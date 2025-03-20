@@ -22,7 +22,11 @@ LogDensityProblems.dimension(prob::MixFlowProblem) = LogDensityProblems.dimensio
 logdensity_reference(prob::MixFlowProblem) = LogDensityProblems.logdensity(prob.reference)
 logdensity_target(prob::MixFlowProblem) = LogDensityProblems.logdensity(prob.target)
 
+function iid_sample_reference end
+function iid_sample end
+
 export logdensity_reference, logdensity_target, MixFlowProblem
+export iid_sample_reference, iid_sample
 
 include("uniform_mixer.jl")
 export AbstractUnifMixer, ErgodicShift, RandomShift 
@@ -41,15 +45,14 @@ function inverse_with_logdetjac end
 
 
 
-function iid_sample_reference end
-function iid_sample end
 function sample_trajectory end
 
 function logpdf_mixflow end
 function logpdf_intermediate end
 function elbo end
 
-
 include("rwmh1d.jl")
+export forward, inverse, logpdf_mixflow, logpdf_intermediate, logpdf_last
+
 
 end
