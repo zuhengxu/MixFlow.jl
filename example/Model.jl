@@ -1,4 +1,5 @@
 using Distributions, Random, LinearAlgebra
+using LogDensityProblems
 using IrrationalConstants
 using Plots
 
@@ -28,3 +29,7 @@ function load_model(name::String)
         error("Model not defined")
     end
 end
+
+# LogDensityProblems.capabilities(::ContinuousDistribution) =  LogDensityProblems.LogDensityOrder{0}()
+LogDensityProblems.dimension(dist::ContinuousDistribution) = length(dist)
+LogDensityProblems.logdensity(dist::ContinuousDistribution, x) = logpdf(dist, x)

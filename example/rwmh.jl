@@ -7,7 +7,6 @@ import PlotlyJS as pjs
 
 include("Model.jl")
 
-
 # the involution map
 f(x, v) = (v, x)
 
@@ -126,7 +125,7 @@ function log_density_rwmh(logp, T, x, v, uv, ua)
     logJ = 0.0
     ℓs = []
     for t in 1:T
-        x, v, uv, ua, logjac = rwmh_inv(ℓπ, x, v, uv, ua)
+        x, v, uv, ua, logjac = rwmh_inv(logp, x, v, uv, ua)
         # println(x, v, logjac)
         # if isnan(x) || isnan(v)
         #     println("nan")
@@ -185,3 +184,33 @@ pjs.savefig(p_target, "figure/$(name)_lpdf.png")
 
 p_est = pjs.plot(pjs.surface(x=xs_eval, y=vs_eval, z=logpdfs_est, showscale = true), layout)
 pjs.savefig(p_est, "figure/$(name)_lpdf_est.png")
+
+
+function inv_T(logp, T, x, v, uv, ua)
+    for t in 1:T
+        x, v, uv, ua, _ = rwmh_inv(logp, x, v, uv, ua)
+    end
+    return x, v, uv, ua
+end
+
+function backward_process(logp, T, x, v, uv, ua)
+    xs = []
+    vs = []
+    for t in 1:T
+        x, v, uv, ua = inv_T(logp, t, x, v, uv, ua)
+        push!(xs, copy(x))
+        push!(vs, copy(v))
+    end
+    return xs, vs
+end
+
+
+x0 = randn()
+v0 = randn() + x0
+uv0 = rand()
+ua0 = rand()
+
+T = 1000
+xs, vs = backward_process(ℓπ, T, x0, v0, uv0, ua0)
+
+plot(vs, label="x", linewidth=2)
