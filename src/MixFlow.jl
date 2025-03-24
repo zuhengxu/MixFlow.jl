@@ -114,7 +114,7 @@ function inverse_with_logdetjac(
     return x, v, uv, ua, logabsjac
 end
 
-export forward, inverse, forware_with_logdetjac, inverse_with_logdetjac
+export forward, inverse, forward_with_logdetjac, inverse_with_logdetjac
 export logpdf_aug_target
 
 

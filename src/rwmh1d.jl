@@ -19,7 +19,6 @@ function forward(
     uv, ua = update_uniform(unif_mixer, uv, ua, t)
 
     # involutive mcmc step
-    # dist_v = _dist_v_given_x(K, x)
     uv_ = normcdf(x, K.σ, v)
     ṽ = norminvcdf(x, K.σ, uv)
     x_, v_ = involution(K, x, ṽ)
@@ -34,8 +33,7 @@ function forward(
     end
 end
 
-function inverse(
-    prob::MixFlowProblem, K::RWMH1D{T}, unif_mixer::ErgodicShift1D,
+function inverse( prob::MixFlowProblem, K::RWMH1D{T}, unif_mixer::ErgodicShift1D,
     x_::T, v_::T, uv::T, ua::T,
     t::Int,
 ) where {T<:Real}
@@ -50,7 +48,6 @@ function inverse(
         ua = exp(loguã)
     end
 
-    # dist_v = _dist_v_given_x(K, x)
     v = norminvcdf(x, K.σ, uv)
     uv = normcdf(x, K.σ, ṽ)
 
