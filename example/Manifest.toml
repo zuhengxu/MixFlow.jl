@@ -2,7 +2,7 @@
 
 julia_version = "1.11.4"
 manifest_format = "2.0"
-project_hash = "6cecebde569cdd8dd0860e6576e59955b9d56085"
+project_hash = "48a2e8b98dd27db0763fee91fb2612145d1511ee"
 
 [[deps.ADTypes]]
 git-tree-sha1 = "e2478490447631aedba0823d4d7a80b2cc8cdb32"
@@ -676,7 +676,7 @@ uuid = "e1d29d7a-bbdc-5cf2-9ac0-f12de2c33e28"
 version = "1.2.0"
 
 [[deps.MixFlow]]
-deps = ["ADTypes", "Distributions", "IrrationalConstants", "LinearAlgebra", "LogDensityProblems", "LogDensityProblemsAD", "LogExpFunctions", "ProgressMeter", "Random", "SpecialFunctions", "StatsBase", "StatsFuns"]
+deps = ["ADTypes", "Distributions", "IrrationalConstants", "LinearAlgebra", "LogDensityProblems", "LogDensityProblemsAD", "LogExpFunctions", "PDMats", "ProgressMeter", "Random", "SpecialFunctions", "StatsBase", "StatsFuns"]
 path = ".."
 uuid = "ea471776-d4c6-43fb-ae26-e5140a895dea"
 version = "1.0.0-DEV"

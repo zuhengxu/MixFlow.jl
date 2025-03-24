@@ -1,18 +1,47 @@
-
-abstract type AbstractUnifMixer end
-
-struct ErgodicShift{F} <: AbstractUnifMixer 
-    ξs::F
+struct ErgodicShift1D{F, T} <: AbstractUnifMixer 
+    ξs_uv::F
+    ξs_ua::T 
 end
-ntransitions(S::ErgodicShift{Vector}) = size(S.ξs, 1) 
-ntransitions(S::ErgodicShift{Matrix}) = size(S.ξs, 2)
+ntransitions(S::ErgodicShift1D) = size(S.ξs_ua, 1)
 
-ErgodicShift(D::Int, nsteps::Int) = ErgodicShift(π/4 .* ones(D, nsteps))
-RandomShift(rng, D::Int, nsteps::Int) = ErgodicShift(rand(rng, D, nsteps))
+ErgodicShift1D(nsteps::Int) = ErgodicShift1D(π/4 .* ones(nsteps), π/4 .* ones(nsteps))
+RandomShift1D(rng, nsteps::Int) = ErgodicShift1D(rand(rng, nsteps), rand(rng, nsteps))
+RandomShift1D(nsteps::Int) = RandomShift1D(Random.default_rng(), nsteps)
 
-forward(S::ErgodicShift{Vector{T}}, u::T, t) where T<:Real = (u + S.ξs[:, t]) % 1
-inverse(S::ErgodicShift{Vector{T}}, u::T, t) where T<:Real = (u + 1 - S.ξs[:, t]) % 1
+_ergodic_shift(u::T, ξ::T) where T<:Real = (u + ξ) % 1
+_inv_ergodic_shift(u::T, ξ::T) where T<:Real = (u + 1 - ξ) % 1
 
-forward(S::ErgodicShift{Matrix{T}}, u::AbstractVector{T}, t) where T<:Real = (u .+ @view(S.ξs[:, t])) .% 1
-inverse(S::ErgodicShift{Matrix{T}}, u::AbstractVector{T}, t) where T<:Real = (u .+ 1 .- @view(S.ξs[:, t])) .% 1
+function update_uniform(S::ErgodicShift1D, uv::T, ua::T, t::Int) where {T<:Real}
+    uvn = _ergodic_shift(uv, S.ξs_uv[t])
+    uan = _ergodic_shift(ua, S.ξs_ua[t])
+    return uvn, uan
+end
+
+function inv_update_uniform(S::ErgodicShift1D, uv::T, ua::T, t::Int) where {T<:Real}
+    uan = _inv_ergodic_shift(ua, S.ξs_ua[t])
+    uvn = _inv_ergodic_shift(uv, S.ξs_uv[t])
+    return uvn, uan
+end
+
+struct ErgodicShift{F, T} <: AbstractUnifMixer 
+    ξs_uv::F
+    ξs_ua::T
+end
+ntransitions(S::ErgodicShift) = size(S.ξs_ua, 1)
+
+ErgodicShift(D::Int, nsteps::Int) = ErgodicShift(π/4 .* ones(D, nsteps), π/4 .* ones(nsteps))
+RandomShift(rng, D::Int, nsteps::Int) = ErgodicShift(rand(rng, D, nsteps), rand(rng, nsteps))
+RandomShift(D::Int, nsteps::Int) = RandomShift(Random.default_rng(), D, nsteps)
+
+function update_uniform(S::ErgodicShift, uv::AbstractVector{T}, ua::T, t::Int) where {T<:Real}
+    uvn = _ergodic_shift.(uv, @view(S.ξs_uv[:, t]))
+    uan = _ergodic_shift(ua, S.ξs_ua[t])
+    return uvn, uan
+end
+
+function inv_update_uniform(S::ErgodicShift, uv::AbstractVector{T}, ua::T, t::Int) where {T<:Real}
+    uan = _inv_ergodic_shift(ua, S.ξs_ua[t])
+    uvn = _inv_ergodic_shift.(uv, @view(S.ξs_uv[:, t]))
+    return uvn, uan
+end
 
