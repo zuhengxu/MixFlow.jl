@@ -23,6 +23,7 @@ LogDensityProblems.dimension(prob::MixFlowProblem) = LogDensityProblems.dimensio
 
 logdensity_reference(prob::MixFlowProblem, x) = LogDensityProblems.logdensity(prob.reference, x)
 logdensity_target(prob::MixFlowProblem, x) = LogDensityProblems.logdensity(prob.target, x)
+∇logpdf_target(prob::MixFlowProblem, x) = LogDensityProblems.logdensity_and_gradient(prob.target, x)[2]
 
 function iid_sample end
 iid_sample_reference(prob::MixFlowProblem, n::Int) = iid_sample(prob.reference, n)
@@ -64,67 +65,108 @@ abstract type MultivariateInvolutiveKernel<:InvolutiveKernel end
 # check mh acceptance condition
 check_acc(ua, logr) = log(ua) > logr ? false : true
 
-function logpdf_aug_target end
+# to be dispatched for each kernel
 function _dist_v_given_x end
+function _cdf_v_given_x end
+function _invcdf_v_given_x end
+function _rand_v_given_x end
+function _involution end
 
 logpdf_aug_target(prob::MixFlowProblem, K::InvolutiveKernel, x, v) =
-    logdensity_target(prob, x) + logpdf(_dist_v_given_x(K, x), v)
+    logdensity_target(prob, x) + logpdf(_dist_v_given_x(K, prob, x), v)
 
-
-function forward end
-function inverse end
-function log_density_flow end
-function elbo end
-
-function forward_with_logdetjac(
-    prob::MixFlowProblem, K::UnivariateInvolutiveKernel, unif_mixer::AbstractUnifMixer,
-    x::T, v::T, uv::T, ua::T,
+function forward(
+    prob::MixFlowProblem, K::MultivariateInvolutiveKernel, unif_mixer::AbstractUnifMixer,
+    x::AbstractVector{T}, v::AbstractVector{T}, uv::AbstractVector{T}, ua::T,
     t::Int,
-) where {T <: Real}
-    xn, vn, uvn, uan = forward(prob, K, unif_mixer, x, v, uv, ua, t)
-    logabsjac = logpdf_aug_target(prob, K, x, v) - logpdf_aug_target(prob, K, xn, vn)
-    return xn, vn, uvn, uan, logabsjac
+) where {T<:Real}
+    # refresh uniform aux variables
+    uv, ua = update_uniform(unif_mixer, uv, ua, t)
+
+    # involutive mcmc step
+    uv_ = _cdf_v_given_x(K, prob, x, v)
+    ṽ = _invcdf_v_given_x(K, prob, x, uv)
+    # println("uv_", uv_)
+    # println("ṽ", ṽ)
+    x_, v_ = _involution(K, prob, x, ṽ)
+
+    logr = logpdf_aug_target(prob, K, x_, v_) - logpdf_aug_target(prob, K, x, ṽ)
+
+    if check_acc(ua, logr)
+        ua = exp(log(ua) - logr)
+        # println("ua", ua)
+        acc = true
+        return x_, v_, uv_, ua, acc
+    else
+        acc = false
+        return x, ṽ, uv_, ua, acc
+    end
 end
+
+function inverse(
+    prob::MixFlowProblem, K::MultivariateInvolutiveKernel, unif_mixer::AbstractUnifMixer,
+    x_::AbstractVector{T}, v_::AbstractVector{T}, uv::AbstractVector{T}, ua::T,
+    t::Int,
+) where {T<:Real}
+    x, ṽ = _involution(K, prob, x_, v_)
+    logr = logpdf_aug_target(prob, K, x_, v_) - logpdf_aug_target(prob, K, x, ṽ)
+
+    loguã = log(ua) + logr
+
+    if loguã > 0
+        # reject
+        x, ṽ = x_, v_
+        acc = false
+    else
+        # accept
+        ua = exp(loguã)
+        acc = true
+    end
+
+    v = _invcdf_v_given_x(K, prob, x, uv)
+    uv = _cdf_v_given_x(K, prob, x, ṽ)
+
+    uv, ua = inv_update_uniform(unif_mixer, uv, ua, t)
+    return x, v, uv, ua, acc
+end
+
 function forward_with_logdetjac(
     prob::MixFlowProblem, K::MultivariateInvolutiveKernel, unif_mixer::AbstractUnifMixer,
     x::AbstractVector{T}, v::AbstractVector{T}, uv::AbstractVector{T}, ua::T,
     t::Int,
 ) where {T <: Real}
-    xn, vn, uvn, uan = forward(prob, K, unif_mixer, x, v, uv, ua, t)
+    xn, vn, uvn, uan, acc = forward(prob, K, unif_mixer, x, v, uv, ua, t)
     logabsjac = logpdf_aug_target(prob, K, x, v) - logpdf_aug_target(prob, K, xn, vn)
-    return xn, vn, uvn, uan, logabsjac
+    return xn, vn, uvn, uan, acc, logabsjac
 end
 
-function inverse_with_logdetjac(
-    prob::MixFlowProblem, K::UnivariateInvolutiveKernel, unif_mixer::AbstractUnifMixer,
-    x_::T, v_::T, uv::T, ua::T, 
-    t::Int,
-) where {T<:Real}
-    x, v, uv, ua = inverse(prob, K, unif_mixer, x_, v_, uv, ua, t)
-    logabsjac = logpdf_aug_target(prob, K, x_, v_) - logpdf_aug_target(prob, K, x, v)
-    return x, v, uv, ua, logabsjac
-end
 function inverse_with_logdetjac(
     prob::MixFlowProblem, K::MultivariateInvolutiveKernel, unif_mixer::AbstractUnifMixer,
     x_::AbstractVector{T}, v_::AbstractVector{T}, uv::AbstractVector{T}, ua::T, 
     t::Int,
 ) where {T<:Real}
-    x, v, uv, ua = inverse(prob, K, unif_mixer, x_, v_, uv, ua, t)
+    x, v, uv, ua, acc = inverse(prob, K, unif_mixer, x_, v_, uv, ua, t)
     logabsjac = logpdf_aug_target(prob, K, x_, v_) - logpdf_aug_target(prob, K, x, v)
-    return x, v, uv, ua, logabsjac
+    return x, v, uv, ua, acc, logabsjac
 end
 
 export forward, inverse, forward_with_logdetjac, inverse_with_logdetjac
 export logpdf_aug_target
 
 
+using StatsFuns: normcdf, norminvcdf
+
 include("rwmh1d.jl")
 include("rwmh.jl")
+include("mala.jl")
 include("hmc_uncorrect.jl")
 include("hmc.jl")
 
+export _involution 
+
 export RWMH1D
 export RWMH
+export uncorrectHMC, HMC, MALA
 
 
 end

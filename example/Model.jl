@@ -1,6 +1,7 @@
 using Distributions, Random, LinearAlgebra
 using LogDensityProblems
 using IrrationalConstants
+using MixFlow 
 using Plots
 
 # 1d targets
@@ -18,7 +19,7 @@ function load_model(name::String)
     elseif name == "Cauchy1D"
         return Cauchy()
     elseif name == "Banana"
-        return Banana(2, 1.0, 100)
+        return Banana(2, 1.0, 10.0)
     elseif name == "Cross"
         return Cross()
     elseif name == "Funnel"
@@ -33,3 +34,7 @@ end
 # LogDensityProblems.capabilities(::ContinuousDistribution) =  LogDensityProblems.LogDensityOrder{0}()
 LogDensityProblems.dimension(dist::ContinuousDistribution) = length(dist)
 LogDensityProblems.logdensity(dist::ContinuousDistribution, x) = logpdf(dist, x)
+
+
+MixFlow.iid_sample(dist::ContinuousDistribution, n::Int) = rand(dist, n)
+MixFlow.iid_sample(dist::ContinuousDistribution) = rand(dist)

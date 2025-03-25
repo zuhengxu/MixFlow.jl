@@ -34,14 +34,14 @@ RandomShift(rng, D::Int, nsteps::Int) = ErgodicShift(rand(rng, D, nsteps), rand(
 RandomShift(D::Int, nsteps::Int) = RandomShift(Random.default_rng(), D, nsteps)
 
 function update_uniform(S::ErgodicShift, uv::AbstractVector{T}, ua::T, t::Int) where {T<:Real}
-    uvn = _ergodic_shift.(uv, @view(S.ξs_uv[:, t]))
+    uvn = _ergodic_shift.(uv, S.ξs_uv[:, t])
     uan = _ergodic_shift(ua, S.ξs_ua[t])
     return uvn, uan
 end
 
 function inv_update_uniform(S::ErgodicShift, uv::AbstractVector{T}, ua::T, t::Int) where {T<:Real}
+    # println("inv_update_uniform")
+    uvn = _inv_ergodic_shift.(uv, S.ξs_uv[:, t])
     uan = _inv_ergodic_shift(ua, S.ξs_ua[t])
-    uvn = _inv_ergodic_shift.(uv, @view(S.ξs_uv[:, t]))
     return uvn, uan
 end
-

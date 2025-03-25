@@ -66,6 +66,31 @@ name = "Cauchy1D"
 target = load_model(name)
 ℓπ(x) = logpdf(target, x)
 
+prob = MixFlowProblem(target, target)
+
+T = 2000
+mixer = RandomShift1D(T)
+K = RWMH1D()
+
+x0, v0, uv0, ua0 = MixFlow._rand_joint_reference(prob, K)
+x, v, uv, ua = x0, v0, uv0, ua0
+
+for t in 1:T
+    x, v, uv, ua = forward(prob, K, mixer, x, v, uv, ua, t)
+end
+
+for t in T:-1:1
+    x, v, uv, ua = inverse(prob, K, mixer, x, v, uv, ua, t)
+end
+
+x - x0
+v - v0
+uv - uv0
+ua - ua0
+
+
+
+
 # check invertibility
 function inv_error_rwmh(ℓπ, T)
     x0 = randn()
