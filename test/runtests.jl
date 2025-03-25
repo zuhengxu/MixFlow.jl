@@ -1,8 +1,5 @@
-using MixFlow
-using Test
 
 
-include("Model.jl")
 
 using Random, Distributions
 using LinearAlgebra
@@ -13,6 +10,8 @@ using ADTypes, Mooncake
 using NormalizingFlows
 using Bijectors
 
+include("Model.jl")
+using Test
 
 target = load_model("Banana")
 
