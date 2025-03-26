@@ -24,10 +24,10 @@ mixer = RandomShift(dim, T_max)
 
 @testset "check invertibility" begin
     @testset "$K" for K in [
-        K = uncorrectHMC(10, 0.02)
-        K = HMC(10, 0.02)
-        K = MALA(0.25)
-        K = RWMH(0.3 * ones(dim))
+        uncorrectHMC(10, 0.02),
+        HMC(10, 0.02),
+        MALA(0.25),
+        RWMH(0.3 * ones(dim)),
     ]
 
     T = 20
