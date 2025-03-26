@@ -15,7 +15,7 @@ function _dist_v_given_x(K::MALA{T}, prob::MixFlowProblem, x::AbstractVector{T})
     ∇ℓπ = Base.Fix1(∇logpdf_target, prob)
     stepsize = K.ϵ
     μ = _euler_step(∇ℓπ, stepsize, x)
-    return MvNormal(μ, stepsize*ones(T, dim))
+    return MvNormal(μ, stepsize*I)
 end
 
 _rand_v_given_x(K::MALA{T}, prob::MixFlowProblem, x::AbstractVector{T}) where T = rand(_dist_v_given_x(K, prob, x))

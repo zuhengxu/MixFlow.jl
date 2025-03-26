@@ -15,7 +15,7 @@ end
 
 function _dist_v_given_x(::HMC{T}, ::MixFlowProblem, x::AbstractVector{T}) where T
     dim = length(x)
-    return MvNormal(zeros(T, dim), ones(T, dim))
+    return MvNormal(zeros(T, dim), I)
 end
 _rand_v_given_x(::HMC{T}, ::MixFlowProblem, x::AbstractVector{T}) where T = randn(length(x))
 _rand_v_given_x(::HMC{T}, ::MixFlowProblem, x::AbstractVector{T}, n::Int) where T = randn(length(x), n)
