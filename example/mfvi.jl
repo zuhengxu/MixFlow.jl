@@ -20,7 +20,7 @@ function mfvi(
     dim = LogDensityProblems.dimension(target)
     logp = Base.Fix1(LogDensityProblems.logdensity, target)
 
-    q₀ = MvNormal(zeros(dim), ones(dim))
+    q₀ = MvNormal(zeros(dim), I)
     flow =
         Bijectors.transformed(q₀, Bijectors.Shift(zeros(dim)) ∘ Bijectors.Scale(ones(dim)))
 

@@ -28,50 +28,73 @@ T_max = 20_000
 mixer = RandomShift(2, T_max)
 # mixer = ErgodicShift(2, T)
 
-T = 100
-K = uncorrectHMC(10, 0.02)
-K = HMC(10, 0.02)
-K = MALA(0.25)
+
+function check_error(prob, K, mixer, T::Int)
+    x0, v0, uv0, ua0 = MF._rand_joint_reference(prob, K)
+    x, v, uv, ua = x0, v0, uv0, ua0
+
+    rejs_fwd = []
+    for t in 1:T
+        x, v, uv, ua, acc = MF.forward(prob, K, mixer, x, v, uv, ua, t)
+        if !acc 
+            push!(rejs_fwd, t)
+        end
+    end
+
+    rejs_inv = []
+    for t in T:-1:1
+        x, v, uv, ua, acc = MF.inverse(prob, K, mixer, x, v, uv, ua, t)
+        if !acc
+            push!(rejs_inv, t)
+        end
+    end
+
+    if uv0 === nothing 
+        errsq = sum(abs2, x - x0) + sum(abs2, v - v0)
+    else
+        errsq = sum(abs2, x - x0) + sum(abs2, v - v0) + sum(abs2, uv - uv0) + sum(abs2, ua - ua0)
+    end
+    err = sqrt(errsq)
+    return err, rejs_fwd, sort(rejs_inv)
+end
+
+
+function check_error(prob, K, mixer, Ts::Vector{Int})
+    stats = []
+    for T in Ts
+        err, _, _ = check_error(prob, K, mixer, T)
+        # stat = (T=T, error=err)
+        push!(stats, err)
+    end
+    return stats
+end
+
+
+# K = uncorrectHMC(10, 0.02)
+# K = HMC(10, 0.02)
+# K = MALA(0.25)
 # K = RWMH(0.3*ones(dim))
-x0, v0, uv0, ua0 = MF._rand_joint_reference(prob, K)
-x, v, uv, ua = x0, v0, uv0, ua0
+T = 100
+err, _, _ = check_error(prob, K, mixer, T)
 
-rejs_fwd = []
-for t in 1:T
-    x, v, uv, ua, acc = MF.forward(prob, K, mixer, x, v, uv, ua, t)
-    if !acc 
-        push!(rejs_fwd, t)
+
+
+for K in [
+    uncorrectHMC(10, 0.02), 
+    HMC(10, 0.02), 
+    MALA(0.25), 
+    RWMH(0.3*ones(dim)), 
+]
+     
+    @threads for _ in 1:32
+        err, _, _ = check_error(prob, K, mixer, T)
+        println("$(K): $(err)")
     end
 end
 
-rejs_inv = []
-for t in T:-1:1
-    x, v, uv, ua, acc = MF.inverse(prob, K, mixer, x, v, uv, ua, t)
-    if !acc
-        push!(rejs_inv, t)
-    end
-end
-rejs_inv = sort(rejs_inv)
 
-# rejs_fwd .- rejs_inv
 # plot(rejs_fwd, label="rejs_fwd", lw = 2)
 # plot!(rejs_inv, label="rejs_inv", lw = 2)
-
-x - x0
-v - v0
-# uv - uv0
-# ua - ua0
-
-
-# K = HMC(20, 0.02)
-# x0, v0, uv0, ua0 = MixFlow._rand_joint_reference(prob, K)
-# x, v, uv, ua = x0, v0, uv0, ua0
-
-# x, v = involution(K, prob, x, v)
-# xb, vb = involution(K, prob, x, v)
-
-# xb - x0
-# vb - v0
 
 
 # function backward_process(prob, K, mixer, x0, v0, uv0, ua0, T)

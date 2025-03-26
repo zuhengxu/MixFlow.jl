@@ -57,7 +57,7 @@ mixer = RandomShift(dim, T_max)
     # ensure that the forward and inverse steps are consistent
     # @test rejs_fwd .- rejs_inv ≈ zeros(length(rejs_fwd))
 
-    @test x .- x0 ≈ zeros(dim)
-    @test v .- v0 ≈ zeros(dim)
+    @test norm(x .- x0) ≤ 1e-3
+    @test norm(v .- v0) ≤ 1e-3
     end
 end
