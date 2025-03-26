@@ -1,6 +1,3 @@
-
-
-
 using Random, Distributions
 using LinearAlgebra
 using LogExpFunctions
@@ -11,6 +8,7 @@ using NormalizingFlows
 using Bijectors
 
 include("Model.jl")
+include("mfvi.jl")
 using Test
 
 target = load_model("Banana")

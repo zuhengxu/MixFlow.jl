@@ -10,6 +10,7 @@ using NormalizingFlows
 using Bijectors
 
 include("Model.jl")
+include("mfvi.jl")
 
 
 # target = MvNormal(zeros(2), ones(2))
