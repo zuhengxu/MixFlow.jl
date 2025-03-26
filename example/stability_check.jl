@@ -13,8 +13,7 @@ include("Model.jl")
 
 
 function check_error_single_run(id, name, )
-    Random.seed!(id)
-    
+    Random.seed!(id) 
 
 end
 

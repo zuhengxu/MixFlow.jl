@@ -2,10 +2,12 @@ using Random, Distributions
 using LinearAlgebra
 using LogExpFunctions
 using LogDensityProblems, LogDensityProblemsAD
-using MixFlow
 using ADTypes, Mooncake
 using NormalizingFlows
 using Bijectors
+using MixFlow
+
+const MF = MixFlow
 
 include("Model.jl")
 include("mfvi.jl")
@@ -32,12 +34,12 @@ mixer = RandomShift(dim, T_max)
 
     T = 20
     
-    x0, v0, uv0, ua0 = MixFlow._rand_joint_reference(prob, K)
+    x0, v0, uv0, ua0 = MF._rand_joint_reference(prob, K)
     x, v, uv, ua = x0, v0, uv0, ua0
 
     rejs_fwd = []
     for t in 1:T
-        x, v, uv, ua, acc = forward(prob, K, mixer, x, v, uv, ua, t)
+        x, v, uv, ua, acc = MF.forward(prob, K, mixer, x, v, uv, ua, t)
         if !acc 
             push!(rejs_fwd, t)
         end
@@ -45,7 +47,7 @@ mixer = RandomShift(dim, T_max)
 
     rejs_inv = []
     for t in T:-1:1
-        x, v, uv, ua, acc = inverse(prob, K, mixer, x, v, uv, ua, t)
+        x, v, uv, ua, acc = MF.inverse(prob, K, mixer, x, v, uv, ua, t)
         if !acc
             push!(rejs_inv, t)
         end
