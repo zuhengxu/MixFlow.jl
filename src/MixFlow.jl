@@ -73,8 +73,7 @@ function forward(
     # println("uv_", uv_)
     # println("ṽ", ṽ)
     x_, v_ = _involution(K, prob, x, ṽ)
-
-    logr = logpdf_aug_target(prob, K, x_, v_) - logpdf_aug_target(prob, K, x, ṽ)
+logr = logpdf_aug_target(prob, K, x_, v_) - logpdf_aug_target(prob, K, x, ṽ)
 
     if check_acc(ua, logr)
         ua = exp(log(ua) - logr)
@@ -155,10 +154,6 @@ export uncorrectHMC, HMC, MALA
 # this will influence how we compute the density and so on
 abstract type AbstractFlowType end
 
-# typical mixflow from time homogenous mapping
-struct DeterministicMixFlow <: AbstractFlowType 
-    flow_length::Int
-end
 # time-inhomogeneous mixflow with IRF (quadrtic density cost)
 struct RandomMixFlow <: AbstractFlowType 
     flow_length::Int
@@ -173,5 +168,67 @@ struct RandomFlow <: AbstractFlowType
     num_flows::Int # M
 end
 
+function inverse_T_step(
+    prob::MixFlowProblem, K::MultivariateInvolutiveKernel, mixer::AbstractUnifMixer,
+    x::AbstractVector{T}, v::AbstractVector{T}, uv::Union{AbstractVector{T}, Nothing}, ua::Union{T,Nothing},
+    steps::Int,
+) where T 
+    for t in steps:-1:1
+        x, v, uv, ua, _ = inverse(prob, K, mixer, x, v, uv, ua, t)
+    end
+    return x, v, uv, ua
+end
+
+function forward_T_step(
+    prob::MixFlowProblem, K::MultivariateInvolutiveKernel, mixer::AbstractUnifMixer,
+    x::AbstractVector{T}, v::AbstractVector{T}, uv::Union{AbstractVector{T}, Nothing}, ua::Union{T,Nothing},
+    steps::Int,
+) where T 
+    for t in 1:steps
+        x, v, uv, ua, _ = forward(prob, K, mixer, x, v, uv, ua, t)
+    end
+    return x, v, uv, ua
+end
+
+function simulate_from_past_T_step(
+    prob::MixFlowProblem, K::MultivariateInvolutiveKernel, mixer::AbstractUnifMixer,
+    x::AbstractVector{T}, v::AbstractVector{T}, uv::Union{AbstractVector{T}, Nothing}, ua::Union{T,Nothing},
+    steps::Int,
+) where T  
+    for t in steps:-1:1
+        x, v, uv, ua, _ = forward(prob, K, mixer, x, v, uv, ua, t)
+    end
+    return x, v, uv, ua
+end
+
+iid_sample(
+    flow::AbstractFlowType, prob::MixFlowProblem, K::InvolutiveKernel, mixer::AbstractUnifMixer, nsample::Int
+) = [iid_sample(flow, prob, K, mixer) for _ in 1:nsample]
+
+function _elbo_single(
+    flow::AbstractFlowType, prob::MixFlowProblem, K::InvolutiveKernel, mixer::AbstractUnifMixer, 
+    x, v, uv, ua,
+)
+    el = logpdf_aug_target(prob, K, x, v) - log_density_flow(flow, prob, K, mixer, x, v, uv, ua)
+    return el
+end
+
+function elbo(
+    flow::AbstractFlowType, prob::MixFlowProblem, K::InvolutiveKernel, mixer::AbstractUnifMixer, 
+    nsample::Int,
+)
+    samples = iid_sample(flow, prob, K, mixer, nsample)
+    els = zeros(nsample)
+    @threads for i in 1:nsample
+        els[i] = _elbo_single(flow, prob, K, mixer, samples[i]...)
+    end
+    # els = map(x -> _elbo_single(flow, prob, K, mixer, x...), samples)
+    return mean(els)
+end
+
+include("random_bwd_mixflow.jl")
+include("deterministic_mixflow.jl")
+export elbo, log_density_flow, simulate_from_past_T_step 
+export RandomBackwardMixFlow, DeterministicMixFlow
 
 end

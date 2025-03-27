@@ -1,13 +1,15 @@
+using MixFlow: log_density_flow, _rand_joint_reference
 using Random, Distributions, Plots
 using LinearAlgebra
 using Base.Threads: @threads
 using JLD2
 using LogExpFunctions
 using LogDensityProblems, LogDensityProblemsAD
-using MixFlow
+using MixFlow 
 using ADTypes, Mooncake
 using NormalizingFlows
 using Bijectors
+using ProgressMeter
 
 const MF = MixFlow
 
@@ -95,3 +97,51 @@ end
 
 # plot(rejs_fwd, label="rejs_fwd", lw = 2)
 # plot!(rejs_inv, label="rejs_inv", lw = 2)
+#
+#
+
+
+
+
+function elbo_sweep(flowtype, prob, K, mixer, nsample, Ts)
+    Els = []
+    @showprogress for T in Ts
+        F = flowtype(T) 
+        el = MF.elbo(F, prob, K, mixer, nsample)
+        push!(Els, el)
+    end
+    return map(identity, Els)
+end
+
+
+# log_density_flow(F, prob, K, mixer, sample...)
+# MF._elbo_single(F, prob, K, mixer, sample...)
+T_max = 20_000
+mixer = RandomShift(2, T_max)
+mix_deter = ErgodicShift(2, T_max)
+
+nsample = 500
+# T = 10
+# F = RandomBackwardMixFlow(T)
+# x0, v0, uv0, ua0 = MF._rand_joint_reference(prob, K)
+# x, v, uv, ua = simulate_from_past_T_step(prob, K, mixer, x0, v0, uv0, ua0, T)
+# sample = iid_sample(F, prob, K, mixer)
+
+Ts = [10, 20, 50, 100, 200, 500, 1000]
+ϵs = [0.005, 0.01, 0.05, 0.1]
+
+P = plot()
+for ϵ in ϵs
+    # ϵ = 0.05
+    K = HMC(10, ϵ)
+    Ku = uncorrectHMC(10, ϵ)
+
+    Els_hmc = elbo_sweep(RandomBackwardMixFlow, prob, K, mixer, nsample, Ts)
+    Els_hmc_deter = elbo_sweep(DeterministicMixFlow, prob, K, mix_deter, nsample, Ts)
+    Els_uhmc_deter = elbo_sweep(DeterministicMixFlow, prob, uncorrectHMC(10, 0.05), mix_deter, nsample, Ts)
+
+    plot!(P, Ts, Els_hmc, label="HMC_bwd_mixflow $(ϵ)", lw=2)
+    plot!(P, Ts, Els_hmc_deter, label="HMC_std_mixflow $(ϵ)", lw=2)
+    plot!(P, Ts, Els_uhmc_deter, label="uncorrectHMC_std_mixflow $(ϵ)", lw=2)
+end
+savefig("figure/$(name)_elbo_sweep.png")
