@@ -13,6 +13,9 @@ const MF = MixFlow
 
 include("Model.jl")
 include("mfvi.jl")
+# plot 
+include("plotting.jl")
+
 
 
 function check_error(prob, K, mixer, T::Int)
@@ -56,10 +59,12 @@ function check_error(prob, K, mixer, Ts::Vector{Int})
 end
 
 
-target = load_model("Banana")
+name = "Cross"
+target = load_model(name)
 
-target_ad = ADgradient(AutoMooncake(; config = Mooncake.Config()), target)
-reference, _ = mfvi(target_ad; sample_per_iter = 10, max_iters = 10000)
+ad = AutoMooncake(; config = Mooncake.Config())
+target_ad = ADgradient(ad, target)
+reference, _ = mfvi(target_ad; sample_per_iter = 10, max_iters = 10000, adtype = ad)
 prob = MixFlowProblem(reference, target_ad)
 
 dims = LogDensityProblems.dimension(target_ad)
@@ -69,7 +74,8 @@ mixer = RandomShift(2, T_max)
 # mixer = ErgodicShift(2, T)
 
 
-Ts = [10, 20, 50, 100, 150, 200, 300, 400, 500, 750, 1000]
+# Ts = [10, 20, 50, 100, 200, 500, 1000, 2000, 5000, 10000]
+Ts = vcat([10, 20, 50], 100:100:1200)
 
 stats = []
 for K in [
@@ -89,16 +95,13 @@ for K in [
     println("$(typeof(K)) done")
 end
 
-JLD2.save("result/stability_banana.jld2", "stats", stats)
+JLD2.save("result/stability_"*"$(name).jld2", "stats", stats)
 
-
-# plot 
-include("plotting.jl")
 
 P =  plot()
 for i in 1:length(stats)
     plot!(stats[i].Ts, get_median(stats[i].errors), ribbon = get_percentiles(stats[i].errors), lw = 3, label = string(stats[i].kernel))
 end
-plot!(title = "banana inv error", xlabel = "T", ylabel = "error", yscale = :log10, legend = :bottomright)
-savefig("figure/stability_banana.png")
+plot!(title = "$(name) inv error", xlabel = "T", ylabel = "error", yscale = :log10, legend = :bottomright)
+savefig("figure/stability_" * "$(name).png")
 

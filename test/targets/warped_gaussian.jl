@@ -23,11 +23,11 @@ WarpedGauss(σ1::T, σ2::T) where {T<:Real} = WarpedGauss{T}(σ1, σ2)
 WarpedGauss() = WarpedGauss(1.0, 0.12)
 
 Base.length(p::WarpedGauss) = 2
-Base.eltype(p::WarpedGauss{T}) where {T<:Real} = T
+Base.eltype(::WarpedGauss{T}) where {T<:Real} = T
 Distributions.sampler(p::WarpedGauss) = p
 
 # Define the transformation function φ and the inverse ϕ⁻¹ for the warped Gaussian distribution
-function ϕ!(p::WarpedGauss, z::AbstractVector)
+function ϕ!(::WarpedGauss, z::AbstractVector)
     length(z) == 2 || error("Dimension mismatch")
     x, y = z
     r = norm(z)
@@ -37,7 +37,7 @@ function ϕ!(p::WarpedGauss, z::AbstractVector)
     return z
 end
 
-function ϕ⁻¹(p::WarpedGauss, z::AbstractVector)
+function ϕ⁻¹(::WarpedGauss, z::AbstractVector)
     length(z) == 2 || error("Dimension mismatch")
     x, y = z
     r = norm(z)
@@ -55,7 +55,7 @@ end
 
 function Distributions._rand!(rng::AbstractRNG, p::WarpedGauss, x::AbstractVecOrMat)
     size(x, 1) == 2 || error("Dimension mismatch")
-    σ₁, σ₂ = p.σ₁, p.σ₂
+    σ₁, σ₂ = p.σ1, p.σ2
     randn!(rng, x)
     x .*= [σ₁, σ₂]
     for y in eachcol(x)
@@ -66,7 +66,7 @@ end
 
 function Distributions._logpdf(p::WarpedGauss, x::AbstractVector)
     size(x, 1) == 2 || error("Dimension mismatch")
-    σ₁, σ₂ = p.σ₁, p.σ₂
+    σ₁, σ₂ = p.σ1, p.σ2
     S = [σ₁, σ₂] .^ 2
     z, logJ = ϕ⁻¹(p, x)
     return -sum(z .^ 2 ./ S) / 2 - IrrationalConstants.log2π - log(σ₁) - log(σ₂) + logJ

@@ -54,7 +54,7 @@ function _rand_v_given_x end
 function _involution end
 
 logpdf_aug_target(prob::MixFlowProblem, K::InvolutiveKernel, x, v) =
-    logdensity_target(prob, x) + log_density_flow(_dist_v_given_x(K, prob, x), v)
+    logdensity_target(prob, x) + logpdf(_dist_v_given_x(K, prob, x), v)
 
 function forward(
     prob::MixFlowProblem, K::MultivariateInvolutiveKernel, unif_mixer::AbstractUnifMixer,
@@ -153,40 +153,22 @@ export uncorrectHMC, HMC, MALA
 abstract type AbstractFlowType end
 
 # typical mixflow from time homogenous mapping
-struct DeterministicMixFlow <: AbstractFlowType end
+struct DeterministicMixFlow <: AbstractFlowType 
+    flow_length::Int
+end
 # time-inhomogeneous mixflow with IRF (quadrtic density cost)
-struct RandomMixFlow <: AbstractFlowType end
-# time-inhomogeneous mixflow with IRF but simulate from past (linear density cost, cant do trajectory sampling)
-struct RandomBackwardMixFlow <: AbstractFlowType end
+struct RandomMixFlow <: AbstractFlowType 
+    flow_length::Int
+end
 # time-inhomogeneous mixflow with IRF but simulate the inverse (linear density cost, cant do trajectory sampling)
-struct RandomInverseMixFlow <: AbstractFlowType end
-# K short runs, no mix
-struct RandomFlow <: AbstractFlowType end
-
-function iid_sample(flow::AbstractFlowType, prob::MixFlowProblem, K::InvolutiveKernel, mixer::AbstractUnifMixer)
-    
+struct RandomInverseMixFlow <: AbstractFlowType 
+    flow_length::Int
+end
+# M short runs, no mix
+struct RandomFlow <: AbstractFlowType 
+    flow_length::Int
+    num_flows::Int # M
 end
 
-function trajectory_sample(flow::AbstractFlowType, prob::MixFlowProblem, K::InvolutiveKernel, mixer::AbstractUnifMixer)
-    nothing
-end
-
-function log_density_flow(flow::AbstractFlowType, prob::MixFlowProblem, K::InvolutiveKernel, x, v, uv, ua)
-    nothing
-end
-
-function elbo_single(flow::AbstractFlowType, prob::MixFlowProblem, K::InvolutiveKernel, mixer::AbstractUnifMixer, x, v, uv, ua)
-    # x, v, uv, ua = iid_sample(flow, prob, K, mixer)
-    el = log_density_flow(flow, prob, K, x, v, uv, ua) - logpdf_aug_target(prob, K, x, v)
-    return el
-end
-
-function elbo(flow::AbstractFlowType, prob::MixFlowProblem, K::InvolutiveKernel, mixer::AbstractUnifMixer, nsample::Int)
-    samples = iid_sample(flow, prob, K, mixer, nsample)
-    els = map(x -> elbo_single(flow, prob, K, mixer, x...), samples)
-    return mean(els)
-end
-
-function elbo_trajectory end
 
 end
