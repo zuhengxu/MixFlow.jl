@@ -127,8 +127,8 @@ nsample = 500
 # x, v, uv, ua = simulate_from_past_T_step(prob, K, mixer, x0, v0, uv0, ua0, T)
 # sample = iid_sample(F, prob, K, mixer)
 
-Ts = [10, 20, 50, 100, 200, 500, 1000]
-ϵs = [0.005, 0.01, 0.05, 0.1]
+Ts = [10, 20, 50, 100, 200, 350, 500]
+ϵs = [0.01, 0.05, 0.1]
 
 P = plot()
 for ϵ in ϵs
@@ -136,12 +136,14 @@ for ϵ in ϵs
     K = HMC(10, ϵ)
     Ku = uncorrectHMC(10, ϵ)
 
+    @info "ϵ = $ϵ"
+    Els_uhmc_deter = elbo_sweep(DeterministicMixFlow, prob, Ku, mix_deter, nsample, Ts)
     Els_hmc = elbo_sweep(RandomBackwardMixFlow, prob, K, mixer, nsample, Ts)
     Els_hmc_deter = elbo_sweep(DeterministicMixFlow, prob, K, mix_deter, nsample, Ts)
-    Els_uhmc_deter = elbo_sweep(DeterministicMixFlow, prob, uncorrectHMC(10, 0.05), mix_deter, nsample, Ts)
 
     plot!(P, Ts, Els_hmc, label="HMC_bwd_mixflow $(ϵ)", lw=2)
     plot!(P, Ts, Els_hmc_deter, label="HMC_std_mixflow $(ϵ)", lw=2)
     plot!(P, Ts, Els_uhmc_deter, label="uncorrectHMC_std_mixflow $(ϵ)", lw=2)
 end
+
 savefig("figure/$(name)_elbo_sweep.png")

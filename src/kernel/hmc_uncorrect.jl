@@ -13,7 +13,7 @@ struct uncorrectHMC{T} <: MultivariateInvolutiveKernel
     end
 end
 
-_dist_v_given_x(::uncorrectHMC, x) = MvNormal(zeros(length(x)), I)
+_dist_v_given_x(::uncorrectHMC, prob::MixFlowProblem, x) = MvNormal(zeros(length(x)), I)
 _rand_v_given_x(::uncorrectHMC, x) = randn(length(x))
 _rand_v_given_x(::uncorrectHMC, x, n::Int) = randn(length(x), n)
 
