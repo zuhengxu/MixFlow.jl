@@ -4,7 +4,7 @@ struct DeterministicMixFlow <: AbstractFlowType
 end
 
 function iid_sample(flow::DeterministicMixFlow, prob::MixFlowProblem, K::InvolutiveKernel, mixer::AbstractUnifMixer)
-    T = flow.flow_length
+    T = rand(1:flow.flow_length)
     x0, v0, uv0, ua0 = _rand_joint_reference(prob, K)  
     return forward_T_step(prob, K, mixer, x0, v0, uv0, ua0, T) 
 end
