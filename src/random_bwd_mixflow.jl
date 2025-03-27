@@ -34,8 +34,18 @@ function trajectory_sample(flow::AbstractFlowType, prob::MixFlowProblem, K::Invo
     @warn "For backward flow, trajectory_sample is of quadratic cost. Use iid_sample instead in practice."
 end
 
-function log_density_flow(flow::AbstractFlowType, prob::MixFlowProblem, K::InvolutiveKernel, x, v, uv, ua)
-    nothing
+function log_density_flow(
+    flow::RandomBackwardMixFlow, prob::MixFlowProblem, K::InvolutiveKernel, mixer::AbstractUnifMixer, 
+    x, v, uv, ua,
+)
+    T = flow.flow_length
+    logp = logpdf_aug_reference(prob, K, x, v)
+    for t in 1:T
+        x, v, uv, ua, _ = inverse(prob, K, mixer, x, v, uv, ua, t)
+        logp += logpdf_aug_target(prob, K, x, v)
+    end
+    return logp
+     
 end
 
 function elbo_single(flow::AbstractFlowType, prob::MixFlowProblem, K::InvolutiveKernel, mixer::AbstractUnifMixer, x, v, uv, ua)

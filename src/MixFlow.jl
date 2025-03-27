@@ -56,6 +56,9 @@ function _involution end
 logpdf_aug_target(prob::MixFlowProblem, K::InvolutiveKernel, x, v) =
     logdensity_target(prob, x) + logpdf(_dist_v_given_x(K, prob, x), v)
 
+logpdf_aug_reference(prob::MixFlowProblem, K::InvolutiveKernel, x, v) =
+    logdensity_reference(prob, x) + logpdf(_dist_v_given_x(K, prob, x), v)
+
 function forward(
     prob::MixFlowProblem, K::MultivariateInvolutiveKernel, unif_mixer::AbstractUnifMixer,
     x::AbstractVector{T}, v::AbstractVector{T}, uv::AbstractVector{T}, ua::T,

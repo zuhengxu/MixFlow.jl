@@ -62,7 +62,7 @@ function rwmh_inv(logp, x_, v_, uv, ua)
 end
 
 # gaussian target
-name = "Cauchy1D"
+name = "Mixture1D"
 target = load_model(name)
 ℓπ(x) = logpdf(target, x)
 
@@ -91,61 +91,61 @@ ua - ua0
 
 
 
-# check invertibility
-function inv_error_rwmh(ℓπ, T)
-    x0 = randn()
-    v0 = randn() + x0
-    uv0 = rand()
-    ua0 = rand()
+# # check invertibility
+# function inv_error_rwmh(ℓπ, T)
+#     x0 = randn()
+#     v0 = randn() + x0
+#     uv0 = rand()
+#     ua0 = rand()
 
-    x,v, uv, ua = copy(x0), copy(v0), copy(uv0), copy(ua0)
-    for i in 1:T
-        x, v, uv, ua, _ = rwmh(ℓπ, x, v, uv, ua)
-    end
+#     x,v, uv, ua = copy(x0), copy(v0), copy(uv0), copy(ua0)
+#     for i in 1:T
+#         x, v, uv, ua, _ = rwmh(ℓπ, x, v, uv, ua)
+#     end
 
-    for i in 1:T
-        x, v, uv, ua, _ = rwmh_inv(ℓπ, x, v, uv, ua)
-    end
+#     for i in 1:T
+#         x, v, uv, ua, _ = rwmh_inv(ℓπ, x, v, uv, ua)
+#     end
 
-    err = [x, v, uv, ua] .- [x0, v0, uv0, ua0]
-    return norm(err)
-end
+#     err = [x, v, uv, ua] .- [x0, v0, uv0, ua0]
+#     return norm(err)
+# end
 
-Ts = 10 .^[1:6 ;]
-ers = [inv_error_rwmh(ℓπ, T) for T in Ts]
-plot(Ts, ers, xaxis=:log, yaxis=:log, label="inv Error", linewidth=3)
-savefig("figure/$(name)_inv_error.png")
+# Ts = 10 .^[1:6 ;]
+# ers = [inv_error_rwmh(ℓπ, T) for T in Ts]
+# plot(Ts, ers, xaxis=:log, yaxis=:log, label="inv Error", linewidth=3)
+# savefig("figure/$(name)_inv_error.png")
 
 
-# check validity of the forward pass of involutive mcmc
-x0 = -3.0
-v0 = randn() + x0
-uv0 = rand()
-ua0 = rand()
-x,v, uv, ua = copy(x0), copy(v0), copy(uv0), copy(ua0)
+# # check validity of the forward pass of involutive mcmc
+# x0 = -3.0
+# v0 = randn() + x0
+# uv0 = rand()
+# ua0 = rand()
+# x,v, uv, ua = copy(x0), copy(v0), copy(uv0), copy(ua0)
 
-T = 10000
-xs = []
-for i in 1:T
-    x, v, uv, ua, _ = rwmh(ℓπ, x, v, uv, ua)
-    push!(xs, x)
-end
+# T = 10000
+# xs = []
+# for i in 1:T
+#     x, v, uv, ua, _ = rwmh(ℓπ, x, v, uv, ua)
+#     push!(xs, x)
+# end
 
 # mean(xs)
 
 # visualize the histogram and density plot
-histogram(xs, nbins=500, label="mcmc sample Histogram", alpha=0.5, normed=true)
-plot!(range(-10, 10; length=300), x -> pdf(target, x), label="True density", linewidth=2)
-# bound the range of the plot
-plot!(xlims=(-10, 10))
-# put a vertical line at the x0
-vline!([x0], label="Initial x0", color=:red)
-savefig("figure/$(name)_sample.png")
+# histogram(xs, nbins=500, label="mcmc sample Histogram", alpha=0.5, normed=true)
+# plot!(range(-10, 10; length=300), x -> pdf(target, x), label="True density", linewidth=2)
+# # bound the range of the plot
+# plot!(xlims=(-10, 10))
+# # put a vertical line at the x0
+# vline!([x0], label="Initial x0", color=:red)
+# savefig("figure/$(name)_sample.png")
 
 # check learned density
 function log_density_rwmh(logp, T, x, v, uv, ua)
     # joint logp
-    logp_joint(x, v) = logp(x) + logpdf(Normal(x), v)
+    logp_joint(x, v) = logpdf(Normal(), x) + logpdf(Normal(x), v)
     x0, v0 = copy(x), copy(v)
     logJ = 0.0
     ℓs = []
@@ -209,33 +209,3 @@ pjs.savefig(p_target, "figure/$(name)_lpdf.png")
 
 p_est = pjs.plot(pjs.surface(x=xs_eval, y=vs_eval, z=logpdfs_est, showscale = true), layout)
 pjs.savefig(p_est, "figure/$(name)_lpdf_est.png")
-
-
-function inv_T(logp, T, x, v, uv, ua)
-    for t in 1:T
-        x, v, uv, ua, _ = rwmh_inv(logp, x, v, uv, ua)
-    end
-    return x, v, uv, ua
-end
-
-function backward_process(logp, T, x, v, uv, ua)
-    xs = []
-    vs = []
-    for t in 1:T
-        x, v, uv, ua = inv_T(logp, t, x, v, uv, ua)
-        push!(xs, copy(x))
-        push!(vs, copy(v))
-    end
-    return xs, vs
-end
-
-
-x0 = randn()
-v0 = randn() + x0
-uv0 = rand()
-ua0 = rand()
-
-T = 1000
-xs, vs = backward_process(ℓπ, T, x0, v0, uv0, ua0)
-
-plot(vs, label="x", linewidth=2)
