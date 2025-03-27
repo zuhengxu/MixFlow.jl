@@ -69,7 +69,7 @@ mixer = RandomShift(2, T_max)
 # mixer = ErgodicShift(2, T)
 
 
-Ts = [10, 20, 50, 100, 200, 500, 1000, 2000, 5000, 10000]
+Ts = [10, 20, 50, 100, 150, 200, 300, 400, 500, 750, 1000]
 
 stats = []
 for K in [
@@ -89,4 +89,16 @@ for K in [
     println("$(typeof(K)) done")
 end
 
-JLD2.save("stability_check.jld2", "stats", stats)
+JLD2.save("result/stability_banana.jld2", "stats", stats)
+
+
+# plot 
+include("plotting.jl")
+
+P =  plot()
+for i in 1:length(stats)
+    plot!(stats[i].Ts, get_median(stats[i].errors), ribbon = get_percentiles(stats[i].errors), lw = 3, label = string(stats[i].kernel))
+end
+plot!(title = "banana inv error", xlabel = "T", ylabel = "error", yscale = :log10, legend = :bottomright)
+savefig("figure/stability_banana.png")
+

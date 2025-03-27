@@ -1,11 +1,10 @@
 module MixFlow
 
 using LinearAlgebra, Distributions, Random, StatsBase, ProgressMeter
-using LogExpFunctions, IrrationalConstants, SpecialFunctions, StatsFuns
+using LogExpFunctions, IrrationalConstants, SpecialFunctions, StatsFuns 
 using LogDensityProblems, ADTypes
 
 using Base.Threads: @threads
-
 
 # setup mixflow problem with specified reference and target
 # all wrapped in logdensityprobs
@@ -39,24 +38,6 @@ include("uniform_mixer.jl")
 export AbstractUnifMixer, ErgodicShift, RandomShift, ErgodicShift1D, RandomShift1D
 export _ergodic_shift, _inv_ergodic_shift
 
-
-# there are some weird flow types 
-# this will influence how we compute the density and so on
-abstract type AbstractFlowType end
-
-# typical mixflow from time homogenous mapping
-struct DeterministicMixFlow <: AbstractFlowType end
-# time-inhomogeneous mixflow with IRF (quadrtic density cost)
-struct RandomMixFlow <: AbstractFlowType end
-# time-inhomogeneous mixflow with IRF but simulate from past (linear density cost, cant do trajectory sampling)
-struct RandomBwdMixFlow <: AbstractFlowType end
-# time-inhomogeneous mixflow with IRF but simulate the inverse (linear density cost, cant do trajectory sampling)
-struct RandomInverseMixFlow <: AbstractFlowType end
-# K short runs, no mix
-struct RandomFlow <: AbstractFlowType end
-
-
-
 # involutive mcmc kernel that defines the involutive IRF mapping
 abstract type InvolutiveKernel end
 abstract type UnivariateInvolutiveKernel<:InvolutiveKernel end
@@ -73,7 +54,7 @@ function _rand_v_given_x end
 function _involution end
 
 logpdf_aug_target(prob::MixFlowProblem, K::InvolutiveKernel, x, v) =
-    logdensity_target(prob, x) + logpdf(_dist_v_given_x(K, prob, x), v)
+    logdensity_target(prob, x) + log_density_flow(_dist_v_given_x(K, prob, x), v)
 
 function forward(
     prob::MixFlowProblem, K::MultivariateInvolutiveKernel, unif_mixer::AbstractUnifMixer,
@@ -153,14 +134,13 @@ end
 export forward, inverse, forward_with_logdetjac, inverse_with_logdetjac
 export logpdf_aug_target
 
-
 using StatsFuns: normcdf, norminvcdf
 
-include("rwmh1d.jl")
-include("rwmh.jl")
-include("mala.jl")
-include("hmc_uncorrect.jl")
-include("hmc.jl")
+include("kernel/rwmh1d.jl")
+include("kernel/rwmh.jl")
+include("kernel/mala.jl")
+include("kernel/hmc_uncorrect.jl")
+include("kernel/hmc.jl")
 
 export _involution 
 
@@ -168,5 +148,45 @@ export RWMH1D
 export RWMH
 export uncorrectHMC, HMC, MALA
 
+# there are some weird flow types 
+# this will influence how we compute the density and so on
+abstract type AbstractFlowType end
+
+# typical mixflow from time homogenous mapping
+struct DeterministicMixFlow <: AbstractFlowType end
+# time-inhomogeneous mixflow with IRF (quadrtic density cost)
+struct RandomMixFlow <: AbstractFlowType end
+# time-inhomogeneous mixflow with IRF but simulate from past (linear density cost, cant do trajectory sampling)
+struct RandomBackwardMixFlow <: AbstractFlowType end
+# time-inhomogeneous mixflow with IRF but simulate the inverse (linear density cost, cant do trajectory sampling)
+struct RandomInverseMixFlow <: AbstractFlowType end
+# K short runs, no mix
+struct RandomFlow <: AbstractFlowType end
+
+function iid_sample(flow::AbstractFlowType, prob::MixFlowProblem, K::InvolutiveKernel, mixer::AbstractUnifMixer)
+    
+end
+
+function trajectory_sample(flow::AbstractFlowType, prob::MixFlowProblem, K::InvolutiveKernel, mixer::AbstractUnifMixer)
+    nothing
+end
+
+function log_density_flow(flow::AbstractFlowType, prob::MixFlowProblem, K::InvolutiveKernel, x, v, uv, ua)
+    nothing
+end
+
+function elbo_single(flow::AbstractFlowType, prob::MixFlowProblem, K::InvolutiveKernel, mixer::AbstractUnifMixer, x, v, uv, ua)
+    # x, v, uv, ua = iid_sample(flow, prob, K, mixer)
+    el = log_density_flow(flow, prob, K, x, v, uv, ua) - logpdf_aug_target(prob, K, x, v)
+    return el
+end
+
+function elbo(flow::AbstractFlowType, prob::MixFlowProblem, K::InvolutiveKernel, mixer::AbstractUnifMixer, nsample::Int)
+    samples = iid_sample(flow, prob, K, mixer, nsample)
+    els = map(x -> elbo_single(flow, prob, K, mixer, x...), samples)
+    return mean(els)
+end
+
+function elbo_trajectory end
 
 end
