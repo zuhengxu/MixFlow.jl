@@ -1,9 +1,9 @@
 # time-inhomogeneous mixflow with IRF (quadrtic density cost)
-struct RandomForwardMixFlow <: AbstractFlowType 
+struct IRFMixFlow <: AbstractFlowType 
     flow_length::Int
 end
 
-function iid_sample(flow::RandomForwardMixFlow, prob::MixFlowProblem, K::InvolutiveKernel, mixer::AbstractUnifMixer)
+function iid_sample(flow::IRFMixFlow, prob::MixFlowProblem, K::InvolutiveKernel, mixer::AbstractUnifMixer)
     T = rand(0:flow.flow_length) 
     x0, v0, uv0, ua0 = _rand_joint_reference(prob, K)  
     if T == 0
@@ -14,7 +14,7 @@ function iid_sample(flow::RandomForwardMixFlow, prob::MixFlowProblem, K::Involut
 end
 
 function log_density_flow(
-    flow::RandomForwardMixFlow, prob::MixFlowProblem, K::InvolutiveKernel, mixer::AbstractUnifMixer, 
+    flow::IRFMixFlow, prob::MixFlowProblem, K::InvolutiveKernel, mixer::AbstractUnifMixer, 
     x, v, uv, ua,
 )
     T = flow.flow_length

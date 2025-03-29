@@ -258,9 +258,10 @@ function elbo(
     return mean(els)
 end
 
-include("random_bwd_mixflow.jl")
+include("irf_fwd_mixflow.jl")
+include("irf_bwd_mixflow.jl")
 include("deterministic_mixflow.jl")
 export elbo, log_density_flow, simulate_from_past_T_step 
-export RandomBackwardMixFlow, DeterministicMixFlow
+export IRFMixFlow, BackwardIRFMixFlow, DeterministicMixFlow
 
 end
