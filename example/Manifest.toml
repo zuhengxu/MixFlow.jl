@@ -884,7 +884,7 @@ uuid = "dbe65cb8-6be2-42dd-bbc5-4196aaced4f4"
 version = "2.0.0"
 
 [[deps.MixFlow]]
-deps = ["ADTypes", "Distributions", "IrrationalConstants", "LinearAlgebra", "LogDensityProblems", "LogDensityProblemsAD", "LogExpFunctions", "PDMats", "ProgressMeter", "Random", "SpecialFunctions", "StatsBase", "StatsFuns"]
+deps = ["ADTypes", "Distributions", "IrrationalConstants", "LinearAlgebra", "LogDensityProblems", "LogDensityProblemsAD", "LogExpFunctions", "PDMats", "ProgressMeter", "Random", "SpecialFunctions", "StatsBase", "StatsFuns", "StructArrays"]
 path = ".."
 uuid = "ea471776-d4c6-43fb-ae26-e5140a895dea"
 version = "1.0.0-DEV"

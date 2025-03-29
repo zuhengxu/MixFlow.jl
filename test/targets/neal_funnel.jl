@@ -28,8 +28,8 @@ Funnel(dim::Int) = Funnel(dim, 0.0, 9.0)
 Base.length(p::Funnel) = p.dim
 Base.eltype(::Funnel{T}) where {T<:Real} = T
 
-function Distributions._rand!(rng::AbstractRNG, p::Funnel, x::AbstractVecOrMat)
-    T = eltype(x)
+function Distributions._rand!(rng::AbstractRNG, p::Funnel{T}, x::AbstractVecOrMat{T}) where {T<:Real}
+    # T = eltype(x)
     d, μ, σ = p.dim, p.μ, p.σ
     d == size(x, 1) || error("Dimension mismatch")
     x[1, :] .= randn(rng, T, size(x, 2)) .* σ .+ μ
@@ -37,7 +37,7 @@ function Distributions._rand!(rng::AbstractRNG, p::Funnel, x::AbstractVecOrMat)
     return x
 end
 
-function Distributions._logpdf(p::Funnel, x::AbstractVector)
+function Distributions._logpdf(p::Funnel{T}, x::AbstractVector{T}) where {T<:Real}
     d, μ, σ = p.dim, p.μ, p.σ
     x1 = x[1]
     x2 = x[2:end]

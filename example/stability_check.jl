@@ -16,8 +16,6 @@ include("mfvi.jl")
 # plot 
 include("plotting.jl")
 
-
-
 function check_error(prob, K, mixer, T::Int)
     x0, v0, uv0, ua0 = MF._rand_joint_reference(prob, K)
     x, v, uv, ua = x0, v0, uv0, ua0
@@ -59,7 +57,7 @@ function check_error(prob, K, mixer, Ts::Vector{Int})
 end
 
 
-name = "Cross"
+name = "Funnel"
 target = load_model(name)
 
 ad = AutoMooncake(; config = Mooncake.Config())

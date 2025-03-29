@@ -222,7 +222,6 @@ function forward_trajectory(
     return sample_path
 end
 
-
 function simulate_from_past_T_step(
     prob::MixFlowProblem, K::MultivariateInvolutiveKernel, mixer::AbstractUnifMixer,
     x::AbstractVector{T}, v::AbstractVector{T}, uv::Union{AbstractVector{T}, Nothing}, ua::Union{T,Nothing},
