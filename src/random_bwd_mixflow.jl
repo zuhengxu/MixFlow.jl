@@ -4,28 +4,40 @@ struct RandomBackwardMixFlow <: AbstractFlowType
 end
 
 function iid_sample(flow::RandomBackwardMixFlow, prob::MixFlowProblem, K::InvolutiveKernel, mixer::AbstractUnifMixer)
-    T = rand(1:flow.flow_length) 
+    T = rand(0:flow.flow_length) 
     x0, v0, uv0, ua0 = _rand_joint_reference(prob, K)  
-    return simulate_from_past_T_step(prob, K, mixer, x0, v0, uv0, ua0, T) 
+    if T == 0
+        return x0, v0, uv0, ua0
+    else
+        return simulate_from_past_T_step(prob, K, mixer, x0, v0, uv0, ua0, T)     
+    end
 end
 
 
-function trajectory_sample(flow::AbstractFlowType, prob::MixFlowProblem, K::InvolutiveKernel, mixer::AbstractUnifMixer)
-    @warn "For backward flow, trajectory_sample is of quadratic cost. Use iid_sample instead in practice."
-end
+# function trajectory_sample(flow::AbstractFlowType, prob::MixFlowProblem, K::InvolutiveKernel, mixer::AbstractUnifMixer)
+#     @warn "For backward flow, trajectory_sample is of quadratic cost. Use iid_sample instead in practice."
+# end
 
 function log_density_flow(
     flow::RandomBackwardMixFlow, prob::MixFlowProblem, K::InvolutiveKernel, mixer::AbstractUnifMixer, 
     x, v, uv, ua,
 )
     T = flow.flow_length
-    logJ = 0.0
+    ℓπ = logpdf_aug_target(prob, K, x, v)
     ℓs = []
+
+    # the zero-th step
+    lr0 = _log_density_ratio(prob, x)
+    push!(ℓs, lr0)
+
     for t in 1:T
-        x, v, uv, ua, _, logjac = inverse_with_logdetjac(prob, K, mixer, x, v, uv, ua, t)
-        logJ += logjac
-        ℓ = logpdf_aug_reference(prob, K, x, v) + logJ
-        push!(ℓs, ℓ)
+        x, v, uv, ua, _ = inverse(prob, K, mixer, x, v, uv, ua, t)
+        # here we use the property that any measure preserving map has jacobian π(x)/π(T_inv x)
+        # this is much more stable as we avoid avaluating density of vdist in intermediate steps
+        ℓr = _log_density_ratio(prob, x) 
+        push!(ℓs, ℓr)
     end
-    return logsumexp(ℓs) - log(T)
+    return logsumexp(ℓs) - log(T+1) + ℓπ
 end
+
+

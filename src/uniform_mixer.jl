@@ -2,8 +2,7 @@ struct ErgodicShift1D{F, T} <: AbstractUnifMixer
     ξs_uv::F
     ξs_ua::T 
 end
-ntransitions(S::ErgodicShift1D) = size(S.ξs_ua, 1)
-
+ntransitions(S::ErgodicShift1D) = size(S.ξs_ua, 1) 
 ErgodicShift1D(nsteps::Int) = ErgodicShift1D(π/4 .* ones(nsteps), π/4 .* ones(nsteps))
 RandomShift1D(rng, nsteps::Int) = ErgodicShift1D(rand(rng, nsteps), rand(rng, nsteps))
 RandomShift1D(nsteps::Int) = RandomShift1D(Random.default_rng(), nsteps)

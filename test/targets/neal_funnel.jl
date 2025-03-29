@@ -39,7 +39,10 @@ end
 
 function Distributions._logpdf(p::Funnel, x::AbstractVector)
     d, μ, σ = p.dim, p.μ, p.σ
-    lpdf1 = logpdf(Normal(μ, σ), x[1])
-    lpdfs = logpdf.(Normal.(zeros(T, d - 1), exp(x[1] / 2)), @view(x[2:end]))
-    return lpdf1 + sum(lpdfs)
+    x1 = x[1]
+    x2 = x[2:end]
+    lpdf_x1 = logpdf(Normal(μ, σ), x1)
+    lpdf_x2_given_1 = logpdf(MvNormal(zeros(T, d-1), exp(x1)I), x2)
+    # logpdf.(Normal.(zeros(T, d - 1), exp(x1 / 2)), x2)
+    return lpdf_x1 + lpdf_x2_given_1
 end

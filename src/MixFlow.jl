@@ -5,6 +5,7 @@ using LogExpFunctions, IrrationalConstants, SpecialFunctions, StatsFuns
 using LogDensityProblems, ADTypes
 
 using Base.Threads: @threads
+using StructArrays
 
 # setup mixflow problem with specified reference and target
 # all wrapped in logdensityprobs
@@ -20,9 +21,19 @@ struct MixFlowProblem{F,T}
 end
 LogDensityProblems.dimension(prob::MixFlowProblem) = LogDensityProblems.dimension(prob.target)
 
+# ensure numerical stability, mapping infiniteness to zero
+ensure_finite(x::Real) = isfinite(x) ? x : zero(x)
+# ensure_finite(x::Real, v::AbstractVecOrMat) = isfinite(x) ? v : zeros(size(v))
 logdensity_reference(prob::MixFlowProblem, x) = LogDensityProblems.logdensity(prob.reference, x)
 logdensity_target(prob::MixFlowProblem, x) = LogDensityProblems.logdensity(prob.target, x)
 ∇logpdf_target(prob::MixFlowProblem, x) = LogDensityProblems.logdensity_and_gradient(prob.target, x)[2]
+
+function _log_density_ratio(prob::MixFlowProblem, x::T) where T
+    ℓπ0 = logdensity_reference(prob, x)
+    ℓπT = logdensity_target(prob, x)
+    return ensure_finite(ℓπ0 - ℓπT)
+end
+
 
 function iid_sample end
 iid_sample_reference(prob::MixFlowProblem, n::Int) = iid_sample(prob.reference, n)
@@ -154,16 +165,12 @@ export uncorrectHMC, HMC, MALA
 # this will influence how we compute the density and so on
 abstract type AbstractFlowType end
 
-# time-inhomogeneous mixflow with IRF (quadrtic density cost)
-struct RandomMixFlow <: AbstractFlowType 
-    flow_length::Int
-end
 # time-inhomogeneous mixflow with IRF but simulate the inverse (linear density cost, cant do trajectory sampling)
 struct RandomInverseMixFlow <: AbstractFlowType 
     flow_length::Int
 end
 # M short runs, no mix
-struct RandomFlow <: AbstractFlowType 
+struct EnsembleMixFlow <: AbstractFlowType 
     flow_length::Int
     num_flows::Int # M
 end
@@ -189,6 +196,32 @@ function forward_T_step(
     end
     return x, v, uv, ua
 end
+
+function inverse_trajectory(
+    prob::MixFlowProblem, K::MultivariateInvolutiveKernel, mixer::AbstractUnifMixer,
+    x::AbstractVector{T}, v::AbstractVector{T}, uv::Union{AbstractVector{T}, Nothing}, ua::Union{T,Nothing},
+    steps::Int,
+) where T 
+    sample_path = []
+    for t in steps:-1:1
+        x, v, uv, ua, _ = inverse(prob, K, mixer, x, v, uv, ua, t)
+        push!(sample_path, map(copy, (x, v, uv, ua)))
+    end
+    return sample_path
+end
+function forward_trajectory(
+    prob::MixFlowProblem, K::MultivariateInvolutiveKernel, mixer::AbstractUnifMixer,
+    x::AbstractVector{T}, v::AbstractVector{T}, uv::Union{AbstractVector{T}, Nothing}, ua::Union{T,Nothing},
+    steps::Int,
+) where T 
+    sample_path = []
+    for t in 1:steps
+        x, v, uv, ua, _ = forward(prob, K, mixer, x, v, uv, ua, t)
+        push!(sample_path, map(copy, (x, v, uv, ua)))
+    end
+    return sample_path
+end
+
 
 function simulate_from_past_T_step(
     prob::MixFlowProblem, K::MultivariateInvolutiveKernel, mixer::AbstractUnifMixer,
@@ -222,7 +255,6 @@ function elbo(
     @threads for i in 1:nsample
         els[i] = _elbo_single(flow, prob, K, mixer, samples[i]...)
     end
-    # els = map(x -> _elbo_single(flow, prob, K, mixer, x...), samples)
     return mean(els)
 end
 
