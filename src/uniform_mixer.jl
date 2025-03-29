@@ -44,3 +44,16 @@ function inv_update_uniform(S::ErgodicShift, uv::AbstractVector{T}, ua::T, t::In
     uan = _inv_ergodic_shift(ua, S.ξs_ua[t])
     return uvn, uan
 end
+
+# set up mixers for the ensemble flow
+function EnsembleRandomShift(D::I, T::I, Nensemble::I) where {I<:Int}
+    uvs = [rand(D, T) for _ in 1:Nensemble]
+    uas = [rand(T) for _ in 1:Nensemble]
+    return StructArrays{ErgodicShift}(ξs_uv=uvs, ξs_ua=uas)
+end
+
+function EnsembleErgodicShift(D::I, T::I, Nensemble::I) where {I<:Int}
+    uvs = [π/4 .* ones(D, T) for _ in 1:Nensemble]
+    uas = [π/4 .* ones(T) for _ in 1:Nensemble]
+    return StructArrays{ErgodicShift}(ξs_uv=uvs, ξs_ua=uas)
+end

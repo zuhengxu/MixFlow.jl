@@ -57,49 +57,55 @@ function check_error(prob, K, mixer, Ts::Vector{Int})
 end
 
 
-name = "Funnel"
-target = load_model(name)
-
-ad = AutoMooncake(; config = Mooncake.Config())
-target_ad = ADgradient(ad, target)
-reference, _ = mfvi(target_ad; sample_per_iter = 10, max_iters = 10000, adtype = ad)
-prob = MixFlowProblem(reference, target_ad)
-
-dims = LogDensityProblems.dimension(target_ad)
-
-T_max = 20_000
-mixer = RandomShift(2, T_max)
-# mixer = ErgodicShift(2, T)
-
-
-# Ts = [10, 20, 50, 100, 200, 500, 1000, 2000, 5000, 10000]
-Ts = vcat([10, 20, 50], 100:100:1200)
-
-stats = []
-for K in [
-    uncorrectHMC(10, 0.02), 
-    HMC(10, 0.02), 
-    MALA(0.25), 
-    RWMH(0.3*ones(dims)), 
+# name = "Funnel"
+for name in [
+    "Funnel",
+    "Banana",
+    "Cross",
+    "WarpedGaussian"
 ]
-    Es = [] 
-    @threads for id in 1:32
-        Random.seed!(id)
-        err = check_error(prob, K, mixer, Ts)
-        push!(Es, err)
+    target = load_model(name)
+
+    ad = AutoMooncake(; config = Mooncake.Config())
+    target_ad = ADgradient(ad, target)
+    reference, _ = mfvi(target_ad; sample_per_iter = 10, max_iters = 10000, adtype = ad)
+    prob = MixFlowProblem(reference, target_ad)
+
+    dims = LogDensityProblems.dimension(target_ad)
+
+    T_max = 20_000
+    mixer = RandomShift(2, T_max)
+    # mixer = ErgodicShift(2, T)
+
+
+    # Ts = [10, 20, 50, 100, 200, 500, 1000, 2000, 5000, 10000]
+    Ts = vcat([10, 20, 50], 100:100:1200)
+
+    stats = []
+    for K in [
+        uncorrectHMC(10, 0.02), 
+        HMC(10, 0.02), 
+        MALA(0.25), 
+        RWMH(0.3*ones(dims)), 
+    ]
+        Es = [] 
+        @threads for id in 1:32
+            Random.seed!(id)
+            err = check_error(prob, K, mixer, Ts)
+            push!(Es, err)
+        end
+        stat = (kernel = typeof(K), Ts=Ts, errors=reduce(hcat, Es))
+        push!(stats, stat)
+        println("$(typeof(K)) done")
     end
-    stat = (kernel = typeof(K), Ts=Ts, errors=reduce(hcat, Es))
-    push!(stats, stat)
-    println("$(typeof(K)) done")
+
+    JLD2.save("result/stability_"*"$(name).jld2", "stats", stats)
+
+
+    P =  plot()
+    for i in 1:length(stats)
+        plot!(stats[i].Ts, get_median(stats[i].errors), ribbon = get_percentiles(stats[i].errors), lw = 3, label = string(stats[i].kernel))
+    end
+    plot!(title = "$(name) inv error", xlabel = "T", ylabel = "error", yscale = :log10, legend = :bottomright)
+    savefig("figure/stability_" * "$(name).png")
 end
-
-JLD2.save("result/stability_"*"$(name).jld2", "stats", stats)
-
-
-P =  plot()
-for i in 1:length(stats)
-    plot!(stats[i].Ts, get_median(stats[i].errors), ribbon = get_percentiles(stats[i].errors), lw = 3, label = string(stats[i].kernel))
-end
-plot!(title = "$(name) inv error", xlabel = "T", ylabel = "error", yscale = :log10, legend = :bottomright)
-savefig("figure/stability_" * "$(name).png")
-

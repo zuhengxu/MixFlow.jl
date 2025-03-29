@@ -46,8 +46,9 @@ export iid_sample_reference, iid_sample
 abstract type AbstractUnifMixer end
 
 include("uniform_mixer.jl")
-export AbstractUnifMixer, ErgodicShift, RandomShift, ErgodicShift1D, RandomShift1D
 export _ergodic_shift, _inv_ergodic_shift
+export AbstractUnifMixer, ErgodicShift, RandomShift, ErgodicShift1D, RandomShift1D
+export EnsembleErgodicShift, EnsembleRandomShift
 
 # involutive mcmc kernel that defines the involutive IRF mapping
 abstract type InvolutiveKernel end
@@ -169,11 +170,6 @@ abstract type AbstractFlowType end
 struct RandomInverseMixFlow <: AbstractFlowType 
     flow_length::Int
 end
-# M short runs, no mix
-struct EnsembleMixFlow <: AbstractFlowType 
-    flow_length::Int
-    num_flows::Int # M
-end
 
 function inverse_T_step(
     prob::MixFlowProblem, K::MultivariateInvolutiveKernel, mixer::AbstractUnifMixer,
@@ -257,10 +253,13 @@ function elbo(
     return mean(els)
 end
 
-include("irf_fwd_mixflow.jl")
-include("irf_bwd_mixflow.jl")
-include("deterministic_mixflow.jl")
+include("flow/irf_fwd_mixflow.jl")
+include("flow/irf_bwd_mixflow.jl")
+include("flow/deterministic_mixflow.jl")
+include("flow/ensemble_irf_flow.jl")
+
 export elbo, log_density_flow, simulate_from_past_T_step 
 export IRFMixFlow, BackwardIRFMixFlow, DeterministicMixFlow
+
 
 end
