@@ -6,6 +6,7 @@ using LogDensityProblems, ADTypes
 
 using Base.Threads: @threads
 using StatsFuns: normcdf, norminvcdf
+using Statistics
 using StructArrays
 
 # setup mixflow problem with specified reference and target
@@ -168,5 +169,7 @@ include("flow/ensemble_irf_flow.jl")
 export elbo, _elbo_single, _elbo_batch
 export IRFMixFlow, BackwardIRFMixFlow, DeterministicMixFlow
 
+
+include("particles.jl")
 
 end
