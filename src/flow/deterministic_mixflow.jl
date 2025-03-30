@@ -25,12 +25,12 @@ function trajectory_sample(flow::DeterministicMixFlow, prob::MixFlowProblem, K::
     return samples
 end
 
-function log_density_flow(
+function log_density_ratio_flow(
     flow::DeterministicMixFlow, prob::MixFlowProblem, K::InvolutiveKernel, mixer::AbstractUnifMixer, 
     x, v, uv, ua,
 )
     T = flow.flow_length
-    ℓπ = logpdf_aug_target(prob, K, x, v)
+    # ℓπ = logpdf_aug_target(prob, K, x, v)
     ℓs = []
 
     # the zero-th step
@@ -43,15 +43,17 @@ function log_density_flow(
         ℓr = _log_density_ratio(prob, x) 
         push!(ℓs, ℓr)
     end
-    return logsumexp(ℓs) - log(T+1) + ℓπ
+    return logsumexp(ℓs) - log(T+1) 
 end
 
 # For non-measure-preserving flows, we need to compute the density incrementally
-function log_density_flow(
+function log_density_ratio_flow(
     flow::DeterministicMixFlow, prob::MixFlowProblem, K::uncorrectHMC, mixer::AbstractUnifMixer, 
     x, v, uv, ua,
 )
     T = flow.flow_length
+    ℓπ = logpdf_aug_target(prob, K, x, v)
+
     logJ = 0.0
     ℓs = []
 
@@ -65,5 +67,7 @@ function log_density_flow(
         ℓ = logpdf_aug_reference(prob, K, x, v) + logJ
         push!(ℓs, ℓ)
     end
-    return logsumexp(ℓs) - log(T+1)
+    ℓflow = logsumexp(ℓs) - log(T+1) 
+    return ℓflow - ℓπ
 end
+
