@@ -22,7 +22,7 @@ function load_model(name::String)
         return Cross()
     elseif name == "Funnel"
         return Funnel(2)
-    elseif name == "warped_gaussian"
+    elseif name == "WarpedGaussian"
         return WarpedGauss()
     else
         error("Model not defined")
