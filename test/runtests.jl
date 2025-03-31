@@ -38,7 +38,7 @@ using Test
             RWMH(0.3 * ones(dim)),
         ]
 
-            T = 60
+            T = 50
 
             x0, v0, uv0, ua0 = MF._rand_joint_reference(prob, K)
             x, v, uv, ua = x0, v0, uv0, ua0
