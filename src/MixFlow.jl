@@ -43,7 +43,7 @@ export logdensity_reference, logdensity_target, MixFlowProblem
 export iid_sample_reference, iid_sample
 
 #################################################################################
-# invertible ergodic shift or other refreshment (e.g., alnold cat mao) that refresh uniform aux variables
+# invertible ergodic shift or other refreshment (e.g., Alnold cat map) that refresh uniform aux variables
 #################################################################################
 abstract type AbstractUnifMixer end
 
@@ -58,6 +58,7 @@ export EnsembleErgodicShift, EnsembleRandomShift
 abstract type InvolutiveKernel end
 abstract type UnivariateInvolutiveKernel<:InvolutiveKernel end
 abstract type MultivariateInvolutiveKernel<:InvolutiveKernel end
+export InvolutiveKernel, UnivariateInvolutiveKernel, MultivariateInvolutiveKernel
 
 # check mh acceptance condition
 check_acc(ua, logr) = log(ua) > logr ? false : true
@@ -167,8 +168,7 @@ include("flow/deterministic_mixflow.jl")
 include("flow/ensemble_irf_flow.jl")
 
 export elbo, _elbo_single, _elbo_batch
-export IRFMixFlow, BackwardIRFMixFlow, DeterministicMixFlow
-
+export DeterministicMixFlow, IRFMixFlow, BackwardIRFMixFlow
 
 include("particles.jl")
 

@@ -37,7 +37,6 @@ function exp_normalize(log_weights)
 end 
 ess(probabilities::AbstractVector) = 1 / sum(abs2, probabilities)
 
-
 struct Particles
     states # iid samples (D × N) from the flow
     probabilities

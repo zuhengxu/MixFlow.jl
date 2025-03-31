@@ -1,0 +1,3 @@
+[submodule "example/nf-nest"]
+	path = example/nf-nest
+	url = https://github.com/UBC-Stat-ML/nf-nest.git

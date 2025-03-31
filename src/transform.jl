@@ -87,7 +87,7 @@ function forward_T_step(
     prob::MixFlowProblem, K::MultivariateInvolutiveKernel, mixer::AbstractUnifMixer,
     x::AbstractVector{T}, v::AbstractVector{T}, uv::Union{AbstractVector{T}, Nothing}, ua::Union{T,Nothing},
     steps::Int,
-) where T 
+) where {T<:Real}
     for t in 1:steps
         x, v, uv, ua, _ = forward(prob, K, mixer, x, v, uv, ua, t)
     end
@@ -111,7 +111,7 @@ function forward_trajectory(
     prob::MixFlowProblem, K::MultivariateInvolutiveKernel, mixer::AbstractUnifMixer,
     x::AbstractVector{T}, v::AbstractVector{T}, uv::Union{AbstractVector{T}, Nothing}, ua::Union{T,Nothing},
     steps::Int,
-) where T 
+) where {T<:Real}
     sample_path = []
     for t in 1:steps
         x, v, uv, ua, _ = forward(prob, K, mixer, x, v, uv, ua, t)
@@ -125,7 +125,7 @@ function simulate_from_past_T_step(
     prob::MixFlowProblem, K::MultivariateInvolutiveKernel, mixer::AbstractUnifMixer,
     x::AbstractVector{T}, v::AbstractVector{T}, uv::Union{AbstractVector{T}, Nothing}, ua::Union{T,Nothing},
     steps::Int,
-) where T  
+) where {T<:Real}
     for t in steps:-1:1
         x, v, uv, ua, _ = forward(prob, K, mixer, x, v, uv, ua, t)
     end
@@ -136,10 +136,10 @@ function backward_process_trajectory(
     prob::MixFlowProblem, K::MultivariateInvolutiveKernel, mixer::AbstractUnifMixer,
     x::AbstractVector{T}, v::AbstractVector{T}, uv::Union{AbstractVector{T}, Nothing}, ua::Union{T,Nothing},
     steps::Int,
-) where T 
+) where {T<:Real}
     sample_path = []
-    for T in 1:steps
-        x, v, uv, ua = simulate_from_past_T_step(prob, K, mixer, x, v, uv, ua, T)
+    for t in 1:steps
+        x, v, uv, ua = simulate_from_past_T_step(prob, K, mixer, x, v, uv, ua, t)
         push!(sample_path, map(copy, (x, v, uv, ua)))
     end
     return sample_path
