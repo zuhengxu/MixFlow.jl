@@ -1,7 +1,7 @@
 module MixFlow
 
-using LinearAlgebra, Distributions, Random, StatsBase, ProgressMeter
-using LogExpFunctions, IrrationalConstants, SpecialFunctions, StatsFuns 
+using LinearAlgebra, Distributions, Random, StatsBase, ProgressMeter 
+using LogExpFunctions, IrrationalConstants, SpecialFunctions
 using LogDensityProblems, ADTypes
 
 using Base.Threads: @threads
@@ -82,6 +82,8 @@ include("transform.jl")
 
 export forward, inverse, forward_with_logdetjac, inverse_with_logdetjac
 export simulate_from_past_T_step, forward_T_step
+export forward_trajectory, backward_process_trajectory
+export forward_trajectory_x, backward_process_trajectory_x
 
 include("kernel/rwmh1d.jl")
 include("kernel/rwmh.jl")

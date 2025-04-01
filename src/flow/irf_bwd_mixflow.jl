@@ -4,13 +4,9 @@ struct BackwardIRFMixFlow <: AbstractFlowType
 end
 
 function iid_sample(flow::BackwardIRFMixFlow, prob::MixFlowProblem, K::InvolutiveKernel, mixer::AbstractUnifMixer)
-    T = rand(1:flow.flow_length) 
+    T = rand(0:flow.flow_length) 
     x0, v0, uv0, ua0 = _rand_joint_reference(prob, K)  
-    if T == 0
-        return x0, v0, uv0, ua0
-    else
-        return simulate_from_past_T_step(prob, K, mixer, x0, v0, uv0, ua0, T)     
-    end
+    return simulate_from_past_T_step(prob, K, mixer, x0, v0, uv0, ua0, T)     
 end
 
 
@@ -24,18 +20,18 @@ function log_density_flow(
 )
     T = flow.flow_length
     ℓπ = logpdf_aug_target(prob, K, x, v)
-    ℓs = []
+    ℓs = zeros(T+1)
 
     # the zero-th step
     lr0 = _log_density_ratio(prob, x)
-    push!(ℓs, lr0)
+    ℓs[1] = lr0
 
     for t in 1:T
         x, v, uv, ua, _ = inverse(prob, K, mixer, x, v, uv, ua, t)
         # here we use the property that any measure preserving map has jacobian π(x)/π(T_inv x)
         # this is much more stable as we avoid avaluating density of vdist in intermediate steps
         ℓr = _log_density_ratio(prob, x) 
-        push!(ℓs, ℓr)
+        ℓs[t+1] = ℓr 
     end
     return logsumexp(ℓs) - log(T+1) + ℓπ
 end

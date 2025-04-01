@@ -1,4 +1,3 @@
-using MixFlow: log_density_flow, _rand_joint_reference
 using Random, Distributions, Plots
 using LinearAlgebra
 using Base.Threads: @threads
@@ -10,6 +9,7 @@ using ADTypes, Mooncake
 using NormalizingFlows
 using Bijectors
 using ProgressMeter
+using MixFlow: _rand_joint_reference 
 
 const MF = MixFlow
 
@@ -27,6 +27,30 @@ prob = MixFlowProblem(reference, target_ad)
 dims = LogDensityProblems.dimension(target_ad)
 
 
+
+# log_density_flow(F, prob, K, mixer, sample...)
+# MF._elbo_single(F, prob, K, mixer, sample...)
+T_max = 8_000
+mixer = RandomShift(2, T_max)
+mix_deter = ErgodicShift(2, T_max)
+
+###############
+# generating trajectories
+###############
+kernel = HMC(10, 0.02) 
+x0, v0, uv0, ua0 = MF._rand_joint_reference(prob, kernel)
+x_traj_fwd = MF.forward_trajectory_x(prob, kernel, mixer, x0, v0, uv0, ua0, T_max)
+x_traj_fwd_homo = MF.forward_trajectory_x(prob, kernel, mix_deter, x0, v0, uv0, ua0, T_max) 
+x_traj_bwd = MF.backward_process_trajectory_x(prob, kernel, mixer, x0, v0, uv0, ua0, T_max)
+
+
+
+
+
+
+#################
+# elbo sweep
+################
 function elbo_sweep(flowtype, prob, K, mixer, nsample, Ts)
     Els = []
     @showprogress for T in Ts
@@ -36,13 +60,6 @@ function elbo_sweep(flowtype, prob, K, mixer, nsample, Ts)
     end
     return map(identity, Els)
 end
-
-
-# log_density_flow(F, prob, K, mixer, sample...)
-# MF._elbo_single(F, prob, K, mixer, sample...)
-T_max = 20_000
-mixer = RandomShift(2, T_max)
-mix_deter = ErgodicShift(2, T_max)
 
 nsample = 500
 # T = 10
