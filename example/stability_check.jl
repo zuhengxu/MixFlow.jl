@@ -1,20 +1,20 @@
-using Random, Distributions, Plots
+using Random, Distributions
 using LinearAlgebra
 using Base.Threads: @threads
-using JLD2
 using LogExpFunctions
 using LogDensityProblems, LogDensityProblemsAD
 using MixFlow
 using ADTypes, Mooncake
 using NormalizingFlows
 using Bijectors
+using DataFrames, CSV
+# using JLD2
 
 const MF = MixFlow
-
 include("Model.jl")
 include("mfvi.jl")
 # plot 
-include("plotting.jl")
+# include("plotting.jl")
 
 function check_error(prob, K, mixer, T::Int)
     x0, v0, uv0, ua0 = MF._rand_joint_reference(prob, K)
@@ -56,56 +56,97 @@ function check_error(prob, K, mixer, Ts::Vector{Int})
     return map(identity, stats)
 end
 
+function _get_kernel_name(K::InvolutiveKernel)
+    str = string(typeof(K))
+    name = split(str, "{", limit = 2)[1]
+    return name
+end
 
-# name = "Funnel"
-for name in [
-    "Funnel",
-    "Banana",
-    "Cross",
-    "WarpedGaussian"
-]
+function GetInvError(name::String, K::MultivariateInvolutiveKernel, seed::Int)
+    Random.seed!(seed)
     target = load_model(name)
 
     ad = AutoMooncake(; config = Mooncake.Config())
     target_ad = ADgradient(ad, target)
-    reference, _ = mfvi(target_ad; sample_per_iter = 10, max_iters = 10000, adtype = ad)
+    reference, _ = mfvi(target_ad; sample_per_iter = 10, max_iters = 5000, adtype = ad)
     prob = MixFlowProblem(reference, target_ad)
 
     dims = LogDensityProblems.dimension(target_ad)
 
     T_max = 20_000
-    mixer = RandomShift(2, T_max)
-    # mixer = ErgodicShift(2, T)
-
+    mixer = RandomShift(dims, T_max)
+    # mixer = ErgodicShift(dims, T)
 
     # Ts = [10, 20, 50, 100, 200, 500, 1000, 2000, 5000, 10000]
     Ts = vcat([10, 20, 50], 100:100:1200)
 
-    stats = []
-    for K in [
-        uncorrectHMC(10, 0.02), 
-        HMC(10, 0.02), 
-        MALA(0.25), 
-        RWMH(0.3*ones(dims)), 
-    ]
-        Es = [] 
-        @threads for id in 1:32
-            Random.seed!(id)
-            err = check_error(prob, K, mixer, Ts)
-            push!(Es, err)
-        end
-        stat = (kernel = typeof(K), Ts=Ts, errors=reduce(hcat, Es))
-        push!(stats, stat)
-        println("$(typeof(K)) done")
-    end
+    # for K in [
+    #     uncorrectHMC(10, 0.02), 
+    #     HMC(10, 0.02), 
+    #     MALA(0.25), 
+    #     RWMH(0.3*ones(dims)), 
+    # ]
+    err = check_error(prob, K, mixer, Ts)
+    df = DataFrame(
+        mcmc = _get_kernel_name(K),
+        id = seed,
+        Ts = Ts,
+        errors = err,
+    )
 
-    JLD2.save("result/stability_"*"$(name).jld2", "stats", stats)
-
-
-    P =  plot()
-    for i in 1:length(stats)
-        plot!(stats[i].Ts, get_median(stats[i].errors), ribbon = get_percentiles(stats[i].errors), lw = 3, label = string(stats[i].kernel))
-    end
-    plot!(title = "$(name) inv error", xlabel = "T", ylabel = "error", yscale = :log10, legend = :bottomright)
-    savefig("figure/stability_" * "$(name).png")
+    return df
 end
+
+# st = GetInvError("WarpedGaussian", HMC(10, 0.02), 2)
+
+# for name in [
+#     "Funnel",
+#     "Banana",
+#     "Cross",
+#     "WarpedGaussian"
+# ]
+#     target = load_model(name)
+
+#     ad = AutoMooncake(; config = Mooncake.Config())
+#     target_ad = ADgradient(ad, target)
+#     reference, _ = mfvi(target_ad; sample_per_iter = 10, max_iters = 10000, adtype = ad)
+#     prob = MixFlowProblem(reference, target_ad)
+
+#     dims = LogDensityProblems.dimension(target_ad)
+
+#     T_max = 20_000
+#     mixer = RandomShift(2, T_max)
+#     # mixer = ErgodicShift(2, T)
+
+
+#     # Ts = [10, 20, 50, 100, 200, 500, 1000, 2000, 5000, 10000]
+#     Ts = vcat([10, 20, 50], 100:100:1200)
+
+#     stats = []
+#     for K in [
+#         uncorrectHMC(10, 0.02), 
+#         HMC(10, 0.02), 
+#         MALA(0.25), 
+#         RWMH(0.3*ones(dims)), 
+#     ]
+#         Es = [] 
+#         @threads for id in 1:32
+#             Random.seed!(id)
+#             err = check_error(prob, K, mixer, Ts)
+#             push!(Es, err)
+#         end
+#         stat = (kernel = typeof(K), Ts=Ts, errors=reduce(hcat, Es))
+#         push!(stats, stat)
+#         println("$(typeof(K)) done")
+#     end
+
+#     JLD2.save("result/stability_"*"$(name).jld2", "stats", stats)
+
+
+#     P =  plot()
+#     for i in 1:length(stats)
+#         plot!(stats[i].Ts, get_median(stats[i].errors), ribbon = get_percentiles(stats[i].errors), lw = 3, label = string(stats[i].kernel))
+#     end
+#     plot!(title = "$(name) inv error", xlabel = "T", ylabel = "error", yscale = :log10, legend = :bottomright)
+#     savefig("figure/stability_" * "$(name).png")
+# end

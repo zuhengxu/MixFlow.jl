@@ -1,1 +1,11 @@
 /Manifest.toml
+
+example/.nextflow/
+example/.nextflow.log*
+example/work/
+
+.vscode/
+
+**/summary.csv
+*.html
+
