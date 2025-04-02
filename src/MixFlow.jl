@@ -9,7 +9,6 @@ using StatsFuns: normcdf, norminvcdf
 using Statistics
 using StructArrays
 
-
 # import mcmc sampler from other libraries
 using AdvancedHMC
 using AdvancedMH
@@ -99,6 +98,25 @@ include("kernel/hmc.jl")
 export RWMH1D
 export RWMH
 export uncorrectHMC, HMC, MALA
+
+function mcmc_sampler(
+    prob::MixFlowProblem, K::MultivariateInvolutiveKernel, x0::AbstractVector{T}, nsteps::Int,
+) where {T<:Real}
+    # Initialize the chain
+    x = x0
+    samples = Vector{T}(undef, length(x0), nsteps)
+    samples[:, 1] .= x
+
+    for i in 2:nsteps
+        # Perform a MALA step
+        x = mcmc_step(prob, K, x)
+        samples[:, i] .= x
+    end
+
+    return samples
+end
+
+export mcmc_sampler, mcmc_step
 
 # there are some weird flow types 
 # this will influence how we compute the density and so on

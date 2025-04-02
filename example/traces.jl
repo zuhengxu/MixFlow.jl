@@ -19,7 +19,6 @@ include("utils.jl")
 
 name = "Banana"
 
-
 target = load_model(name)
 
 ad = AutoMooncake(; config = Mooncake.Config())
@@ -40,10 +39,7 @@ mix_deter = ErgodicShift(2, T_max)
 ###############
 # generating trajectories
 ###############
-kernel = HMC(200, 0.02) 
-
-
-
+kernel = HMC(100, 0.01) 
 
 x0, v0, uv0, ua0 = MF._rand_joint_reference(prob, kernel)
 x_traj_fwd = MF.forward_trajectory_x(prob, kernel, mixer, x0, v0, uv0, ua0, T_max)

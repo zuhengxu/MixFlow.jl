@@ -15,6 +15,7 @@ const MF = MixFlow
 
 include("Model.jl")
 include("mfvi.jl")
+include("utils.jl")
 
 name = "Banana"
 target = load_model(name)
@@ -26,18 +27,18 @@ prob = MixFlowProblem(reference, target_ad)
 
 dims = LogDensityProblems.dimension(target_ad)
 
-
+samples, stats = advanced_hmc_sampler(prob, MF.HMC(20, 0.01), nothing, 5000, 10000, 0.8)
 
 # log_density_flow(F, prob, K, mixer, sample...)
 # MF._elbo_single(F, prob, K, mixer, sample...)
-T_max = 1_000
+T_max = 1000
 mixer = RandomShift(2, T_max)
 mix_deter = ErgodicShift(2, T_max)
 
 ###############
 # generating trajectories
 ###############
-kernel = HMC(200, 0.01) 
+kernel = MF.HMC(50, 0.02) 
 x0, v0, uv0, ua0 = MF._rand_joint_reference(prob, kernel)
 x_traj_fwd = MF.forward_trajectory_x(prob, kernel, mixer, x0, v0, uv0, ua0, T_max)
 x_traj_fwd_homo = MF.forward_trajectory_x(prob, kernel, mix_deter, x0, v0, uv0, ua0, T_max) 
@@ -56,14 +57,6 @@ p4 = plot(x_traj_bwd', label = "irf bwd")
 plot(p1, p2, p3, p4, layout = 4)
 plot!(title = "HMC trace")
 savefig("figure/banana_hmc_trajectory.png")
-
-function running_mean(xs::Matrix{T}) where T
-    cumsum(xs; dims = 2) ./ [1:size(xs, 2) ;]'
-end
-
-function running_square(xs::Matrix{T}) where T
-    cumsum(xs.^2, dims = 2) ./ [1: size(xs, 2) ;]'
-end
 
 m_fwd = running_mean(x_traj_fwd) 
 m_inv = running_mean(x_traj_inv)

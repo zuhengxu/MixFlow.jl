@@ -33,3 +33,28 @@ function _rand_joint_reference(prob::MixFlowProblem, K::RWMH)
     ua = rand()
     return x, v, uv, ua
 end
+
+
+function mcmc_step(prob::MixFlowProblem, K::RWMH{T}, x::AbstractVector{T}) where T
+    #proposal
+    v = _rand_v_given_x(K, prob, x)
+    logr = logdensity_target(prob, v) - logdensity_target(prob, x)
+    return check_acc(rand(), logr) ? v : x
+end
+
+
+# function rwmh_sampler(
+#     prob::MixFlowProblem, K::RWMH{T}, x0::AbstractVector{T}, nsteps::Int,
+# ) where {T<:Real}
+#     # Initialize the chain
+#     x = x0
+#     samples = Vector{T}(undef, length(x0), nsteps)
+#     samples[:, 1] .= x
+
+#     for i in 1:nsteps
+#         # Propose a new sample
+#         x = rwmh(prob, K, x)
+#         samples[:, i] .= x
+#     end
+#     return samples
+# end

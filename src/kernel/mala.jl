@@ -59,3 +59,13 @@ end
 
 # its a metropolis-hastings algorithm with q(v|x) ∼ N(x + ϵ/2 ∇ℓπ(x), ϵI), of which the involution map is the swap
 _involution(::MALA{T}, ::MixFlowProblem, x::AbstractVector{T}, v::AbstractVector{T}) where T = (v, x)
+
+# mcmc sampler
+function mcmc_step(prob::MixFlowProblem, K::MALA{T}, x::AbstractVector{T}) where T
+    #proposal
+    v = _rand_v_given_x(K, prob, x)
+    ℓ_proposal = logdensity_target(prob, v) + logpdf(_dist_v_given_x(K, prob, v), x)
+    ℓ_previous = logdensity_target(prob, x) + logpdf(_dist_v_given_x(K, prob, x), v)
+    logr = ℓ_proposal - ℓ_previous
+    return check_acc(rand(), logr) ? v : x
+end
