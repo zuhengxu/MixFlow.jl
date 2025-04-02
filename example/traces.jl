@@ -36,6 +36,9 @@ function run_traces(name::String, kernel::MultivariateInvolutiveKernel, T_max::I
     fn_prefix = "$(name)_$(_get_kernel_name(kernel))"
     @info "Running $(fn_prefix) with T_max = $T_max"
 
+    fig_dir = joinpath(@__DIR__, "figure/")
+    res_dir = joinpath(@__DIR__, "result/")
+
     ###############
     # generating trajectories
     ###############
@@ -48,7 +51,7 @@ function run_traces(name::String, kernel::MultivariateInvolutiveKernel, T_max::I
 
 
     JLD2.save(
-        "result/$(fn_prefix)_trajectory.jld2",
+        joinpath(res_dir, "$(fn_prefix)_trajectory.jld2"),
         "mcmc", x_traj_mcmc,
         "fwd", x_traj_fwd, 
         "fwd_homo", x_traj_fwd_homo, 
@@ -63,7 +66,7 @@ function run_traces(name::String, kernel::MultivariateInvolutiveKernel, T_max::I
     p5 = plot(x_traj_mcmc', label = "mcmc")
     plot(p1, p2, p3, p4, p5, layout = 5)
     plot!(title = "$(fn_prefix) trace")
-    savefig("figure/$(fn_prefix)_trajectory.png")
+    savefig(joinpath(fig_dir, "$(fn_prefix)_trajectory.png"))
 
     m_fwd = running_mean(x_traj_fwd) 
     m_inv = running_mean(x_traj_inv)
@@ -78,7 +81,7 @@ function run_traces(name::String, kernel::MultivariateInvolutiveKernel, T_max::I
     p5 = plot(m_mcmc', label = "mcmc")
     plot(p1, p2, p3, p4, p5, layout = 5)
     plot!(title = "$(fn_prefix) running mean")
-    savefig("figure/$(fn_prefix)_mean.png")
+    savefig(joinpath(fig_dir, "$(fn_prefix)_mean.png"))
 
     v_fwd = running_square(x_traj_fwd)
     v_inv = running_square(x_traj_inv)
@@ -93,5 +96,5 @@ function run_traces(name::String, kernel::MultivariateInvolutiveKernel, T_max::I
     p5 = plot(v_mcmc', label = "mcmc")
     plot(p1, p2, p3, p4, p5, layout = 5)
     plot!(title = "$(fn_prefix) running E(x^2)")
-    savefig("figure/$(fn_prefix)_var.png")
+    savefig(joinpath(fig_dir, "$(fn_prefix)_var.png"))
 end

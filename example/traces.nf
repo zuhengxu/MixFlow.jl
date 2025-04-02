@@ -19,8 +19,8 @@ kernel_string = [
 
 t_max_string = [
     HMC: 1000,
-    MALA: 1500,
-    RWMH: 10000,
+    MALA: 1000,
+    RWMH: 5000,
 ]
 
 // global constants
@@ -39,14 +39,14 @@ workflow {
 
 process run_simulation {
     debug false 
-    time 300.min // change
-    cpus 4
-    memory 8.GB // change
+    time 600.min // change
+    cpus 1
+    memory 4.GB // change
     input:
         path julia_env 
         val config 
-    output:
-        path "${filed(config)}"
+    // output:
+        // path "${filed(config)}"
     """
     ${activate(julia_env)}
 
