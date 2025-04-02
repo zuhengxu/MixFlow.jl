@@ -38,4 +38,3 @@ function _involution(K::HMC{T}, prob::MixFlowProblem, x::AbstractVector{T}, v::A
     # flip momentum to ensure involutivity
     return x_, -v_
 end
-

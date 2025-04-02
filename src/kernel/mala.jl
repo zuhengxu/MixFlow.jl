@@ -1,21 +1,25 @@
+using PDMats: PDiagMat
+
 struct MALA{T} <: MultivariateInvolutiveKernel
     ϵ::T
-    function MALA(ϵ::T) where T
+    σs::PDiagMat{T} # diagonal stds of the proposal
+    function MALA(ϵ::T, σs::PDiagMat{T}) where {T}
         if ϵ <= 0
             throw(ArgumentError("mala stepsize ϵ must be positive"))
         end
-        new{T}(ϵ)
+        new{T}(ϵ, σs)
     end
 end
 
-_euler_step(∇ℓπ, ϵ::T, x::AbstractVector{T}) where T = x .+ ϵ .* ∇ℓπ(x) ./ 2
+MALA(ϵ::T, σs::AbstractVector{T}) where {T} = MALA(ϵ, PDiagMat(σs))
+_euler_step(∇ℓπ, ϵ::T, x::AbstractVector{T}, σs::PDiagMat{T}) where {T} = x .+ ϵ .* σs.diag.^2 .* ∇ℓπ(x) ./ 2
 
 function _dist_v_given_x(K::MALA{T}, prob::MixFlowProblem, x::AbstractVector{T}) where T
-    dim = LogDensityProblems.dimension(prob.target)
+    # dim = LogDensityProblems.dimension(prob.target)
     ∇ℓπ = Base.Fix1(∇logpdf_target, prob)
     stepsize = K.ϵ
-    μ = _euler_step(∇ℓπ, stepsize, x)
-    return MvNormal(μ, stepsize*I)
+    μ = _euler_step(∇ℓπ, stepsize, x, K.σs)
+    return MvNormal(μ, stepsize.*K.σs.^2)
 end
 
 _rand_v_given_x(K::MALA{T}, prob::MixFlowProblem, x::AbstractVector{T}) where T = rand(_dist_v_given_x(K, prob, x))
@@ -24,23 +28,23 @@ _rand_v_given_x(K::MALA{T}, prob::MixFlowProblem, x::AbstractVector{T}, n::Int) 
 function _cdf_v_given_x(
     K::MALA{T}, prob::MixFlowProblem, x::AbstractVector{T}, v::AbstractVector{T}
 ) where T
-    dim = LogDensityProblems.dimension(prob.target)
+    # dim = LogDensityProblems.dimension(prob.target)
     ∇ℓπ = Base.Fix1(∇logpdf_target, prob)
     stepsize = K.ϵ
-    μ = _euler_step(∇ℓπ, stepsize, x)
-    σ = sqrt(stepsize)
-    return normcdf.(μ, σ*ones(dim), v)
+    μ = _euler_step(∇ℓπ, stepsize, x, K.σs)
+    ϵ_sqrt = sqrt(stepsize)
+    return normcdf.(μ, ϵ_sqrt.*K.σs.diag, v)
 end
 
 function _invcdf_v_given_x(
     K::MALA{T}, prob::MixFlowProblem, x::AbstractVector{T}, uv::AbstractVector{T}
 ) where T
-    dim = LogDensityProblems.dimension(prob.target)
+    # dim = LogDensityProblems.dimension(prob.target)
     ∇ℓπ = Base.Fix1(∇logpdf_target, prob)
     stepsize = K.ϵ
-    μ = _euler_step(∇ℓπ, stepsize, x)
-    σ = sqrt(stepsize)
-    return norminvcdf.(μ, σ*ones(dim), uv)
+    μ = _euler_step(∇ℓπ, stepsize, x, K.σs)
+    ϵ_sqrt = sqrt(stepsize)
+    return norminvcdf.(μ, ϵ_sqrt.*K.σs.diag, uv)
 end
 
 

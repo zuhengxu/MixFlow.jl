@@ -9,9 +9,9 @@ function forward(
     # involutive mcmc step
     uv_ = _cdf_v_given_x(K, prob, x, v)
     ṽ = _invcdf_v_given_x(K, prob, x, uv)
-    # println("uv_", uv_)
-    # println("ṽ", ṽ)
     x_, v_ = _involution(K, prob, x, ṽ)
+    # TODO: notice that the following log ratio does not include the jacobian term of the involution map
+    # this is because that for RWMH, MALA, HMC, the involution map has unit jacobian
     logr = logpdf_aug_target(prob, K, x_, v_) - logpdf_aug_target(prob, K, x, ṽ)
 
     if check_acc(ua, logr)
@@ -31,6 +31,8 @@ function inverse(
     t::Int,
 ) where {T<:Real}
     x, ṽ = _involution(K, prob, x_, v_)
+    # TODO: notice that the following log ratio does not include the jacobian term of the involution map
+    # this is because that for RWMH, MALA, HMC, the involution map has unit jacobian
     logr = logpdf_aug_target(prob, K, x_, v_) - logpdf_aug_target(prob, K, x, ṽ)
 
     loguã = log(ua) + logr
@@ -94,18 +96,19 @@ function forward_T_step(
     return x, v, uv, ua
 end
 
-# function inverse_trajectory(
-#     prob::MixFlowProblem, K::MultivariateInvolutiveKernel, mixer::AbstractUnifMixer,
-#     x::AbstractVector{T}, v::AbstractVector{T}, uv::Union{AbstractVector{T}, Nothing}, ua::Union{T,Nothing},
-#     steps::Int,
-# ) where T 
-#     sample_path = []
-#     for t in steps:-1:1
-#         x, v, uv, ua, _ = inverse(prob, K, mixer, x, v, uv, ua, t)
-#         push!(sample_path, map(copy, (x, v, uv, ua)))
-#     end
-#     return sample_path
-# end
+function inverse_trajectory_x(
+    prob::MixFlowProblem, K::MultivariateInvolutiveKernel, mixer::AbstractUnifMixer,
+    x::AbstractVector{T}, v::AbstractVector{T}, uv::Union{AbstractVector{T}, Nothing}, ua::Union{T,Nothing},
+    steps::Int,
+) where T 
+    sample_path = zeros(T, length(x), steps+1)
+    @showprogress for t in 1:steps
+        sample_path[:,t] .= x
+        x, v, uv, ua, _ = inverse(prob, K, mixer, x, v, uv, ua, t)
+    end
+    sample_path[:,steps+1] .= x
+    return sample_path
+end
 
 function forward_trajectory(
     prob::MixFlowProblem, K::MultivariateInvolutiveKernel, mixer::AbstractUnifMixer,
@@ -129,7 +132,7 @@ function forward_trajectory_x(
     sample_path = zeros(T, length(x), steps+1)
     @showprogress for t in 1:steps
         sample_path[:,t] .= x
-        x, _, _, _, _ = forward(prob, K, mixer, x, v, uv, ua, t)
+        x, v, uv, ua, _ = forward(prob, K, mixer, x, v, uv, ua, t)
     end
     sample_path[:,steps+1] .= x
     return sample_path

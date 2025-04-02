@@ -5,6 +5,8 @@ version = "1.0.0-DEV"
 
 [deps]
 ADTypes = "47edcb42-4c32-4615-8424-f2b9edc5f35b"
+AdvancedHMC = "0bf59076-c3b1-5ca4-86bd-e02cd72cde3d"
+AdvancedMH = "5b7e9947-ddc0-4b3f-9b55-0d8042f74170"
 Distributions = "31c24e10-a181-5473-b8eb-7969acd0382f"
 IrrationalConstants = "92d709cd-6900-40b7-9082-c6be49f344b6"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
@@ -22,6 +24,8 @@ StructArrays = "09ab397b-f2b6-538f-b94a-2f83cf4a842a"
 
 [compat]
 ADTypes = "1.14.0"
+AdvancedHMC = "0.7.0"
+AdvancedMH = "0.8.6"
 Distributions = "0.25.118"
 IrrationalConstants = "0.2.4"
 LinearAlgebra = "1.11.0"

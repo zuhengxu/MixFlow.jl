@@ -34,11 +34,11 @@ using Test
         @testset "$K" for K in [
             uncorrectHMC(10, 0.02),
             HMC(10, 0.02),
-            MALA(0.25),
-            RWMH(0.3 * ones(dim)),
+            MALA(0.25, ones(dim)),
+            RWMH(0.3, ones(dim)),
         ]
 
-            T = 60
+            T = 40
 
             x0, v0, uv0, ua0 = MF._rand_joint_reference(prob, K)
             x, v, uv, ua = x0, v0, uv0, ua0

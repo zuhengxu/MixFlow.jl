@@ -15,8 +15,11 @@ const MF = MixFlow
 
 include("Model.jl")
 include("mfvi.jl")
+include("utils.jl")
 
 name = "Banana"
+
+
 target = load_model(name)
 
 ad = AutoMooncake(; config = Mooncake.Config())
@@ -37,7 +40,11 @@ mix_deter = ErgodicShift(2, T_max)
 ###############
 # generating trajectories
 ###############
-kernel = HMC(200, 0.01) 
+kernel = HMC(200, 0.02) 
+
+
+
+
 x0, v0, uv0, ua0 = MF._rand_joint_reference(prob, kernel)
 x_traj_fwd = MF.forward_trajectory_x(prob, kernel, mixer, x0, v0, uv0, ua0, T_max)
 x_traj_fwd_homo = MF.forward_trajectory_x(prob, kernel, mix_deter, x0, v0, uv0, ua0, T_max) 
@@ -91,48 +98,3 @@ plot(p1, p2, p3, p4, layout = 4)
 plot!(title = "running E(x^2) HMC")
 savefig("figure/banana_hmc_var.png")
 
-#################
-# elbo sweep
-################
-function elbo_sweep(flowtype, prob, K, mixer, nsample, Ts)
-    Els = []
-    @showprogress for T in Ts
-        F = flowtype(T) 
-        el = MF.elbo(F, prob, K, mixer, nsample)
-        push!(Els, el)
-    end
-    return map(identity, Els)
-end
-
-nsample = 500
-# T = 10
-# F = RandomBackwardMixFlow(T)
-# x0, v0, uv0, ua0 = MF._rand_joint_reference(prob, K)
-# x, v, uv, ua = simulate_from_past_T_step(prob, K, mixer, x0, v0, uv0, ua0, T)
-# sample = iid_sample(F, prob, K, mixer)
-
-Ts = [10, 20, 50, 100, 200, 350, 500]
-ϵs = [0.01, 0.05, 0.1]
-
-P = plot()
-for ϵ in ϵs
-    # ϵ = 0.05
-    K = HMC(10, ϵ)
-    Ku = uncorrectHMC(10, ϵ)
-
-    @info "ϵ = $ϵ"
-    Els_uhmc_deter = elbo_sweep(DeterministicMixFlow, prob, Ku, mix_deter, nsample, Ts)
-    Els_hmc = elbo_sweep(BackwardIRFMixFlow, prob, K, mixer, nsample, Ts)
-    Els_hmc_deter = elbo_sweep(DeterministicMixFlow, prob, K, mix_deter, nsample, Ts)
-
-    plot!(P, Ts, Els_hmc, label="HMC_bwd_mixflow $(ϵ)", lw=2)
-    plot!(P, Ts, Els_hmc_deter, label="HMC_std_mixflow $(ϵ)", lw=2)
-    plot!(P, Ts, Els_uhmc_deter, label="uncorrectHMC_std_mixflow $(ϵ)", lw=2)
-end
-
-savefig("figure/$(name)_elbo_sweep.png")
-
-
-using StructArrays
-
-MMixer = StructArray{ErgodicShift}(ξs_uv = [rand(2, 10) for _ in 1:10], ξs_ua = [rand(10) for _ in 1:10])

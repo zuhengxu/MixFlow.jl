@@ -9,6 +9,11 @@ using StatsFuns: normcdf, norminvcdf
 using Statistics
 using StructArrays
 
+
+# import mcmc sampler from other libraries
+using AdvancedHMC
+using AdvancedMH
+
 # setup mixflow problem with specified reference and target
 # all wrapped in logdensityprobs
 struct MixFlowProblem{F,T}

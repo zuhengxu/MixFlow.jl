@@ -5,6 +5,8 @@ struct RWMH{T} <: MultivariateInvolutiveKernel
 end
 
 RWMH(σs::AbstractVector{T}) where {T} = RWMH(PDiagMat(σs))
+# ϵ as stepsize, and σs as the diagonal preconditioning
+RWMH(ϵ::T, σs::AbstractVector{T}) where {T} = RWMH(PDiagMat(ϵ .* σs))
 RWMH(dim::Int) = RWMH(PDiagMat(ones(dim)))
 
 _involution(::RWMH{T}, ::MixFlowProblem, x::AbstractVector{T}, v::AbstractVector{T}) where T = (v, x)

@@ -13,6 +13,7 @@ using DataFrames, CSV
 const MF = MixFlow
 include("Model.jl")
 include("mfvi.jl")
+include("utils.jl")
 # plot 
 # include("plotting.jl")
 
@@ -56,13 +57,7 @@ function check_error(prob, K, mixer, Ts::Vector{Int})
     return map(identity, stats)
 end
 
-function _get_kernel_name(K::InvolutiveKernel)
-    str = string(typeof(K))
-    name = split(str, "{", limit = 2)[1]
-    return name
-end
-
-function GetInvError(name::String, K::MultivariateInvolutiveKernel, seed::Int)
+function GetInvError(name::String, K::MultivariateInvolutiveKernel, seed::Int; type::String="irf")
     Random.seed!(seed)
     target = load_model(name)
 
@@ -74,18 +69,17 @@ function GetInvError(name::String, K::MultivariateInvolutiveKernel, seed::Int)
     dims = LogDensityProblems.dimension(target_ad)
 
     T_max = 20_000
-    mixer = RandomShift(dims, T_max)
-    # mixer = ErgodicShift(dims, T)
 
-    # Ts = [10, 20, 50, 100, 200, 500, 1000, 2000, 5000, 10000]
+    if type == "homogeneous"
+        mixer = ErgodicShift(dims, T_max)
+    elseif type == "irf"
+        mixer = RandomShift(dims, T_max)
+    else
+        error("type must be either homogeneous or inhomogeneous")
+    end
+
     Ts = vcat([10, 20, 50], 100:100:1200)
 
-    # for K in [
-    #     uncorrectHMC(10, 0.02), 
-    #     HMC(10, 0.02), 
-    #     MALA(0.25), 
-    #     RWMH(0.3*ones(dims)), 
-    # ]
     err = check_error(prob, K, mixer, Ts)
     df = DataFrame(
         mcmc = _get_kernel_name(K),
@@ -93,7 +87,6 @@ function GetInvError(name::String, K::MultivariateInvolutiveKernel, seed::Int)
         Ts = Ts,
         errors = err,
     )
-
     return df
 end
 
