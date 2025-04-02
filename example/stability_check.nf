@@ -19,11 +19,6 @@ kernel_string = [
     RWMH: "RWMH(0.3*ones(2))", 
 ]
 
-// global constants
-// def n_iterations = 100000 // number of GD steps 
-// Notes: With n_iterations = 10_000, takes ~24 minutes total 
-// with n = 100_000, takes 3h 15 mins total
-
 workflow {
     compiled_env = instantiate(julia_env) | precompile
     configs = crossProduct(variables, params.dryRun)
