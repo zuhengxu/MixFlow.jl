@@ -138,6 +138,7 @@ Compute ℓqN(x) - ℓπ(x). Can be used for computing log_density_flow, IS weig
 - For non-measure-preserving flows, we just compute ℓqN via change of var formula.
 """
 function log_density_ratio_flow end
+_log_importance_weight(args...) = -log_density_ratio_flow(args...)
 
 function log_density_flow(
     flow::AbstractFlowType, prob::MixFlowProblem, K::InvolutiveKernel, mixer::AbstractUnifMixer,
@@ -153,48 +154,74 @@ iid_sample(
     flow::AbstractFlowType, prob::MixFlowProblem, K::InvolutiveKernel, mixer::AbstractUnifMixer, nsample::Int
 ) = [iid_sample(flow, prob, K, mixer) for _ in 1:nsample]
     
-function _elbo_single(
-    flow::AbstractFlowType, prob::MixFlowProblem, K::InvolutiveKernel, mixer::AbstractUnifMixer, 
-    x, v, uv, ua,
-)
-    # el = logpdf_aug_target(prob, K, x, v) - log_density_flow(flow, prob, K, mixer, x, v, uv, ua)
-    logw = log_density_ratio_flow(flow, prob, K, mixer, x, v, uv, ua) 
-    return -logw
-end
-
-function _elbo_batch(
-    flow::AbstractFlowType, prob::MixFlowProblem, K::InvolutiveKernel, mixer::AbstractUnifMixer, 
-    samples::Vector{Tuple{X, V, UV, UA}},
-) where {X, V, UV, UA}
-
-    nsample = length(samples)
-    els = zeros(nsample)
-    @threads for i in 1:nsample
-        els[i] = _elbo_single(flow, prob, K, mixer, samples[i]...)
-    end
-    return mean(els)
-end
-
-function elbo(
-    flow::AbstractFlowType, prob::MixFlowProblem, K::InvolutiveKernel, mixer::AbstractUnifMixer, 
-    nsample::Int,
-)
-    samples = iid_sample(flow, prob, K, mixer, nsample)
-    els = zeros(nsample)
-    @threads for i in 1:nsample
-        els[i] = _elbo_single(flow, prob, K, mixer, samples[i]...)
-    end
-    return mean(els)
-end
-
 include("flow/irf_fwd_mixflow.jl")
 include("flow/irf_bwd_mixflow.jl")
 include("flow/deterministic_mixflow.jl")
 include("flow/ensemble_irf_flow.jl")
 
-export elbo, _elbo_single, _elbo_batch
+export _log_importance_weight
 export DeterministicMixFlow, IRFMixFlow, BackwardIRFMixFlow
 
 include("particles.jl")
+export Particles
+
+"""
+Output Particles that stores iid samples of x, corresponding log importance weights, and other diagnostics.
+"""
+function mixflow(
+    flow::AbstractFlowType, prob::MixFlowProblem, K::InvolutiveKernel, mixer::AbstractUnifMixer,
+    nsample::Int; 
+    show_report::Bool = true,
+)
+    dims = LogDensityProblems.dimension(prob)
+    samples = zeros(dims, nsample)
+    ℓws = zeros(nsample)
+    @showprogress @threads for i in 1:nsample
+        x, v, uv, ua = iid_sample(flow, prob, K, mixer) 
+        samples[:, i] .= x
+        # compupte log is weight
+        ℓw = _log_importance_weight(flow, prob, K, mixer, x, v, uv, ua)
+        ℓws[i] = ℓw
+    end
+    output = Particles(flow, samples, ℓws)
+    report(output, show_report)
+    return output
+end
+
+export mixflow
+
+# function _log_importance_weight(
+#     flow::AbstractFlowType, prob::MixFlowProblem, K::InvolutiveKernel, mixer::AbstractUnifMixer, 
+#     x, v, uv, ua,
+# )
+#     # el = logpdf_aug_target(prob, K, x, v) - log_density_flow(flow, prob, K, mixer, x, v, uv, ua)
+#     logw = log_density_ratio_flow(flow, prob, K, mixer, x, v, uv, ua) 
+#     return -logw
+# end
+
+# function _elbo_batch(
+#     flow::AbstractFlowType, prob::MixFlowProblem, K::InvolutiveKernel, mixer::AbstractUnifMixer, 
+#     samples::Vector{Tuple{X, V, UV, UA}},
+# ) where {X, V, UV, UA}
+
+#     nsample = length(samples)
+#     els = zeros(nsample)
+#     @threads for i in 1:nsample
+#         els[i] = _log_importance_weight(flow, prob, K, mixer, samples[i]...)
+#     end
+#     return mean(els)
+# end
+
+# function elbo(
+#     flow::AbstractFlowType, prob::MixFlowProblem, K::InvolutiveKernel, mixer::AbstractUnifMixer, 
+#     nsample::Int,
+# )
+#     samples = iid_sample(flow, prob, K, mixer, nsample)
+#     els = zeros(nsample)
+#     @threads for i in 1:nsample
+#         els[i] = _log_importance_weight(flow, prob, K, mixer, samples[i]...)
+#     end
+#     return mean(els)
+# end
 
 end

@@ -17,7 +17,6 @@ include("Model.jl")
 include("mfvi.jl")
 include("utils.jl")
 
-
 function run_traces(name::String, kernel::MultivariateInvolutiveKernel, T_max::Int)
     Random.seed!(1)
     target = load_model(name)

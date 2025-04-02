@@ -14,12 +14,11 @@ end
 #     @warn "For backward flow, trajectory_sample is of quadratic cost. Use iid_sample instead in practice."
 # end
 
-function log_density_flow(
+function log_density_ratio_flow(
     flow::BackwardIRFMixFlow, prob::MixFlowProblem, K::InvolutiveKernel, mixer::AbstractUnifMixer, 
     x, v, uv, ua,
 )
     T = flow.flow_length
-    ℓπ = logpdf_aug_target(prob, K, x, v)
     ℓs = zeros(T+1)
 
     # the zero-th step
@@ -33,7 +32,7 @@ function log_density_flow(
         ℓr = _log_density_ratio(prob, x) 
         ℓs[t+1] = ℓr 
     end
-    return logsumexp(ℓs) - log(T+1) + ℓπ
+    return logsumexp(ℓs) - log(T+1) 
 end
 
 
