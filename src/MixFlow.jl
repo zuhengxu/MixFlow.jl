@@ -104,7 +104,7 @@ function mcmc_sampler(
 ) where {T<:Real}
     # Initialize the chain
     x = x0
-    samples = Vector{T}(undef, length(x0), nsteps)
+    samples = zeros(T, length(x0), nsteps)
     samples[:, 1] .= x
 
     for i in 2:nsteps
