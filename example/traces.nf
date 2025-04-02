@@ -4,11 +4,11 @@ include { combine_csvs; } from './nf-nest/combine.nf'
 
 params.dryRun = false
 def julia_env = file(moduleDir)
-def julia_script = file(moduleDir/'stability_check.jl')
+def julia_script = file(moduleDir/'traces.jl')
 
 def variables = [
     target: ["Banana", "Funnel", "WarpedGaussian", "Cross"], 
-    kernel: ["HMC", "uncorrectHMC", "RWMH", "MALA"],
+    kernel: ["HMC", "RWMH", "MALA"],
 ]
 
 kernel_string = [
@@ -40,7 +40,7 @@ workflow {
 process run_simulation {
     debug false 
     time 300.min // change
-    cpus 5
+    cpus 4
     memory 8.GB // change
     input:
         path julia_env 
