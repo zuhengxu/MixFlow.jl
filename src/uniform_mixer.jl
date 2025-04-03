@@ -83,8 +83,8 @@ function EnsembleRandomShift(D::I, T::I, Nensemble::I) where {I<:Int}
 end
 
 function EnsembleErgodicShift(D::I, T::I, Nensemble::I) where {I<:Int}
-    uvs = [π/4 .* ones(D, T) for _ in 1:Nensemble]
-    uas = [π/4 .* ones(T) for _ in 1:Nensemble]
+    uvs = [π/8 .* ones(D, T) for _ in 1:Nensemble]
+    uas = [π/7 .* ones(T) for _ in 1:Nensemble]
     return StructArrays{ErgodicShift}(ξs_uv=uvs, ξs_ua=uas)
 end
 

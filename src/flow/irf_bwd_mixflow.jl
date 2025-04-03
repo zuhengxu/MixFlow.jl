@@ -9,7 +9,6 @@ function iid_sample(flow::BackwardIRFMixFlow, prob::MixFlowProblem, K::Involutiv
     return simulate_from_past_T_step(prob, K, mixer, x0, v0, uv0, ua0, T)     
 end
 
-
 # function trajectory_sample(flow::AbstractFlowType, prob::MixFlowProblem, K::InvolutiveKernel, mixer::AbstractUnifMixer)
 #     @warn "For backward flow, trajectory_sample is of quadratic cost. Use iid_sample instead in practice."
 # end
