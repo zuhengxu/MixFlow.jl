@@ -13,7 +13,24 @@ include("Model.jl")
 include("mfvi.jl")
 include("utils.jl")
 
-function run_elbo(seed, name, flowtype, kernel_type, step_size, nsample, T; leapfrog_steps=50)
+function run_elbo(
+    seed, name::String, flowtype::Type{MF.AbstractFlowType}, T::Int, kernel_type::Type{MF.MultivariateInvolutiveKernel}, step_size; 
+    nsample = 1024, leapfrog_steps=50,
+    )
+    if (kernel_type == MF.uncorrectHMC) && !(flowtype isa MF.DeterministicMixFlow)
+        println("no this combo")
+        return DataFrame( nchains = NaN, logZ = NaN, elbo = NaN, ess = NaN, nparticles = NaN) 
+    end
+
+    if kernel_type == MF.HMC
+        kernel = MF.HMC(leapfrog_steps, step_size)
+    elseif kernel_type == MF.uncorrectHMC
+        kernel = MF.uncorrectHMC(leapfrog_steps, step_size)
+    else 
+        kernel =  kernel_type(step_size, ones(dims))
+    end
+
+
     # name = "Banana"
     Random.seed!(seed)
 
@@ -32,19 +49,11 @@ function run_elbo(seed, name, flowtype, kernel_type, step_size, nsample, T; leap
         mixer = RandomShift(dims, T)
     end
 
-    if kernel_type == MF.HMC
-        kernel = MF.HMC(leapfrog_steps, step_size)
-    elseif kernel_type == MF.uncorrectHMC
-        kernel = MF.uncorrectHMC(leapfrog_steps, step_size)
-    else 
-        kernel =  kernel_type(step_size, ones(dims))
-    end
 
     flow = flowtype(T)
     output = MF.mixflow(flow, prob, kernel, mixer, nsample)
     
     df = DataFrame(
-        flow = string(flowtype),
         nchains = 1, 
         logZ = output.logZ,
         elbo = output.elbo,
@@ -54,7 +63,7 @@ function run_elbo(seed, name, flowtype, kernel_type, step_size, nsample, T; leap
     return df
 end
 
-# df = run_elbo(1, "Banana", MF.BackwardIRFMixFlow, MF.HMC, 0.05, 32, 10)
+# df = run_elbo(1, "Banana", MF.BackwardIRFMixFlow, 1, MF.uncorrectHMC, 0.05; nsample = 32)
 
 # nsample = 1024
 

@@ -3,22 +3,18 @@ include { instantiate; precompile; activate } from './nf-nest/pkg.nf'
 include { combine_csvs; } from './nf-nest/combine.nf'
 
 params.dryRun = false
+params.n_sample = params.dryRun ? 8 : 1024
+
 def julia_env = file(moduleDir)
 def julia_script = file(moduleDir/'elbo.jl')
 
 def variables = [
-    flowtype: ["BackwardIRMixFlow", "DeterministicMixFlow", "IRFMixFlow"]
+    seed: params.dryRun ? 1..3 : 1..10,
     target: ["Banana", "Funnel", "WarpedGaussian", "Cross"], 
+    flowtype: ["MF.BackwardIRMixFlow", "MF.DeterministicMixFlow", "MF.IRFMixFlow"],
     kernel: ["MF.HMC", "MF.uncorrectHMC", "MF.RWMH", "MF.MALA"],
-    step_size: [0.001, 0.005, 0.01, 0.05, 0.1, 0.5]
-    seed: 1..32,
-]
-
-kernel_string = [
-    HMC: "HMC(50, 0.02)",
-    uncorrectHMC: "uncorrectHMC(10, 0.02)",
-    MALA: "MALA(0.25)", 
-    RWMH: "RWMH(0.3*ones(2))", 
+    step_size: params.dryRun ? [0.001, 0.005] : [0.001, 0.005, 0.01, 0.05, 0.1],
+    flow_length: params.dryRun ? [0, 10] : [0, 10, 20, 50, 100, 250, 500],
 ]
 
 workflow {
@@ -32,7 +28,7 @@ workflow {
 
 process run_simulation {
     debug false 
-    time 300.min // change
+    time 600.min // change
     cpus 1 
     memory 8.GB // change
     input:
@@ -48,11 +44,13 @@ process run_simulation {
     # get configurations
     seed = ${config.seed}
     name = "${config.target}"
-    kernel = ${kernel_string[config.kernel]}
+    flowtype = ${config.flowtype}
+    kernel = ${config.kernel}
+    step_size = ${config.step_size}
+    flow_length = ${config.flow_length}
 
     # run simulation
-    df = GetInvError(name, kernel, seed)
-
+    df = run_elbo(seed, name, flowtype, flow_length, kernel, step_size; nsample = ${params.n_sample})
     
     # store output
     mkdir("${filed(config)}")
