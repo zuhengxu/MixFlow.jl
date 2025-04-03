@@ -3,18 +3,24 @@ include { instantiate; precompile; activate } from './nf-nest/pkg.nf'
 include { combine_csvs; } from './nf-nest/combine.nf'
 
 params.dryRun = false
-params.n_sample = params.dryRun ? 8 : 1024
+params.n_sample = params.dryRun ? 8 : 512
 
 def julia_env = file(moduleDir)
 def julia_script = file(moduleDir/'elbo.jl')
 
 def variables = [
-    seed: params.dryRun ? 1..3 : 1..10,
-    target: ["Banana", "Funnel", "WarpedGaussian", "Cross"], 
-    flowtype: ["MF.BackwardIRMixFlow", "MF.DeterministicMixFlow", "MF.IRFMixFlow"],
-    kernel: ["MF.HMC", "MF.uncorrectHMC", "MF.RWMH", "MF.MALA"],
-    step_size: params.dryRun ? [0.001, 0.005] : [0.001, 0.005, 0.01, 0.05, 0.1],
-    flow_length: params.dryRun ? [0, 10] : [0, 10, 20, 50, 100, 250, 500],
+    // seed: 1..10,
+    // target: ["Banana", "Funnel", "WarpedGaussian", "Cross"], 
+    // flowtype: ["MF.BackwardIRFMixFlow", "MF.DeterministicMixFlow", "MF.IRFMixFlow"],
+    // kernel: ["MF.HMC", "MF.uncorrectHMC", "MF.RWMH", "MF.MALA"],
+    // step_size: [0.001, 0.005, 0.01, 0.05, 0.1],
+    // flow_length: [0, 10, 20, 50, 100, 250, 500],
+    seed: 1..3,
+    target: ["Banana", "Funnel"],
+    flowtype: ["MF.BackwardIRFMixFlow", "MF.DeterministicMixFlow"],
+    kernel: ["MF.RWMH", "MF.MALA"],
+    step_size: [0.001, 0.005],
+    flow_length: [0, 10],
 ]
 
 workflow {
@@ -30,7 +36,7 @@ process run_simulation {
     debug false 
     time 600.min // change
     cpus 1 
-    memory 8.GB // change
+    memory 2.GB // change
     input:
         path julia_env 
         val config 
