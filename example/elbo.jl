@@ -21,7 +21,7 @@ function run_elbo(seed, name, flowtype, kernel_type, step_size, nsample, T; leap
 
     ad = AutoMooncake(; config = Mooncake.Config())
     target_ad = ADgradient(ad, target)
-    reference, _ = mfvi(target_ad; sample_per_iter = 10, max_iters = 10000, adtype = ad)
+    reference, _ = mfvi(target_ad; sample_per_iter = 10, max_iters = 100000, adtype = ad)
     prob = MixFlowProblem(reference, target_ad)
 
     dims = LogDensityProblems.dimension(target_ad)
@@ -34,12 +34,14 @@ function run_elbo(seed, name, flowtype, kernel_type, step_size, nsample, T; leap
 
     if kernel_type == MF.HMC
         kernel = MF.HMC(leapfrog_steps, step_size)
+    elseif kernel_type == MF.uncorrectHMC
+        kernel = MF.uncorrectHMC(leapfrog_steps, step_size)
     else 
         kernel =  kernel_type(step_size, ones(dims))
     end
 
     flow = flowtype(T)
-    output = MF.mixflow(flow,  prob, kernel, mixer, nsample)
+    output = MF.mixflow(flow, prob, kernel, mixer, nsample)
     
     df = DataFrame(
         flow = string(flowtype),

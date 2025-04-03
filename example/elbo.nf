@@ -4,19 +4,21 @@ include { combine_csvs; } from './nf-nest/combine.nf'
 
 params.dryRun = false
 def julia_env = file(moduleDir)
-def julia_script = file(moduleDir/'stability_check.jl')
+def julia_script = file(moduleDir/'elbo.jl')
 
 def variables = [
+    flowtype: ["BackwardIRMixFlow", "DeterministicMixFlow", "IRFMixFlow"]
     target: ["Banana", "Funnel", "WarpedGaussian", "Cross"], 
-    kernel: ["HMC", "uncorrectHMC", "RWMH", "MALA"],
+    kernel: ["MF.HMC", "MF.uncorrectHMC", "MF.RWMH", "MF.MALA"],
+    step_size: [0.001, 0.005, 0.01, 0.05, 0.1, 0.5]
     seed: 1..32,
 ]
 
 kernel_string = [
-    HMC: "HMC(10, 0.02)",
+    HMC: "HMC(50, 0.02)",
     uncorrectHMC: "uncorrectHMC(10, 0.02)",
-    MALA: "MALA(0.25, ones(2))", 
-    RWMH: "RWMH(0.3, ones(2))", 
+    MALA: "MALA(0.25)", 
+    RWMH: "RWMH(0.3*ones(2))", 
 ]
 
 workflow {
