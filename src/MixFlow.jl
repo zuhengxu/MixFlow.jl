@@ -157,7 +157,7 @@ iid_sample(
 include("flow/irf_fwd_mixflow.jl")
 include("flow/irf_bwd_mixflow.jl")
 include("flow/deterministic_mixflow.jl")
-include("flow/ensemble_irf_flow.jl")
+# include("flow/ensemble_irf_flow.jl")
 
 export _log_importance_weight
 export DeterministicMixFlow, IRFMixFlow, BackwardIRFMixFlow
