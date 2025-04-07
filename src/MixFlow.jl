@@ -157,10 +157,12 @@ iid_sample(
 include("flow/irf_fwd_mixflow.jl")
 include("flow/irf_bwd_mixflow.jl")
 include("flow/deterministic_mixflow.jl")
-# include("flow/ensemble_irf_flow.jl")
+include("flow/ensemble_irf_flow.jl")
 
 export _log_importance_weight
 export DeterministicMixFlow, IRFMixFlow, BackwardIRFMixFlow
+export EnsembleIRFFlow
+
 
 include("particles.jl")
 export Particles
@@ -169,10 +171,10 @@ export Particles
 Output Particles that stores iid samples of x, corresponding log importance weights, and other diagnostics.
 """
 function mixflow(
-    flow::AbstractFlowType, prob::MixFlowProblem, K::InvolutiveKernel, mixer::AbstractUnifMixer,
+    flow::AbstractFlowType, prob::MixFlowProblem, K::InvolutiveKernel, mixer::Union{M, StructArray{M}},
     nsample::Int; 
     show_report::Bool = true,
-)
+) where {M<:AbstractUnifMixer}
     dims = LogDensityProblems.dimension(prob)
     samples = zeros(dims, nsample)
     ℓws = zeros(nsample)
