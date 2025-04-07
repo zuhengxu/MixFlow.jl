@@ -3,16 +3,17 @@ include { instantiate; precompile; activate } from './nf-nest/pkg.nf'
 include { combine_csvs; } from './nf-nest/combine.nf'
 
 params.dryRun = false
-params.n_sample = params.dryRun ? 8 : 1024
+params.n_sample = params.dryRun ? 8 : 512
+params.nrun_threads = 10
 
 def julia_env = file(moduleDir)
 def julia_script = file(moduleDir/'ensemble.jl')
 
 def variables = [
-    seed: 1,
-    target: ["Banana", "Funnel"], 
-    total_cost: [0, 20, 50, 100, 200, 500],
-    nchains: [5, 10], 
+    seed: 1..5,
+    target: ["Banana", "Funnel", "Cross", "WarpedGaussian"], 
+    flow_length: [0, 10, 20, 50, 100, 200],
+    nchains: [1, 5, 10, 20], 
     kernel: ["MF.HMC", "MF.RWMH", "MF.MALA"],
     step_size: [0.01, 0.05, 0.1],
 ]
@@ -28,8 +29,8 @@ workflow {
 
 process run_simulation {
     debug false 
-    memory { 2.GB * Math.pow(2, task.attempt-1) }
-    time { 1.hour* Math.pow(2, task.attempt-1) } 
+    memory { 8.GB * Math.pow(2, task.attempt-1) }
+    time { 2.hour* Math.pow(2, task.attempt-1) } 
     cpus 1
     errorStrategy { task.attempt < 2 ? 'retry' : 'ignore' } 
     input:
@@ -38,7 +39,7 @@ process run_simulation {
     output:
         path "${filed(config)}"
     """
-    ${activate(julia_env)}
+    ${activate(julia_env,params.nrun_threads)}
 
     include("$julia_script")
 
@@ -47,13 +48,11 @@ process run_simulation {
     name = "${config.target}"
     kernel = ${config.kernel}
     step_size = ${config.step_size}
-    total_cost = ${config.total_cost}
+    T = ${config.flow_length}
     nchains = ${config.nchains}
 
-
-
     # run simulation
-    df = run_ensemble(seed, name, total_cost, nchains, kernel, step_size; nsample = ${params.n_sample})
+    df = run_ensemble(seed, name, T, nchains, kernel, step_size; nsample = ${params.n_sample})
     
     # store output
     mkdir("${filed(config)}")

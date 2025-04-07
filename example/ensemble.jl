@@ -5,6 +5,7 @@ using LogExpFunctions
 using LogDensityProblems, LogDensityProblemsAD
 using ADTypes, Mooncake
 using DataFrames, CSV
+using JLD2
 
 using MixFlow 
 const MF = MixFlow
@@ -14,19 +15,16 @@ include("mfvi.jl")
 include("utils.jl")
 
 function run_ensemble(
-    seed, name::String, total_cost::Int, nchains::Int, kernel_type, step_size; 
+    seed, name::String, flow_length::Int, nchains::Int, kernel_type, step_size; 
     nsample = 1024, leapfrog_steps=50,
     )
     Random.seed!(seed)
 
-    target = load_model(name)
-
-    ad = AutoMooncake(; config = Mooncake.Config())
-    target_ad = ADgradient(ad, target)
-    reference, _ = mfvi(target_ad; sample_per_iter = 10, max_iters = 100_000, adtype = ad)
-    prob = MixFlowProblem(reference, target_ad)
-
-    dims = LogDensityProblems.dimension(target_ad)
+    vi_res = JLD2.load(
+        joinpath(@__DIR__, "result/$(name)_mfvi.jld2"),
+    )
+    prob = vi_res["prob"]
+    dims = LogDensityProblems.dimension(prob)
  
 
     if kernel_type == MF.HMC
@@ -35,7 +33,7 @@ function run_ensemble(
         kernel =  kernel_type(step_size, ones(dims))
     end
     
-    flow_length = div(total_cost, nchains)
+    # flow_length = div(total_cost, nchains)
     EM = EnsembleRandomShift(dims, flow_length, nchains)
 
     flow = EnsembleIRFFlow(flow_length, nchains)
