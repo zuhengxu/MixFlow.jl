@@ -5,6 +5,7 @@ using LogExpFunctions
 using LogDensityProblems, LogDensityProblemsAD
 using ADTypes, Mooncake
 using DataFrames, CSV
+using JLD2
 
 using MixFlow 
 const MF = MixFlow
@@ -25,14 +26,18 @@ function run_elbo(
     # name = "Banana"
     Random.seed!(seed)
 
-    target = load_model(name)
+    # target = load_model(name)
 
-    ad = AutoMooncake(; config = Mooncake.Config())
-    target_ad = ADgradient(ad, target)
-    reference, _ = mfvi(target_ad; sample_per_iter = 10, max_iters = 100000, adtype = ad)
-    prob = MixFlowProblem(reference, target_ad)
+    # ad = AutoMooncake(; config = Mooncake.Config())
+    # target_ad = ADgradient(ad, target)
+    # reference, _ = mfvi(target_ad; sample_per_iter = 10, max_iters = 100_000, adtype = ad)
+    # prob = MixFlowProblem(reference, target_ad)
+    vi_res = JLD2.load(
+        joinpath(@__DIR__, "result/$(name)_mfvi.jld2"),
+    )
+    prob = vi_res["prob"]
 
-    dims = LogDensityProblems.dimension(target_ad)
+    dims = LogDensityProblems.dimension(prob)
 
     if flowtype isa MF.DeterministicMixFlow
         mixer = ErgodicShift(dims, T)
@@ -63,7 +68,7 @@ function run_elbo(
     return df
 end
 
-# df = run_elbo(1, "Banana", MF.BackwardIRFMixFlow, 1, MF.uncorrectHMC, 0.05; nsample = 32)
+# df = run_elbo(1, "Banana", MF.BackwardIRFMixFlow, 0, MF.HMC, 0.05; nsample = 1024)
 
 # nsample = 1024
 
