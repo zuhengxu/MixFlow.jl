@@ -88,7 +88,7 @@ all_reports() = [
         # header with    # lambda expression used to 
         # width of 9     # compute that report item
         "    T     "   => a -> a.flow.flow_length,
-        "n_ensumble"   => a -> hasfield(typeof(a.flow), :num_flow) ? a.flow.num_flow : 1,
+        "n_ensumble"   => a -> hasfield(typeof(a.flow), :num_flows) ? a.flow.num_flows : 1,
         "    N     "   => a -> n_particles(a.particles),
         # "  time(s) "   => a -> a.full_timing, 
         # "  allc(B) "   => a -> a.timing.bytes,
