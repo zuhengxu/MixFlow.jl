@@ -12,11 +12,10 @@ if !isdir(fig_dir)
 end
 
 df = CSV.read(joinpath(@__DIR__, "output/summary.csv"), DataFrame) 
-# df = CSV.read("output/summary.csv", DataFrame) 
 
 targets = unique(df.target)
 kernels = unique(df.kernel)
-nchains = unique(df.nchains)
+nchains = [1, 20]
 
 for (t, k, n) in Iterators.product(targets, kernels, nchains)
     println("target: $t, kernel: $k, nchains: $n")
@@ -27,6 +26,7 @@ for (t, k, n) in Iterators.product(targets, kernels, nchains)
     )
     local ds = _subset_expt(df, selector)
 
+    ps = [] 
     for metric in [:elbo, :logZ, :ess]
         local fg = groupederrorline(
             ds, :flow_length, metric, :seed, :step_size;
@@ -44,20 +44,12 @@ for (t, k, n) in Iterators.product(targets, kernels, nchains)
             hline!(fg, [512], color = :red, linestyle = :dash, lw = 2, label = "n particles")
         end
 
-        savefig(fg, joinpath(fig_dir, "$(t)__$(_throw_dot(k))__nchain=$(n)_$(metric).png"))
+        push!(ps, fg)
+        # savefig(fg, joinpath(fig_dir, "$(t)__$(_throw_dot(k))__nchain=$(n)_$(metric).png"))
     end
+    fg_joined = plot(ps..., layout = (1, 3), dpi = 600, size = (1600, 400), margin = 10Plots.mm)
+    savefig(fg_joined, joinpath(fig_dir, "$(t)__$(_throw_dot(k))__nchain=$(n).png"))
 end
-
-
-# t = targets[1]
-# k = kernels[1]
-# n = nchains[1] 
-# selector = Dict(
-#     :target => t,
-#     :nchains => n,
-#     :kernel => k,
-# )
-# ds = _subset_expt(df, selector)
 
 # performance over increasing nchains
 
@@ -69,7 +61,7 @@ if !isdir(fig_dir)
 end
 targets = unique(df.target)
 kernels = unique(df.kernel)
-flengths = unique(df.flow_length)
+flengths = unique(df.flow_length)[1:3]
 
 for (t, k, l) in Iterators.product(targets, kernels, flengths)
     println("target: $t, kernel: $k, flow_length: $l")
@@ -80,6 +72,7 @@ for (t, k, l) in Iterators.product(targets, kernels, flengths)
     )
     local ds = _subset_expt(df, selector)
 
+    ps = [] 
     for metric in [:elbo, :logZ, :ess]
         local fg = groupederrorline(
             ds, :nchains, metric, :seed, :step_size;
@@ -96,8 +89,11 @@ for (t, k, l) in Iterators.product(targets, kernels, flengths)
         elseif metric == :ess
             hline!(fg, [512], color = :red, linestyle = :dash, lw = 2, label = "n particles")
         end
+        push!(ps, fg)
 
-        savefig(fg, joinpath(fig_dir, "$(t)__$(_throw_dot(k))__T=$(l)_$(metric).png"))
+        # savefig(fg, joinpath(fig_dir, "$(t)__$(_throw_dot(k))__T=$(l)_$(metric).png"))
     end
+    fg_joined = plot(ps..., layout = (1, 3), dpi = 600, size = (1600, 400), margin = 10Plots.mm)
+    savefig(fg_joined, joinpath(fig_dir, "$(t)__$(_throw_dot(k))__T=$(l).png"))
 end
 

@@ -47,6 +47,6 @@ for (t, k, f) in Iterators.product(targets, kernels, flowtypes)
 
         # savefig(fg, joinpath(fig_dir, "$(t)__$(_throw_dot(k))__$(_throw_dot(f))_$(metric).png"))
     end
-    fg_joined = plot(ps..., layout = (1, 3), dpi = 600, size = (1600, 400), margin = 10Plots.mm)
+    fg_joined = plot(ps..., layout = (1, 3), dpi = 1000, size = (1200, 300), margin = 10Plots.mm)
     savefig(fg_joined, joinpath(fig_dir, "$(t)__$(_throw_dot(k))__$(_throw_dot(f)).png"))
 end
