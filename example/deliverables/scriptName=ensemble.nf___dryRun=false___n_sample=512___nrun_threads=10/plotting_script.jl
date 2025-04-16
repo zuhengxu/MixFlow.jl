@@ -61,7 +61,7 @@ if !isdir(fig_dir)
 end
 targets = unique(df.target)
 kernels = unique(df.kernel)
-flengths = unique(df.flow_length)[1:3]
+flengths = [0, 10, 20]
 
 for (t, k, l) in Iterators.product(targets, kernels, flengths)
     println("target: $t, kernel: $k, flow_length: $l")
