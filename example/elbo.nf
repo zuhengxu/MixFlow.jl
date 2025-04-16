@@ -4,24 +4,18 @@ include { combine_csvs; } from './nf-nest/combine.nf'
 
 params.dryRun = false
 params.n_sample = params.dryRun ? 8 : 512
-params.nrunThreads = 10
+params.nrunThreads = 5
 
 def julia_env = file(moduleDir)
 def julia_script = file(moduleDir/'elbo.jl')
 
 def variables = [
     seed: 1..5,
-    target: ["Banana", "Funnel", "WarpedGaussian", "Cross"], 
-    flowtype: ["MF.BackwardIRFMixFlow", "MF.DeterministicMixFlow", "MF.IRFMixFlow"],
+    target: ["Banana", "Cross"], 
+    flowtype: ["MF.DeterministicMixFlow"],
     kernel: ["MF.HMC", "MF.uncorrectHMC", "MF.RWMH", "MF.MALA"],
-    step_size: [0.001, 0.005, 0.01, 0.05, 0.1],
+    step_size: [0.005, 0.01, 0.05, 0.1],
     flow_length: [0, 10, 20, 50, 100, 200, 300],
-    // seed: 1..3,
-    // target: ["Banana", "Funnel"],
-    // flowtype: ["MF.BackwardIRFMixFlow", "MF.DeterministicMixFlow"],
-    // kernel: ["MF.RWMH", "MF.MALA"],
-    // step_size: [0.001, 0.005],
-    // flow_length: [0, 10],
 ]
 
 workflow {
@@ -35,7 +29,7 @@ workflow {
 
 process run_simulation {
     debug false 
-    memory { 10.GB * Math.pow(2, task.attempt-1) }
+    memory { 5.GB * Math.pow(2, task.attempt-1) }
     time { 30.hour * Math.pow(2, task.attempt-1) } 
     cpus 1 
     errorStrategy { task.attempt < 2 ? 'retry' : 'ignore' } 

@@ -18,15 +18,10 @@ kernel_string = [
 ]
 
 t_max_string = [
-    HMC: 5000,
-    MALA: 5000,
-    RWMH: 10000,
+    HMC: 500,
+    MALA: 500,
+    RWMH: 1000,
 ]
-
-// global constants
-// def n_iterations = 100000 // number of GD steps 
-// Notes: With n_iterations = 10_000, takes ~24 minutes total 
-// with n = 100_000, takes 3h 15 mins total
 
 workflow {
     compiled_env = instantiate(julia_env) | precompile

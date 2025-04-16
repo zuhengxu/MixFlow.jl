@@ -54,7 +54,7 @@ function log_density_ratio_flow(
     ℓs = zeros(T+1)
 
     # the zero-th step
-    ℓ0 = logpdf_aug_target(prob, K, x, v)
+    ℓ0 = logpdf_aug_reference(prob, K, x, v)
     ℓs[1] = ℓ0
 
     for t in 1:T
