@@ -9,7 +9,7 @@ using ADTypes, Mooncake
 using NormalizingFlows
 using Bijectors
 using ProgressMeter
-using MixFlow: _rand_joint_reference 
+using MixFlow: _rand_joint_reference, _log_density_ratio
 
 const MF = MixFlow
 
@@ -20,7 +20,6 @@ include("utils.jl")
 function run_traces(name::String, kernel::MultivariateInvolutiveKernel, T_max::Int)
     Random.seed!(1)
     target = load_model(name)
-    
 
     ad = AutoMooncake(; config = Mooncake.Config())
     target_ad = ADgradient(ad, target)

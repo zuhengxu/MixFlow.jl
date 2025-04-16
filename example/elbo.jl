@@ -18,7 +18,9 @@ function run_elbo(
     seed, name::String, flowtype, T::Int, kernel_type, step_size; 
     nsample = 1024, leapfrog_steps=50,
     )
-    if (kernel_type == MF.uncorrectHMC) && !(flowtype isa MF.DeterministicMixFlow)
+
+    flow = flowtype(T)
+    if (kernel_type == MF.uncorrectHMC) && !(flow isa MF.DeterministicMixFlow)
         println("no this combo")
         return DataFrame( nchains = NaN, logZ = NaN, elbo = NaN, ess = NaN, nparticles = NaN) 
     end
@@ -26,12 +28,6 @@ function run_elbo(
     # name = "Banana"
     Random.seed!(seed)
 
-    # target = load_model(name)
-
-    # ad = AutoMooncake(; config = Mooncake.Config())
-    # target_ad = ADgradient(ad, target)
-    # reference, _ = mfvi(target_ad; sample_per_iter = 10, max_iters = 100_000, adtype = ad)
-    # prob = MixFlowProblem(reference, target_ad)
     vi_res = JLD2.load(
         joinpath(@__DIR__, "result/$(name)_mfvi.jld2"),
     )
@@ -39,7 +35,7 @@ function run_elbo(
 
     dims = LogDensityProblems.dimension(prob)
 
-    if flowtype isa MF.DeterministicMixFlow
+    if flow isa MF.DeterministicMixFlow
         mixer = ErgodicShift(dims, T)
     else
         mixer = RandomShift(dims, T)
@@ -53,9 +49,6 @@ function run_elbo(
         kernel =  kernel_type(step_size, ones(dims))
     end
 
-
-
-    flow = flowtype(T)
     output = MF.mixflow(flow, prob, kernel, mixer, nsample)
     
     df = DataFrame(
@@ -68,7 +61,7 @@ function run_elbo(
     return df
 end
 
-# df = run_elbo(1, "Banana", MF.BackwardIRFMixFlow, 0, MF.HMC, 0.05; nsample = 1024)
+# df = run_elbo(1, "Banana", MF.DeterministicMixFlow, 10, MF.uncorrectHMC, 0.05; nsample = 512)
 
 # nsample = 1024
 

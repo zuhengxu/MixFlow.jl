@@ -18,9 +18,9 @@ kernel_string = [
 ]
 
 t_max_string = [
-    HMC: 1000,
-    MALA: 1000,
-    RWMH: 5000,
+    HMC: 5000,
+    MALA: 5000,
+    RWMH: 10000,
 ]
 
 // global constants

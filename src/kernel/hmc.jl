@@ -80,7 +80,7 @@ function mcmc_sampler(
     samples, _ =  advanced_hmc_sampler(
         target_ad, x0, K.n_leapfrog, initial_ϵ, nsamples, n_adapts, target_acc
     )
-    return samples
+    return n_adapts == 0 ? hcat(x0, samples) : samples
 end
 
     
