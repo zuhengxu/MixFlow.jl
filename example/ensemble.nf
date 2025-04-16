@@ -12,10 +12,10 @@ def julia_script = file(moduleDir/'ensemble.jl')
 def variables = [
     seed: 1..5,
     target: ["Banana", "Funnel", "Cross", "WarpedGaussian"], 
-    flow_length: [0, 10, 20, 50, 100, 200],
+    flow_length: [0, 10, 20, 50, 80, 100],
     nchains: [1, 5, 10, 20], 
     kernel: ["MF.HMC", "MF.RWMH", "MF.MALA"],
-    step_size: [0.01, 0.05, 0.1],
+    step_size: [0.01, 0.05, 0.1, 0.2],
 ]
 
 workflow {
@@ -29,8 +29,8 @@ workflow {
 
 process run_simulation {
     debug false 
-    memory { 8.GB * Math.pow(2, task.attempt-1) }
-    time { 2.hour* Math.pow(2, task.attempt-1) } 
+    memory { 16.GB * Math.pow(2, task.attempt-1) }
+    time { 4.hour* Math.pow(2, task.attempt-1) } 
     cpus 1
     errorStrategy { task.attempt < 2 ? 'retry' : 'ignore' } 
     input:
