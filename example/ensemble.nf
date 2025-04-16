@@ -10,7 +10,7 @@ def julia_env = file(moduleDir)
 def julia_script = file(moduleDir/'ensemble.jl')
 
 def variables = [
-    seed: 1..5,
+    seed: 1,
     target: ["Banana", "Funnel", "Cross", "WarpedGaussian"], 
     flow_length: [0, 10, 20, 50, 100, 200],
     nchains: [1, 5, 10, 20], 

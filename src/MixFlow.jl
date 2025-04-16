@@ -108,7 +108,7 @@ function mcmc_sampler(
     samples[:, 1] .= x
 
     for i in 2:nsteps
-        # Perform a MALA step
+        # Perform an involutive mcmc step
         x = mcmc_step(prob, K, x)
         samples[:, i] .= x
     end
