@@ -1,3 +1,4 @@
+using ProgressMeter
 using Random, Distributions, Plots
 using LinearAlgebra
 using Base.Threads: @threads
@@ -63,30 +64,54 @@ end
 
 # df = run_elbo(1, "Banana", MF.DeterministicMixFlow, 10, MF.uncorrectHMC, 0.05; nsample = 512)
 
-# nsample = 1024
 
-# Ts = [10, 20, 50, 100, 200, 350, 500]
-# ϵs = [0.01, 0.05, 0.1]
+function run_tv(
+    seed, name::String, flowtype, T::Int, kernel_type, step_size; 
+    nsample = 512, leapfrog_steps=50,
+) 
+    flow = flowtype(T)
 
-# P = plot()
-# for ϵ in ϵs
-#     # ϵ = 0.05
-#     K = HMC(10, ϵ)
-#     Ku = uncorrectHMC(10, ϵ)
+    Random.seed!(seed)
 
-#     @info "ϵ = $ϵ"
-#     Els_uhmc_deter = elbo_sweep(DeterministicMixFlow, prob, Ku, mix_deter, nsample, Ts)
-#     Els_hmc = elbo_sweep(BackwardIRFMixFlow, prob, K, mixer, nsample, Ts)
-#     Els_hmc_deter = elbo_sweep(DeterministicMixFlow, prob, K, mix_deter, nsample, Ts)
+    vi_res = JLD2.load(
+        joinpath(@__DIR__, "result/$(name)_mfvi.jld2"),
+    )
+    prob = vi_res["prob"]
 
-#     plot!(P, Ts, Els_hmc, label="HMC_bwd_mixflow $(ϵ)", lw=2)
-#     plot!(P, Ts, Els_hmc_deter, label="HMC_std_mixflow $(ϵ)", lw=2)
-#     plot!(P, Ts, Els_uhmc_deter, label="uncorrectHMC_std_mixflow $(ϵ)", lw=2)
-# end
+    dims = LogDensityProblems.dimension(prob)
+    mixer = ErgodicShift(dims, T)
+        
+    if kernel_type == MF.HMC
+        kernel = MF.HMC(leapfrog_steps, step_size)
+    elseif kernel_type == MF.uncorrectHMC
+        kernel = MF.uncorrectHMC(leapfrog_steps, step_size)
+    else 
+        kernel =  kernel_type(step_size, ones(dims))
+    end
 
-# savefig("figure/$(name)_elbo_sweep.png")
+    xsπ = rand(prob.target.ℓ, nsample) 
+    vsπ = reduce(hcat, [MF._rand_v_given_x(kernel, prob, x) for x in eachcol(xsπ)])
+    uvπ = rand(dims, nsample)
+    uaπ = rand(nsample)
+    
+    lrs = zeros(T+1, nsample)
+    @showprogress @threads for i in 1:nsample
+        x = xsπ[:, i]
+        v = vsπ[:, i]
+        uv = kernel_type == MF.uncorrectHMC ? nothing : uvπ[:, i]
+        ua = kernel_type == MF.uncorrectHMC ? nothing : uaπ[i]
+        lrs[:, i] .= MF.log_density_ratio_flow_sweep(flow, prob, kernel, mixer, x, v, uv, ua)
+    end
+    
+    tvs = mean(abs.(expm1.(lrs)), dims = 2) ./ 2
 
+    df = DataFrame(
+        tv = vec(tvs),
+        Ts = [1:T+1 ;],
+        nparticles = nsample,
+    ) 
+    return df
+end
 
-# using StructArrays
-
-# MMixer = StructArray{ErgodicShift}(ξs_uv = [rand(2, 10) for _ in 1:10], ξs_ua = [rand(10) for _ in 1:10])
+# tv_uhmc = run_tv(1, "Funnel", MF.DeterministicMixFlow, 200, MF.uncorrectHMC, 0.1; nsample = 512)
+# tv_hmc = run_tv(1, "Funnel", MF.DeterministicMixFlow, 30, MF.HMC, 0.1; nsample = 512)

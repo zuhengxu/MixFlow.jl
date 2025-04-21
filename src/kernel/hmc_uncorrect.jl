@@ -14,12 +14,12 @@ struct uncorrectHMC{T} <: MultivariateInvolutiveKernel
 end
 
 _dist_v_given_x(::uncorrectHMC, prob::MixFlowProblem, x) = MvNormal(zeros(length(x)), I)
-_rand_v_given_x(::uncorrectHMC, x) = randn(length(x))
-_rand_v_given_x(::uncorrectHMC, x, n::Int) = randn(length(x), n)
+_rand_v_given_x(::uncorrectHMC, ::MixFlowProblem, x) = randn(length(x))
+_rand_v_given_x(::uncorrectHMC, ::MixFlowProblem, x, n::Int) = randn(length(x), n)
 
 function _rand_joint_reference(prob::MixFlowProblem, K::uncorrectHMC)
     x = rand(prob.reference)
-    v = _rand_v_given_x(K, x)
+    v = _rand_v_given_x(K, prob, x)
     return x, v, nothing, nothing
 end
 

@@ -13,6 +13,8 @@ using StructArrays
 using AdvancedHMC
 using AdvancedMH
 
+include("utils.jl")
+
 # setup mixflow problem with specified reference and target
 # all wrapped in logdensityprobs
 struct MixFlowProblem{F,T}
@@ -149,6 +151,17 @@ function log_density_flow(
     return logw + ℓπ
 end
 
+"""
+Compute ℓqt(x) - ℓπ(x) for t = 0, ..., T. 
+
+This is useful for examining the evolving quality of the flow.
+A curve that can be computed in linear time O(T) on a fixed point x.
+
+useful for quick stepsize tuning.
+"""
+function log_density_ratio_flow_sweep end
+
+
 # iid sample from the flow distribution
 iid_sample(
     flow::AbstractFlowType, prob::MixFlowProblem, K::InvolutiveKernel, mixer::AbstractUnifMixer, nsample::Int
@@ -160,6 +173,7 @@ include("flow/deterministic_mixflow.jl")
 include("flow/ensemble_irf_flow.jl")
 
 export _log_importance_weight
+export log_density_ratio_flow, log_density_ratio_flow_sweep
 export DeterministicMixFlow, IRFMixFlow, BackwardIRFMixFlow
 export EnsembleIRFFlow
 
