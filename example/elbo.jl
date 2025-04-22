@@ -28,7 +28,6 @@ function run_elbo(
         return DataFrame( nchains = NaN, logZ = NaN, elbo = NaN, ess = NaN, nparticles = NaN) 
     end
 
-    # name = "Banana"
     Random.seed!(seed)
 
     vi_res = JLD2.load(
