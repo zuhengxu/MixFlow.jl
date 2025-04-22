@@ -10,5 +10,5 @@ example/work/
 
 **.nextflow/*
 **work/*
-**.nextflow.log*
+**.nextflow.log**
 nextflow
