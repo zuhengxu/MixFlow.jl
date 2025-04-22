@@ -75,9 +75,9 @@ function tv_plot(
 
     targets = unique(df.target)
     kernels = unique(df.kernel)
-    f = unique(df.flowtype)[1] # we only run the homoflow
+    flowtypes = unique(df.flowtype)
 
-    for (t, k) in Iterators.product(targets, kernels)
+    for (t, k, f) in Iterators.product(targets, kernels, flowtypes)
         println("target: $t, kernel: $k, flowtype: $f")
         fig_name = "$(t)__$(_throw_dot(f))__$(_throw_dot(k))"
         local selector = Dict(
@@ -95,7 +95,8 @@ function tv_plot(
             linestyle = :solid,
             lw = 2,
         )
-
+        
+        plot!(fg, ylims = (0, 1))    # TV is between 0 and 1
         plot!(fg, ylabel = "Total Variation", xlabel = "flow length")
         plot!(fg, dpi = 600, size = (500, 400), margin = 10Plots.mm)
         savefig(fg, fig_name * ".png")

@@ -3,7 +3,7 @@ include { instantiate; precompile; activate } from '../nf-nest/pkg.nf'
 include { combine_csvs; } from '../nf-nest/combine.nf'
 
 params.dryRun = false
-params.n_sample = params.dryRun ? 8 : 1024
+params.n_sample = params.dryRun ? 8 : 512 
 params.nrunThreads = 5
 
 def julia_env = file("${moduleDir}/../")
@@ -11,12 +11,12 @@ def julia_script = file(moduleDir/'tuning.jl')
 def plot_script = file(moduleDir/'tuning.jl')
 
 def variables = [
-    seed: [1],
+    seed: [1..5],
     target: ["Banana", "Cross", "Funnel", "WarpedGaussian"], 
     flowtype: ["MF.DeterministicMixFlow"],
     kernel: ["MF.MALA", "MF.RWMH"],
-    step_size: [0.05, 0.1, 0.2, 0.5],
-    flow_length: [300],
+    step_size: [0.05, 0.1, 0.2, 0.5, 1.0],
+    flow_length: [3000],
 ]
 
 workflow {
@@ -29,7 +29,7 @@ workflow {
 
 
 process run_simulation {
-    debug true 
+    debug false 
     memory { 10.GB * Math.pow(2, task.attempt-1) }
     time { 24.hour * Math.pow(2, task.attempt-1) } 
     cpus 1 
