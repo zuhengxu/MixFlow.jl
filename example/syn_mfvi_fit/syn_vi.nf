@@ -1,8 +1,8 @@
-include { crossProduct; filed; deliverables } from './nf-nest/cross.nf'
-include { instantiate; precompile; activate } from './nf-nest/pkg.nf'
+include { crossProduct; filed; deliverables } from '../nf-nest/cross.nf'
+include { instantiate; precompile; activate } from '../nf-nest/pkg.nf'
 
 params.dryRun = false
-def julia_env = file(moduleDir)
+def julia_env = file(moduleDir/'..')
 def julia_script = file(moduleDir/'syn_vi.jl')
 
 def variables = [

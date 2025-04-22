@@ -1,21 +1,21 @@
-include { crossProduct; filed; deliverables } from './nf-nest/cross.nf'
-include { instantiate; precompile; activate } from './nf-nest/pkg.nf'
-include { combine_csvs; } from './nf-nest/combine.nf'
+include { crossProduct; filed; deliverables } from '../nf-nest/cross.nf'
+include { instantiate; precompile; activate } from '../nf-nest/pkg.nf'
+include { combine_csvs; } from '../nf-nest/combine.nf'
 
 params.dryRun = false
 params.n_sample = params.dryRun ? 8 : 512
 params.nrunThreads = 5
 
-def julia_env = file(moduleDir)
-def julia_script = file(moduleDir/'elbo.jl')
-def plot_script = file(moduleDir/'elbo.jl')
+def julia_env = file("${moduleDir}/../")
+def julia_script = file(moduleDir/'uhmc_hmc.jl')
+def plot_script = file(moduleDir/'uhmc_hmc.jl')
 
 def variables = [
     seed: 1..5,
     target: ["Banana", "Cross", "Funnel", "WarpedGaussian"], 
     flowtype: ["MF.DeterministicMixFlow"],
     kernel: ["MF.HMC", "MF.uncorrectHMC"],
-    step_size: [0.01, 0.05, 0.08, 0.1],
+    step_size: [0.01, 0.05, 0.1, 0.2],
     flow_length: [300],
 ]
 
@@ -29,7 +29,7 @@ workflow {
 
 
 process run_simulation {
-    debug false 
+    debug true 
     memory { 10.GB * Math.pow(2, task.attempt-1) }
     time { 24.hour * Math.pow(2, task.attempt-1) } 
     cpus 1 
@@ -71,7 +71,7 @@ process plot {
         path combined_csvs_folder
     publishDir "${deliverables(workflow, params)}", mode: 'copy', overwrite: true
     """
-    ${activate(julia_env)}
+    ${activate(julia_env,params.nrunThreads)}
 
     include("$plot_script")
     uhmc_hmc_tv_plot("$combined_csvs_folder")

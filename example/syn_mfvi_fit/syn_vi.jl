@@ -8,9 +8,10 @@ using JLD2
 using MixFlow 
 const MF = MixFlow
 
-include("Model.jl")
-include("mfvi.jl")
-include("utils.jl")
+
+include(joinpath(@__DIR__, "../mfvi.jl"))
+include(joinpath(@__DIR__, "../Model.jl"))
+include(joinpath(@__DIR__, "../utils.jl"))
 
 
 function get_vi_reference(
