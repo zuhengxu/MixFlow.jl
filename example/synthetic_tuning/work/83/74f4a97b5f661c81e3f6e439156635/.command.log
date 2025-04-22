@@ -1,0 +1,2 @@
+loading startup.jl
+target: Banana, kernel: MF.MALA, flowtype: MF.DeterministicMixFlow

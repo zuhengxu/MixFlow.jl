@@ -11,7 +11,7 @@ def julia_script = file(moduleDir/'tuning.jl')
 def plot_script = file(moduleDir/'tuning.jl')
 
 def variables = [
-    seed: [1..5],
+    seed: 1..5,
     target: ["Banana", "Cross", "Funnel", "WarpedGaussian"], 
     flowtype: ["MF.DeterministicMixFlow"],
     kernel: ["MF.MALA", "MF.RWMH"],

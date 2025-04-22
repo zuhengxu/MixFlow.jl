@@ -1,9 +1,0 @@
-loading startup.jl
-target: Banana, kernel: MF.MALA, flowtype: MF.DeterministicMixFlow
-target: Cross, kernel: MF.MALA, flowtype: MF.DeterministicMixFlow
-target: Funnel, kernel: MF.MALA, flowtype: MF.DeterministicMixFlow
-target: WarpedGaussian, kernel: MF.MALA, flowtype: MF.DeterministicMixFlow
-target: Banana, kernel: MF.RWMH, flowtype: MF.DeterministicMixFlow
-target: Cross, kernel: MF.RWMH, flowtype: MF.DeterministicMixFlow
-target: Funnel, kernel: MF.RWMH, flowtype: MF.DeterministicMixFlow
-target: WarpedGaussian, kernel: MF.RWMH, flowtype: MF.DeterministicMixFlow

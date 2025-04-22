@@ -64,7 +64,7 @@ function run_tv(
     return df
 end
 
-# df = run_tv(1, "Banana", MF.DeterministicMixFlow, 10, MF.RWMH, 0.1; nsample = 16)
+# df = run_tv(1, "Banana", MF.DeterministicMixFlow, 3000, MF.RWMH, 0.1; nsample = 16)
 # df = run_tv(1, "Funnel", MF.DeterministicMixFlow, 30, MF.HMC, 0.1; nsample = 512)
 
 
@@ -83,6 +83,7 @@ function tv_plot(
         local selector = Dict(
             :target => t,
             :kernel => k,
+            :flowtype => f,
         )
         local ds = _subset_expt(df, selector)
 

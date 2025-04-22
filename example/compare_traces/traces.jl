@@ -13,9 +13,9 @@ using MixFlow: _rand_joint_reference, _log_density_ratio
 
 const MF = MixFlow
 
-include("Model.jl")
-include("mfvi.jl")
-include("utils.jl")
+include(joinpath(@__DIR__, "../mfvi.jl"))
+include(joinpath(@__DIR__, "../Model.jl"))
+include(joinpath(@__DIR__, "../plotting.jl"))
 
 function run_traces(name::String, kernel::MultivariateInvolutiveKernel, T_max::Int)
     Random.seed!(1)

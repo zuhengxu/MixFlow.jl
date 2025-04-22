@@ -1,3 +1,4 @@
-2025-04-21 23:39:01	5m 57s	spontaneous_euclid	OK	f71409a9fd772fa02aecced39da0150a	44c474e8-e63e-4e9e-b2eb-c98325ad4e7b	nextflow run tuning.nf
-2025-04-22 00:08:02	38.3s	astonishing_aryabhata	ERR	fde5da787b3d2a950099309810795ef8	7a8bd922-b4e3-410f-b24c-570908e3927e	nextflow run tuning.nf
-2025-04-22 00:08:55	12m 58s	infallible_pike	OK	cbc3531b9732a107b79f1954bc6df631	7a8bd922-b4e3-410f-b24c-570908e3927e	nextflow run tuning.nf -resume
+2025-04-22 00:36:53	25.1s	special_laplace	OK	efd910f5f936cb944f848f204f823694	a45fd41b-cc69-4a4b-bc04-e54617b5d57f	nextflow run tuning.nf --dryRun
+2025-04-22 00:39:12	24.5s	grave_davinci	OK	42e5873d35dbcc42bf9e9f0cf6749a24	b35a69dc-204c-46c4-a479-ec24b884e354	nextflow run tuning.nf --dryRun
+2025-04-22 00:40:42	1m 24s	backstabbing_swirles	OK	53359c8e6de8f2f997e543236a2ba286	35134fea-8fef-411a-b687-3339f411027e	nextflow run tuning.nf --dryRun
+2025-04-22 00:42:37	1h 16m 45s	cheesy_bardeen	OK	53359c8e6de8f2f997e543236a2ba286	bfd99475-a68e-43ff-bcda-71ecb9817ad3	nextflow run tuning.nf
