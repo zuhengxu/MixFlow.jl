@@ -8,3 +8,7 @@ example/work/
 
 *.html
 
+.nextflow/*
+work/*
+.nextflow.log*
+nextflow
