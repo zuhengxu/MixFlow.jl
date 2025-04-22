@@ -15,6 +15,8 @@ include("Model.jl")
 include("mfvi.jl")
 include("utils.jl")
 
+include(joinpath(@__DIR__, "plotting.jl"))
+
 function run_elbo(
     seed, name::String, flowtype, T::Int, kernel_type, step_size; 
     nsample = 1024, leapfrog_steps=50,
@@ -115,3 +117,50 @@ end
 
 # tv_uhmc = run_tv(1, "Funnel", MF.DeterministicMixFlow, 200, MF.uncorrectHMC, 0.1; nsample = 512)
 # tv_hmc = run_tv(1, "Funnel", MF.DeterministicMixFlow, 30, MF.HMC, 0.1; nsample = 512)
+
+
+function uhmc_hmc_tv_plot(
+    combined_csvs_folder::String
+)
+    df = CSV.read(joinpath(combined_csvs_folder, "summary.csv"), DataFrame) 
+
+    targets = unique(df.target)
+    kernels = unique(df.kernel)
+    f = unique(df.flowtype)[1]
+    color_list = [1:4 ;]
+
+    for t in targets
+        fig_name = "$(t)__$(_throw_dot(f))"
+        println(fig_name)
+
+        local ds = _subset_expt(df, Dict(:target => t, :kernel => kernels[1]))
+        local fg = groupederrorline(
+            ds, :Ts, :tv, :seed, :step_size;
+            mark_nan = true,
+            errorstyle = :ribbon,
+            legend = :best,
+            title = fig_name,
+            groupcolor = color_list,
+            linestyle = :solid,
+            lw = 2,
+        )
+
+        local ds1 = _subset_expt(df, Dict(:target => t, :kernel => kernels[2]))
+
+        add_groupederrorline!(
+            fg,
+            ds1, :Ts, :tv, :seed, :step_size;
+            mark_nan = true,
+            errorstyle = :ribbon,
+            label = "",
+            groupcolor = color_list,
+            linestyle = :dash,
+            lw = 2,
+        )
+        plot!(fg, ylabel = "Total Variation", xlabel = "flow length")
+        plot!(fg, [0], [0], linestyle = :dash, label = "uHMC", color = "black")
+        plot!(fg, [0], [0], linestyle = :solid, label = "HMC", color = "black")
+        plot!(dpi = 600, size = (500, 400), margin = 10Plots.mm)
+        savefig(fg, fig_name * ".png")
+    end
+end

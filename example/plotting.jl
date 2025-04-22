@@ -68,10 +68,30 @@ function subset_expt(
     selector::Dict,
 )
     df = CSV.read(combined_csv_dir, DataFrame)
-    df = _remove_nan(df)
+    # df = _remove_nan(df)
     df_s = _subset_expt(df, selector)
     return df_s
 end
+
+function _process_nan_for_errorline!(
+    ymat::AbstractMatrix{T}
+) where T
+    # if one row has nan, change the whole row to nan
+    for i in 1:size(ymat, 1)
+        if any(isnan.(ymat[i, :]))
+            ymat[i, :] .= NaN
+        end
+    end
+end
+
+function _process_nan_for_errorline!(
+    ymat::AbstractArray{T, 3}
+) where T
+    @views for i in 1:size(ymat, 3)
+        _process_nan_for_errorline!(ymat[:, :, i])
+    end
+end
+
 
 """
 process the dataframe to a 3 way array that can be sent to StatsPlots.errorline
@@ -121,8 +141,57 @@ function _process_for_grouped_errorline(
             end
         end
     end
+    # sync all rows with nans, avoiding plotting issues with error bar
+    _process_nan_for_errorline!(y_mat)
     return xs, y_mat, g_vals
 end 
+
+"""
+add a marker to the figure indicating the location of nan happens
+ymat has to be processed by _process_nan_for_errorline!
+"""
+function nan_marks(xs, y_mat::AbstractMatrix)
+    x_pos = []
+    y_pos = []
+    idx = findfirst(isnan, y_mat[:,1]) 
+    if idx === nothing
+        return nothing, nothing
+    end
+    push!(x_pos, xs[idx-1])        
+    push!(y_pos, mean(y_mat[idx-1, :]))
+    return x_pos, y_pos
+end
+
+function nan_marks(xs, y_mat::AbstractArray{T, 3}) where T
+    x_pos = []
+    y_pos = []
+    for i in 1:size(y_mat, 3)
+        xps, yps = nan_marks(xs, @view(y_mat[:, :, i]))
+        if xps === nothing
+            continue
+        end
+        push!(x_pos, xps)
+        push!(y_pos, yps)
+    end
+    if isempty(x_pos)
+        return nothing, nothing
+    end
+    return reduce(vcat, x_pos), reduce(vcat, y_pos)
+end
+
+function add_nan_mark_fig!(fg, xs, y_mat; plt_kargs...)
+    x_pos, y_pos = nan_marks(xs, y_mat)
+    if x_pos !== nothing
+        scatter!(
+            fg,
+            x_pos, y_pos,
+            label = "",
+            marker = :x,
+            markercolor = :red;
+            plt_kargs...,
+        )
+    end
+end
 
 function groupederrorline(
     df::AbstractDataFrame,          
@@ -130,6 +199,7 @@ function groupederrorline(
     y_key::Symbol,
     rep_key::Symbol,
     group_key::Symbol;
+    mark_nan = false,
     plt_kargs...
 )
     xs, y_mat, gs = _process_for_grouped_errorline(
@@ -145,11 +215,43 @@ function groupederrorline(
         label = gs',
         xlabel = x_key,
         ylabel = y_key,
-        legend = :best,
-        legendtitle = group_key;
+        legend = :best;
         plt_kargs...,
     )
+    if mark_nan
+        add_nan_mark_fig!(fg, xs, y_mat; label = "NaN")
+    end
     return fg
+end
+
+function add_groupederrorline!(
+    fg,
+    df::AbstractDataFrame,          
+    x_key::Symbol,
+    y_key::Symbol,
+    rep_key::Symbol,
+    group_key::Symbol;
+    mark_nan = false,
+    plt_kargs...
+)
+    xs, y_mat, _ = _process_for_grouped_errorline(
+        df,
+        x_key,
+        y_key,
+        rep_key,
+        group_key,
+    )
+
+    StatsPlots.errorline!(
+        fg,
+        xs, y_mat,
+        xlabel = x_key,
+        ylabel = y_key;
+        plt_kargs...,
+    )
+    if mark_nan
+        add_nan_mark_fig!(fg, xs, y_mat; label = "NaN")
+    end
 end
 
 

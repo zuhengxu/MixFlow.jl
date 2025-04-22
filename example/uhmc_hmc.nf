@@ -4,10 +4,11 @@ include { combine_csvs; } from './nf-nest/combine.nf'
 
 params.dryRun = false
 params.n_sample = params.dryRun ? 8 : 512
-params.nrunThreads = 10
+params.nrunThreads = 5
 
 def julia_env = file(moduleDir)
 def julia_script = file(moduleDir/'elbo.jl')
+def plot_script = file(moduleDir/'elbo.jl')
 
 def variables = [
     seed: 1..5,
@@ -22,6 +23,7 @@ workflow {
     compiled_env = instantiate(julia_env) | precompile
     configs = crossProduct(variables, params.dryRun)
     combined = run_simulation(compiled_env, configs) | combine_csvs
+    plot(compiled_env, plot_script, combined)
     final_deliverable(compiled_env, combined)
 }
 
@@ -56,6 +58,23 @@ process run_simulation {
     # store output
     mkdir("${filed(config)}")
     CSV.write("${filed(config)}/summary.csv", df)
+    """
+}
+
+process plot {
+    input:
+        path julia_env 
+        path plot_script
+        path combined_csvs_folder 
+    output:
+        path '*.png'
+        path combined_csvs_folder
+    publishDir "${deliverables(workflow, params)}", mode: 'copy', overwrite: true
+    """
+    ${activate(julia_env)}
+
+    include("$plot_script")
+    uhmc_hmc_tv_plot("$combined_csvs_folder")
     """
 }
 
