@@ -1,0 +1,30 @@
+loading startup.jl
+ERROR: LoadError: Cannot convert Pair{Symbol, Int64} to series data for plotting
+Stacktrace:
+  [1] error(s::String)
+    @ Base ./error.jl:35
+  [2] _prepare_series_data(x::Pair{Symbol, Int64})
+    @ RecipesPipeline ~/.julia/packages/RecipesPipeline/BGM3l/src/series.jl:8
+  [3] _series_data_vector(x::Pair{Symbol, Int64}, plotattributes::Dict{Symbol, Any})
+    @ RecipesPipeline ~/.julia/packages/RecipesPipeline/BGM3l/src/series.jl:36
+  [4] macro expansion
+    @ ~/.julia/packages/RecipesPipeline/BGM3l/src/series.jl:128 [inlined]
+  [5] apply_recipe(plotattributes::AbstractDict{Symbol, Any}, ::Type{RecipesPipeline.SliceIt}, x::Any, y::Any, z::Any)
+    @ RecipesPipeline ~/.julia/packages/RecipesBase/BRe07/src/RecipesBase.jl:300
+  [6] _process_userrecipes!(plt::Any, plotattributes::Any, args::Any)
+    @ RecipesPipeline ~/.julia/packages/RecipesPipeline/BGM3l/src/user_recipe.jl:38
+  [7] recipe_pipeline!(plt::Any, plotattributes::Any, args::Any)
+    @ RecipesPipeline ~/.julia/packages/RecipesPipeline/BGM3l/src/RecipesPipeline.jl:72
+  [8] _plot!(plt::Plots.Plot, plotattributes::Any, args::Any)
+    @ Plots ~/.julia/packages/Plots/dIjan/src/plot.jl:223
+  [9] plot!(::Plots.Plot, ::Any, ::Vararg{Any}; kw...)
+    @ Plots ~/.julia/packages/Plots/dIjan/src/plot.jl:213
+ [10] plot!(::Any, ::Vararg{Any}; kw...)
+    @ Plots ~/.julia/packages/Plots/dIjan/src/plot.jl:202
+ [11] plot!
+    @ ~/.julia/packages/Plots/dIjan/src/plot.jl:194 [inlined]
+ [12] grouped_ess_plot(combined_csvs_folder::String; dpi::Int64, size::Tuple{Int64, Int64}, margin::Measures.AbsoluteLength, kargs::@Kwargs{xtickfontsize::Int64, ytickfontsize::Int64, yguidefontsize::Int64})
+    @ Main ~/Research/MixFlow.jl/example/compare_traces/trace_plotting.jl:177
+ [13] top-level scope
+    @ ~/Research/MixFlow.jl/example/compare_traces/work/4a/2142822c486d1dc6888aeff542f82f/.command.sh:4
+in expression starting at /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/4a/2142822c486d1dc6888aeff542f82f/.command.sh:4

@@ -11,4 +11,5 @@ example/work/
 **.nextflow/*
 **work/*
 **.nextflow.log**
+**summary.csv
 nextflow

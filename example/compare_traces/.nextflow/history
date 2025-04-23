@@ -9,3 +9,16 @@
 2025-04-22 18:12:33	27.5s	dreamy_wiles	OK	6dbcbdebf68da7c56eb3a854f9626900	517937fe-7255-40cd-a535-85f859d4f94e	nextflow run traces.nf --dryRun
 2025-04-22 18:24:49	17m 18s	disturbed_pauling	ERR	7cceb66b437a93bcbca9f692758f2be7	d446ca47-94cf-455e-95ac-8cd6c64e5775	nextflow run traces.nf
 2025-04-22 18:42:58	2h 26m 34s	cranky_escher	OK	6468bed11da2c5f3c87e5cc2d7a427ae	d446ca47-94cf-455e-95ac-8cd6c64e5775	nextflow run traces.nf -resume
+2025-04-22 21:47:12	52s	sick_gates	ERR	c2e29e8fb4955fd43d417937b9d0c4ac	d446ca47-94cf-455e-95ac-8cd6c64e5775	nextflow run traces.nf -resume
+2025-04-22 21:48:26	2h 16m 7s	thirsty_noyce	ERR	79521af77a82858c5b72bd1a00c19591	d446ca47-94cf-455e-95ac-8cd6c64e5775	nextflow run traces.nf -resume
+2025-04-23 00:05:01	5h 55m 54s	stoic_dubinsky	OK	6abafefc6599e987bb145d0084142ebe	d446ca47-94cf-455e-95ac-8cd6c64e5775	nextflow run traces.nf -resume
+2025-04-23 16:07:50	-	gloomy_chandrasekhar	-	f70184c92b9608fbcf608ce2c75f7a6b	d446ca47-94cf-455e-95ac-8cd6c64e5775	nextflow run traces.nf -resume
+2025-04-23 16:08:39	34.3s	hungry_meucci	OK	4c8252396c1290aa4014dac66d9dbf2b	d446ca47-94cf-455e-95ac-8cd6c64e5775	nextflow run traces.nf -resume
+2025-04-23 16:16:37	38.6s	spontaneous_poisson	OK	4c8252396c1290aa4014dac66d9dbf2b	d446ca47-94cf-455e-95ac-8cd6c64e5775	nextflow run traces.nf -resume
+2025-04-23 16:20:15	32.4s	zen_lamport	ERR	3822d60447184885a5b71f160e0faefd	d446ca47-94cf-455e-95ac-8cd6c64e5775	nextflow run traces.nf -resume
+2025-04-23 16:24:39	31.2s	fervent_mahavira	ERR	354e41cbf27409109c58b225e33ff52b	d446ca47-94cf-455e-95ac-8cd6c64e5775	nextflow run traces.nf -resume
+2025-04-23 16:26:02	38.6s	marvelous_swartz	OK	354e41cbf27409109c58b225e33ff52b	d446ca47-94cf-455e-95ac-8cd6c64e5775	nextflow run traces.nf -resume
+2025-04-23 16:27:58	44.5s	ridiculous_ritchie	OK	91e4e3e26fa5441efb1e9ef3069b494f	d446ca47-94cf-455e-95ac-8cd6c64e5775	nextflow run traces.nf -resume
+2025-04-23 16:35:04	44.7s	serene_banach	OK	6495231ea99e4b995292316885e1182d	d446ca47-94cf-455e-95ac-8cd6c64e5775	nextflow run traces.nf -resume
+2025-04-23 16:37:26	42.1s	sick_heisenberg	OK	b6413e61e35582e8d6ab78e94319861e	d446ca47-94cf-455e-95ac-8cd6c64e5775	nextflow run traces.nf -resume
+2025-04-23 16:38:48	41.9s	gloomy_bassi	OK	47a169287c4918b1ea3654456065521d	d446ca47-94cf-455e-95ac-8cd6c64e5775	nextflow run traces.nf -resume

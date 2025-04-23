@@ -1,0 +1,2 @@
+loading startup.jl
+[ Info: Running mcmc on Cross MALA{Float64}(0.05, [1.0 0.0; 0.0 1.0]) with T_max = 3000

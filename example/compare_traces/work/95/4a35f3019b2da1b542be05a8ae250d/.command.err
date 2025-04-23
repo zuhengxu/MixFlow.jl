@@ -1,0 +1,49 @@
+[ Info: Running mcmc on Cross HMC{Float64}(50, 0.05) with T_max = 500
+Sampling   0%|▏                              |  ETA: 0:08:06[K
+                                 2: iterations[K
+                               0.0: ratio_divergent_transitions[K
+                               NaN: ratio_divergent_transitions_during_adaption[K
+                                50: n_steps[K
+                              true: is_accept[K
+                               1.0: acceptance_rate[K
+               -2.3099561367324934: log_density[K
+                 4.260069958706998: hamiltonian_energy[K
+             -0.013344605004856902: hamiltonian_energy_error[K
+                             false: numerical_error[K
+                              0.05: step_size[K
+                              0.05: nom_step_size[K
+                             false: is_adapt[K
+   UnitEuclideanMetric([1.0, 1.0]): mass_matrix[K[A[A[A[A[A[A[A[A[A[A[A[A[A[A
+
+
+
+
+
+
+
+
+
+
+
+
+
+[K[A[K[A[K[A[K[A[K[A[K[A[K[A[K[A[K[A[K[A[K[A[K[A[K[A[K[ASampling 100%|███████████████████████████████| Time: 0:00:03[K
+                               500: iterations[K
+                               0.0: ratio_divergent_transitions[K
+                               NaN: ratio_divergent_transitions_during_adaption[K
+                                50: n_steps[K
+                              true: is_accept[K
+                               1.0: acceptance_rate[K
+                 -1.52339279719417: log_density[K
+                1.6265502488990995: hamiltonian_energy[K
+             -0.002293420303887128: hamiltonian_energy_error[K
+                             false: numerical_error[K
+                              0.05: step_size[K
+                              0.05: nom_step_size[K
+                             false: is_adapt[K
+   UnitEuclideanMetric([1.0, 1.0]): mass_matrix[K
+┌ Info: Finished 500 sampling steps for 1 chains in 3.911903196 (s)
+│   h = Hamiltonian(metric=UnitEuclideanMetric([1.0, 1.0]), kinetic=AdvancedHMC.GaussianKinetic())
+│   κ = AdvancedHMC.HMCKernel{AdvancedHMC.FullMomentumRefreshment, AdvancedHMC.Trajectory{AdvancedHMC.EndPointTS, AdvancedHMC.Leapfrog{Float64}, AdvancedHMC.FixedNSteps}}(AdvancedHMC.FullMomentumRefreshment(), Trajectory{AdvancedHMC.EndPointTS}(integrator=Leapfrog(ϵ=0.05), tc=AdvancedHMC.FixedNSteps(50)))
+│   EBFMI_est = 1.0191510396957781
+└   average_acceptance_rate = 0.9926021138275963
