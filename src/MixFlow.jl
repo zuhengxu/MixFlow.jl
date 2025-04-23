@@ -106,10 +106,10 @@ function mcmc_sampler(
 ) where {T<:Real}
     # Initialize the chain
     x = x0
-    samples = zeros(T, length(x0), nsteps)
+    samples = zeros(T, length(x0), nsteps+1)
     samples[:, 1] .= x
 
-    for i in 2:nsteps
+    for i in 2:nsteps+1
         # Perform an involutive mcmc step
         x = mcmc_step(prob, K, x)
         samples[:, i] .= x

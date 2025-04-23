@@ -5,12 +5,12 @@ include { combine_csvs; } from '../nf-nest/combine.nf'
 params.dryRun = false
 params.nrunThreads = 5
 
-def julia_env = file(moduleDir/'..')
+def julia_env = file("${moduleDir}/../")
 def julia_script = file(moduleDir/'traces.jl')
 
 def variables = [
-    tracetype: ["mcmc", "fwd_homo", "fwd_irf", "inv_irf", "bwd_irf", "bwd_inv_irf"],
     seed : 1..32,
+    tracetype: ["mcmc", "fwd_homo", "fwd_irf", "inv_irf", "bwd_irf", "bwd_inv_irf"],
     target: ["Banana", "Funnel", "WarpedGaussian", "Cross"], 
     kernel: ["MF.RWMH", "MF.MALA", "MF.HMC"],
 ]
@@ -18,14 +18,15 @@ def variables = [
 workflow {
     compiled_env = instantiate(julia_env) | precompile
     configs = crossProduct(variables, params.dryRun)
-    combined = run_simulation(compiled_env, configs) 
+    combined = run_simulation(compiled_env, configs) | combine_csvs
     // plot(compiled_env, plot_script, combined)
     final_deliverable(compiled_env, combined)
 }
 
 
+
 process run_simulation {
-    debug false 
+    debug true 
     memory { 5.GB * Math.pow(2, task.attempt-1) }
     time { 24.hour * Math.pow(2, task.attempt-1) } 
     cpus 1 
@@ -46,9 +47,8 @@ process run_simulation {
     tracetype = "${config.tracetype}"
     kernel_type = ${config.kernel}
 
-
     # run simulation
-    run_traces(seed, name, kernel, tracetype)
+    df = run_traces(seed, name, kernel, tracetype)
 
     # store output
     mkdir("${filed(config)}")

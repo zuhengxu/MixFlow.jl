@@ -1,1 +1,4 @@
 loading startup.jl
+Precompiling project...
+   2987.6 ms  ✓ MixFlow
+  1 dependency successfully precompiled in 4 seconds. 429 already precompiled.
