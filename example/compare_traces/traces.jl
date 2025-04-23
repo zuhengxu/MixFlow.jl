@@ -115,7 +115,7 @@ function run_traces(seed, name::String, kernel_type, trace_type)
     return df
 end
 
-# dts = run_traces(1, "Banana", MF.HMC, "mcmc")
+# dts = run_traces(1, "Banana", MF.RWMH, "mcmc")
 
 # function chain_from_combine_csvs( 
 #     combined_csvs_folder::String,

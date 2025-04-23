@@ -1,0 +1,6 @@
+ERROR: LoadError: UndefVarError: `kernel` not defined in `Main`
+Suggestion: check for spelling errors or missing imports.
+Stacktrace:
+ [1] top-level scope
+   @ ~/Research/MixFlow.jl/example/compare_traces/work/13/c58d3b876325898d7d9a3cb70e229a/.command.sh:12
+in expression starting at /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/13/c58d3b876325898d7d9a3cb70e229a/.command.sh:12

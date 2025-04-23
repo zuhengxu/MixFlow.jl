@@ -26,7 +26,7 @@ workflow {
 
 
 process run_simulation {
-    debug true 
+    debug false 
     memory { 5.GB * Math.pow(2, task.attempt-1) }
     time { 24.hour * Math.pow(2, task.attempt-1) } 
     cpus 1 
@@ -48,7 +48,7 @@ process run_simulation {
     kernel_type = ${config.kernel}
 
     # run simulation
-    df = run_traces(seed, name, kernel, tracetype)
+    df = run_traces(seed, name, kernel_type, tracetype)
 
     # store output
     mkdir("${filed(config)}")
