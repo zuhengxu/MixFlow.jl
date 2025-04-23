@@ -1,13 +1,12 @@
-using Random, Distributions, Plots
+using Random, Distributions
 using LinearAlgebra
-using JLD2
 using LogExpFunctions
 using LogDensityProblems, LogDensityProblemsAD
 using MixFlow 
 using ADTypes, Mooncake
 using NormalizingFlows
 using Bijectors
-using ProgressMeter
+using DataFrames
 using MixFlow: _rand_joint_reference, _log_density_ratio
 
 const MF = MixFlow
@@ -34,9 +33,12 @@ fn_prefix = "$(name)_$(_get_kernel_name(kernel))"
 res = JLD2.load( joinpath(res_dir, "$(fn_prefix)_trajectory.jld2"))
 
 
-test_func = Base.Fix1(MF._log_density_ratio, prob)
+f_log_ratio = Base.Fix1(MF._log_density_ratio, prob)
+
 
 x_mcmc = res["mcmc"]
+
+
 x0 = res["bwd"][:, 1]
 x_mcmc = hcat(x0, x_mcmc)
 es = [test_func(x) for x in eachcol(x_mcmc)]
@@ -44,14 +46,14 @@ drs = expm1.(es) .+ 1
 
 
 
-
+using MCMCChains
 
 dims, N = size(x_mcmc)
-nchains = 5 
+nchains = 4 
 
 samples_all = zeros(N, dims, nchains)
 samples_all[:, :, 1] .= x_mcmc'
-for (i, k) in enumerate(["mcmc", "fwd", "bwd", "fwd_homo", "inv"])
+for (i, k) in enumerate(["fwd", "bwd", "fwd_homo", "inv"])
     s = res[k]
     samples_all[:, :, i+1] .= s'
 end
@@ -59,11 +61,10 @@ chn = Chains(samples_all, [:d1, :d2])
 
 samples = [test_func(x) for x in eachcol(x_mcmc)]
 
-ess(chn; autocov_method = FFTAutocovMethod(), maxlag = typemax(Int))
+ess_chn = ess(chn[:, :, 1]; autocov_method = FFTAutocovMethod(), maxlag = typemax(Int))
 
 
 
-using MCMCChains
 using StatsPlots
 
 # Define the experiment
