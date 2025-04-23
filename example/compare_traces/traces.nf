@@ -9,9 +9,10 @@ def julia_env = file("${moduleDir}/../")
 def julia_script = file(moduleDir/'traces.jl')
 
 def variables = [
-    seed : 1..32,
+    seed : 1..10,
     tracetype: ["mcmc", "fwd_homo", "fwd_irf", "inv_irf", "bwd_irf", "bwd_inv_irf"],
-    target: ["Banana", "Funnel", "WarpedGaussian", "Cross"], 
+    // target: ["Banana", "Funnel", "WarpedGaussian", "Cross"], 
+    target : ["Banana", "Cross"],
     kernel: ["MF.RWMH", "MF.MALA", "MF.HMC"],
 ]
 

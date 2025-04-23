@@ -1,0 +1,162 @@
+loading startup.jl
+[ Info: Running mcmc on Banana_HMC with T_max = 500
+Sampling   0%|▏                              |  ETA: 0:12:09[K
+                                 2: iterations[K
+                               0.0: ratio_divergent_transitions[K
+                               NaN: ratio_divergent_transitions_during_adaption[K
+                                50: n_steps[K
+                              true: is_accept[K
+                               1.0: acceptance_rate[K
+                -3.223260919636803: log_density[K
+                 4.768244941886006: hamiltonian_energy[K
+             -0.027089376242602548: hamiltonian_energy_error[K
+                             false: numerical_error[K
+                               0.2: step_size[K
+                               0.2: nom_step_size[K
+                             false: is_adapt[K
+   UnitEuclideanMetric([1.0, 1.0]): mass_matrix[K[A[A[A[A[A[A[A[A[A[A[A[A[A[A
+
+
+
+
+
+
+
+
+
+
+
+
+
+[K[A[K[A[K[A[K[A[K[A[K[A[K[A[K[A[K[A[K[A[K[A[K[A[K[A[K[ASampling  77%|███████████████████████▉       |  ETA: 0:00:02[K
+                               386: iterations[K
+                              0.03: ratio_divergent_transitions[K
+                               NaN: ratio_divergent_transitions_during_adaption[K
+                                50: n_steps[K
+                              true: is_accept[K
+                               1.0: acceptance_rate[K
+                 -3.98391767236932: log_density[K
+                 4.563674363358727: hamiltonian_energy[K
+              -0.07155339110092118: hamiltonian_energy_error[K
+                             false: numerical_error[K
+                               0.2: step_size[K
+                               0.2: nom_step_size[K
+                             false: is_adapt[K
+   UnitEuclideanMetric([1.0, 1.0]): mass_matrix[K[A[A[A[A[A[A[A[A[A[A[A[A[A[A
+
+
+
+
+
+
+
+
+
+
+
+
+
+[K[A[K[A[K[A[K[A[K[A[K[A[K[A[K[A[K[A[K[A[K[A[K[A[K[A[K[ASampling  85%|██████████████████████████▍    |  ETA: 0:00:01[K
+                               426: iterations[K
+                              0.03: ratio_divergent_transitions[K
+                               NaN: ratio_divergent_transitions_during_adaption[K
+                                50: n_steps[K
+                              true: is_accept[K
+                               1.0: acceptance_rate[K
+                -3.510887009381749: log_density[K
+                 4.025869923634002: hamiltonian_energy[K
+             -0.052336594331591435: hamiltonian_energy_error[K
+                             false: numerical_error[K
+                               0.2: step_size[K
+                               0.2: nom_step_size[K
+                             false: is_adapt[K
+   UnitEuclideanMetric([1.0, 1.0]): mass_matrix[K[A[A[A[A[A[A[A[A[A[A[A[A[A[A
+
+
+
+
+
+
+
+
+
+
+
+
+
+[K[A[K[A[K[A[K[A[K[A[K[A[K[A[K[A[K[A[K[A[K[A[K[A[K[A[K[ASampling  92%|████████████████████████████▍  |  ETA: 0:00:01[K
+                               458: iterations[K
+                              0.02: ratio_divergent_transitions[K
+                               NaN: ratio_divergent_transitions_during_adaption[K
+                                50: n_steps[K
+                              true: is_accept[K
+                0.6707075352407782: acceptance_rate[K
+                 -3.78758747934405: log_density[K
+                 10.41818146533181: hamiltonian_energy[K
+               0.39942210104947407: hamiltonian_energy_error[K
+                             false: numerical_error[K
+                               0.2: step_size[K
+                               0.2: nom_step_size[K
+                             false: is_adapt[K
+   UnitEuclideanMetric([1.0, 1.0]): mass_matrix[K[A[A[A[A[A[A[A[A[A[A[A[A[A[A
+
+
+
+
+
+
+
+
+
+
+
+
+
+[K[A[K[A[K[A[K[A[K[A[K[A[K[A[K[A[K[A[K[A[K[A[K[A[K[A[K[ASampling  98%|██████████████████████████████▎|  ETA: 0:00:00[K
+                               488: iterations[K
+                              0.02: ratio_divergent_transitions[K
+                               NaN: ratio_divergent_transitions_during_adaption[K
+                                50: n_steps[K
+                              true: is_accept[K
+                0.9839912755764261: acceptance_rate[K
+                -3.726427956798431: log_density[K
+                 4.109509126776276: hamiltonian_energy[K
+               0.01613824825330923: hamiltonian_energy_error[K
+                             false: numerical_error[K
+                               0.2: step_size[K
+                               0.2: nom_step_size[K
+                             false: is_adapt[K
+   UnitEuclideanMetric([1.0, 1.0]): mass_matrix[K[A[A[A[A[A[A[A[A[A[A[A[A[A[A
+
+
+
+
+
+
+
+
+
+
+
+
+
+[K[A[K[A[K[A[K[A[K[A[K[A[K[A[K[A[K[A[K[A[K[A[K[A[K[A[K[ASampling 100%|███████████████████████████████| Time: 0:00:05[K
+                               500: iterations[K
+                              0.02: ratio_divergent_transitions[K
+                               NaN: ratio_divergent_transitions_during_adaption[K
+                                50: n_steps[K
+                              true: is_accept[K
+                0.9461355431211167: acceptance_rate[K
+                -3.918663084218852: log_density[K
+                3.9289064758326875: hamiltonian_energy[K
+               0.05536943993901389: hamiltonian_energy_error[K
+                             false: numerical_error[K
+                               0.2: step_size[K
+                               0.2: nom_step_size[K
+                             false: is_adapt[K
+   UnitEuclideanMetric([1.0, 1.0]): mass_matrix[K
+┌ Info: Finished 500 sampling steps for 1 chains in 5.941364438 (s)
+│   h = Hamiltonian(metric=UnitEuclideanMetric([1.0, 1.0]), kinetic=AdvancedHMC.GaussianKinetic())
+│   κ = AdvancedHMC.HMCKernel{AdvancedHMC.FullMomentumRefreshment, AdvancedHMC.Trajectory{AdvancedHMC.EndPointTS, AdvancedHMC.Leapfrog{Float64}, AdvancedHMC.FixedNSteps}}(AdvancedHMC.FullMomentumRefreshment(), Trajectory{AdvancedHMC.EndPointTS}(integrator=Leapfrog(ϵ=0.2), tc=AdvancedHMC.FixedNSteps(50)))
+│   EBFMI_est = 1.4442375476524656
+└   average_acceptance_rate = 0.8945824390939126
