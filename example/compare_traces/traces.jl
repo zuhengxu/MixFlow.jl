@@ -22,25 +22,25 @@ include(joinpath(@__DIR__, "../plotting.jl"))
 function simulation_setting(name)
     if name == "Banana"
         dic = Dict(
-            "HMC" => (500, 50, 0.2),
+            "HMC" => (500, 50, 0.1),
             "MALA" => (3000, 0.05, ones(2)),
             "RWMH" => (3000, 0.5, ones(2)),
         )
     elseif name == "Cross"
         dic = Dict(
-            "HMC" => (500, 50, 0.1),
+            "HMC" => (500, 50, 0.05),
             "MALA" => (3000, 0.05, ones(2)),
             "RWMH" => (3000, 1.0, ones(2)),
         )
     elseif name == "Funnel"
         dic = Dict(
-            "HMC" => (500, 50, 0.2),
+            "HMC" => (500, 50, 0.1),
             "MALA" => (3000, 0.1, ones(2)),
             "RWMH" => (3000, 1.0, ones(2)),
         )
     elseif name == "WarpedGaussian"
         dic = Dict(
-            "HMC" => (500, 50, 0.2),
+            "HMC" => (500, 50, 0.08),
             "MALA" => (3000, 0.05, ones(2)),
             "RWMH" => (3000, 1.0, ones(2)),
         )
@@ -77,7 +77,7 @@ function run_traces(seed, name::String, kernel_type, trace_type)
     
 
     fn_prefix = "$(name)_$(_get_kernel_name(kernel))"
-    @info "Running $(trace_type) on $(fn_prefix) with T_max = $T_max"
+    @info "Running $(trace_type) on $(name) $(kernel) with T_max = $T_max"
 
     ###############
     # generating trajectories
@@ -115,7 +115,7 @@ function run_traces(seed, name::String, kernel_type, trace_type)
     return df
 end
 
-# dts = run_traces(1, "Banana", MF.RWMH, "mcmc")
+# dts = run_traces(2, "Cross", MF.HMC, "inv_irf")
 
 # function chain_from_combine_csvs( 
 #     combined_csvs_folder::String,
