@@ -1,21 +1,3 @@
-using Random, Distributions
-using LinearAlgebra
-using LogExpFunctions
-using LogDensityProblems, LogDensityProblemsAD
-using MixFlow 
-using ADTypes, Mooncake
-using NormalizingFlows
-using Bijectors
-using DataFrames
-using MixFlow: _rand_joint_reference, _log_density_ratio
-
-const MF = MixFlow
-
-include("Model.jl")
-include("mfvi.jl")
-include("utils.jl")
-
-
 using MCMCDiagnosticTools
 
 fig_dir = joinpath("figure/")
@@ -196,22 +178,67 @@ function run_traces(seed, name::String, kernel_type, trace_type)
     return df
 end
 
-# dts = run_traces(1, "Banana", MF.RWMH, "mcmc")
+dts = run_traces(1, "Banana", MF.RWMH, "mcmc")
 
-# function chain_from_combine_csvs( 
-#     combined_csvs_folder::String,
-#     target,
-#     kernel_str, 
-#     trace_type, 
-# )
-#     df = CSV.read(joinpath(combined_csvs_folder, "summary.csv"), DataFrame)
+function chain_from_combine_csvs( 
+    combined_csvs_folder::String,
+    target,
+    kernel_str, 
+    trace_type, 
+)
+    df = CSV.read(joinpath(combined_csvs_folder, "summary.csv"), DataFrame)
 
-#     selector = Dict(
-#         :target => target, 
-#         :kernel => kernel_str,
-#         :trace_type => trace_type,
-#     )
-#     # groupby then iter over groupby and put in 3way array
-#     # ds = _subset_expt(df, selector)[!, [:iter, :d1, :d2, :dr, :seed]]
-# end
-#     
+    selector = Dict(
+        :target => target, 
+        :kernel => kernel_str,
+        :trace_type => trace_type,
+    )
+    # groupby then iter over groupby and put in 3way array
+    ds = _subset_expt(df, selector)
+    dgs = @pipe ds |> 
+            select(_, [:iter, :d1, :d2, :dr, :seed]) |>
+            groupby(_, [:seed])
+
+    Cs = zeros(size(dds[1], 1), 3, length(dgs))
+    for (i, d) in enumerate(dds)
+        Cs[:, :, i] .= Array(d[:, 2:end-1])
+    end
+    # xs = [1:size(dds, 1) ;]
+    return Cs
+end
+    
+df = CSV.read(
+    joinpath(
+        "/home/zuhdav/Research/MixFlow.jl/example/compare_traces/deliverables/scriptName=traces.nf___dryRun=false___nrunThreads=5/output",
+        "summary.csv"
+    ), DataFrame)
+
+target = "Banana"
+kernel_str = "MF.RWMH"
+trace_type = "mcmc"
+
+selector = Dict(
+    :target => target, 
+    :kernel => kernel_str,
+    :tracetype => trace_type,
+)
+ds = _subset_expt(df, selector)
+dds = @pipe ds |> 
+        select(_, [:iter, :d1, :d2, :dr, :seed]) |>
+        groupby(_, [:seed])
+
+size(dds[1])
+Cs = zeros(size(dds[1], 1), size(dds[1], 2)-2, length(dds))
+for (i, d) in enumerate(dds)
+    Cs[:, :, i] .= Array(d[:, 2:end-1])
+end
+
+chn = Chains(Cs, [:d1, :d2, :dr])
+
+
+Es = [ess(chn[:, :, i]; autocov_method = FFTAutocovMethod(), maxlag = typemax(Int)) for i in 1:size(Cs, 3)]
+E = ess(chn[:, :, 1]; autocov_method = FFTAutocovMethod(), maxlag = typemax(Int))
+# groupby then iter over groupby and put in 3way array
+using Pipe
+
+sort!(ds)
