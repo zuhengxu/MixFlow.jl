@@ -8,4 +8,4 @@
 2025-04-22 18:09:28	26.8s	festering_snyder	OK	750b2651504611d10feb7f66023549a7	84023184-dd8d-431e-b9a9-de7048110a6e	nextflow run traces.nf --dryRun
 2025-04-22 18:12:33	27.5s	dreamy_wiles	OK	6dbcbdebf68da7c56eb3a854f9626900	517937fe-7255-40cd-a535-85f859d4f94e	nextflow run traces.nf --dryRun
 2025-04-22 18:24:49	17m 18s	disturbed_pauling	ERR	7cceb66b437a93bcbca9f692758f2be7	d446ca47-94cf-455e-95ac-8cd6c64e5775	nextflow run traces.nf
-2025-04-22 18:42:58	-	cranky_escher	-	6468bed11da2c5f3c87e5cc2d7a427ae	d446ca47-94cf-455e-95ac-8cd6c64e5775	nextflow run traces.nf -resume
+2025-04-22 18:42:58	2h 26m 34s	cranky_escher	OK	6468bed11da2c5f3c87e5cc2d7a427ae	d446ca47-94cf-455e-95ac-8cd6c64e5775	nextflow run traces.nf -resume

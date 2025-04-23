@@ -1,0 +1,492 @@
+#!/bin/bash
+### ---
+### name: 'combine_workflow:combine_process'
+### outputs:
+### - 'output'
+### ...
+set -e
+set -u
+NXF_DEBUG=${NXF_DEBUG:=0}; [[ $NXF_DEBUG > 1 ]] && set -x
+NXF_ENTRY=${1:-nxf_main}
+
+
+nxf_sleep() {
+  sleep $1 2>/dev/null || sleep 1;
+}
+
+nxf_date() {
+    local ts=$(date +%s%3N);
+    if [[ ${#ts} == 10 ]]; then echo ${ts}000
+    elif [[ $ts == *%3N ]]; then echo ${ts/\%3N/000}
+    elif [[ $ts == *3N ]]; then echo ${ts/3N/000}
+    elif [[ ${#ts} == 13 ]]; then echo $ts
+    else echo "Unexpected timestamp value: $ts"; exit 1
+    fi
+}
+
+nxf_env() {
+    echo '============= task environment ============='
+    env | sort | sed "s/\(.*\)AWS\(.*\)=\(.\{6\}\).*/\1AWS\2=\3xxxxxxxxxxxxx/"
+    echo '============= task output =================='
+}
+
+nxf_kill() {
+    declare -a children
+    while read P PP;do
+        children[$PP]+=" $P"
+    done < <(ps -e -o pid= -o ppid=)
+
+    kill_all() {
+        [[ $1 != $$ ]] && kill $1 2>/dev/null || true
+        for i in ${children[$1]:=}; do kill_all $i; done
+    }
+
+    kill_all $1
+}
+
+nxf_mktemp() {
+    local base=${1:-/tmp}
+    mkdir -p "$base"
+    if [[ $(uname) = Darwin ]]; then mktemp -d $base/nxf.XXXXXXXXXX
+    else TMPDIR="$base" mktemp -d -t nxf.XXXXXXXXXX
+    fi
+}
+
+nxf_fs_copy() {
+  local source=$1
+  local target=$2
+  local basedir=$(dirname $1)
+  mkdir -p $target/$basedir
+  cp -fRL $source $target/$basedir
+}
+
+nxf_fs_move() {
+  local source=$1
+  local target=$2
+  local basedir=$(dirname $1)
+  mkdir -p $target/$basedir
+  mv -f $source $target/$basedir
+}
+
+nxf_fs_rsync() {
+  rsync -rRl $1 $2
+}
+
+nxf_fs_rclone() {
+  rclone copyto $1 $2/$1
+}
+
+nxf_fs_fcp() {
+  fcp $1 $2/$1
+}
+
+on_exit() {
+    exit_status=${nxf_main_ret:=$?}
+    printf -- $exit_status > /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/2b/efe4d88664cfe3a82ab527240f2344/.exitcode
+    set +u
+    exit $exit_status
+}
+
+on_term() {
+    set +e
+    [[ "$pid" ]] && nxf_kill $pid
+}
+
+nxf_launch() {
+    /usr/bin/env julia --threads=1 --project=combine_env /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/2b/efe4d88664cfe3a82ab527240f2344/.command.sh
+}
+
+nxf_stage() {
+    true
+    # stage input files
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/e2/a3d90d1de4a02d970c73a4d8b5507d/seed=3___tracetype=inv_irf___target=Banana___kernel=MF.RWMH seed=3___tracetype=inv_irf___target=Banana___kernel=MF.RWMH
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/ff/010563daedcce08879009dfc7c4b96/seed=6___tracetype=mcmc___target=Cross___kernel=MF.RWMH seed=6___tracetype=mcmc___target=Cross___kernel=MF.RWMH
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/90/4fdf2746e483039b5cec2989068a76/seed=8___tracetype=inv_irf___target=Banana___kernel=MF.MALA seed=8___tracetype=inv_irf___target=Banana___kernel=MF.MALA
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/08/fca98844dbe3cc3673de5540137242/seed=5___tracetype=mcmc___target=Banana___kernel=MF.HMC seed=5___tracetype=mcmc___target=Banana___kernel=MF.HMC
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/89/37b3e9b1991fc4bf8b7942c481db6d/seed=7___tracetype=fwd_irf___target=Cross___kernel=MF.HMC seed=7___tracetype=fwd_irf___target=Cross___kernel=MF.HMC
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/98/9f71bb33bf878b22646cb6c92c03ef/seed=8___tracetype=fwd_homo___target=Cross___kernel=MF.RWMH seed=8___tracetype=fwd_homo___target=Cross___kernel=MF.RWMH
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/86/99dce6c4a525b53c8c2f0354157ade/seed=7___tracetype=bwd_inv_irf___target=Cross___kernel=MF.HMC seed=7___tracetype=bwd_inv_irf___target=Cross___kernel=MF.HMC
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/20/9620550046038baedf7b7abcccd891/seed=8___tracetype=inv_irf___target=Cross___kernel=MF.HMC seed=8___tracetype=inv_irf___target=Cross___kernel=MF.HMC
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/70/1525d0ce5698cbad4bc5e2a4a4638a/seed=8___tracetype=bwd_irf___target=Cross___kernel=MF.RWMH seed=8___tracetype=bwd_irf___target=Cross___kernel=MF.RWMH
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/8c/fba633d7e97845bf64497088920351/seed=10___tracetype=inv_irf___target=Banana___kernel=MF.MALA seed=10___tracetype=inv_irf___target=Banana___kernel=MF.MALA
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/94/248cbd299d789b0b398a1e3f8b871a/seed=10___tracetype=bwd_inv_irf___target=Banana___kernel=MF.RWMH seed=10___tracetype=bwd_inv_irf___target=Banana___kernel=MF.RWMH
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/6e/f5212b2698f2270223dc8cef9a9931/seed=7___tracetype=fwd_homo___target=Banana___kernel=MF.HMC seed=7___tracetype=fwd_homo___target=Banana___kernel=MF.HMC
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/82/5ad68d3b1a5e0704e20a9f6dc28733/seed=8___tracetype=bwd_inv_irf___target=Banana___kernel=MF.HMC seed=8___tracetype=bwd_inv_irf___target=Banana___kernel=MF.HMC
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/d0/0689cfb90e32591ec742d0bd34d254/seed=3___tracetype=mcmc___target=Cross___kernel=MF.MALA seed=3___tracetype=mcmc___target=Cross___kernel=MF.MALA
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/04/56e67a16f21b46341073fb82b33525/seed=5___tracetype=bwd_inv_irf___target=Banana___kernel=MF.MALA seed=5___tracetype=bwd_inv_irf___target=Banana___kernel=MF.MALA
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/28/bd463d2464daa08dd53dedcedce2c3/seed=10___tracetype=inv_irf___target=Cross___kernel=MF.MALA seed=10___tracetype=inv_irf___target=Cross___kernel=MF.MALA
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/0a/8eb7fe48955f30c1dc25bce1a43075/seed=9___tracetype=fwd_homo___target=Cross___kernel=MF.MALA seed=9___tracetype=fwd_homo___target=Cross___kernel=MF.MALA
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/ac/0d48fb15556452560f1d599a4b7cdb/seed=4___tracetype=inv_irf___target=Cross___kernel=MF.HMC seed=4___tracetype=inv_irf___target=Cross___kernel=MF.HMC
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/17/6f3a0c91a212f851fe98439c4c9ccd/seed=6___tracetype=mcmc___target=Banana___kernel=MF.MALA seed=6___tracetype=mcmc___target=Banana___kernel=MF.MALA
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/7b/05f901417f7b8761c5e5c3f69281af/seed=5___tracetype=inv_irf___target=Cross___kernel=MF.MALA seed=5___tracetype=inv_irf___target=Cross___kernel=MF.MALA
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/42/4dece2e2b08b5283d78d2f0c693031/seed=1___tracetype=bwd_inv_irf___target=Cross___kernel=MF.HMC seed=1___tracetype=bwd_inv_irf___target=Cross___kernel=MF.HMC
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/a9/59c0b623a3830df3b0c4d49c6464a0/seed=3___tracetype=fwd_irf___target=Cross___kernel=MF.HMC seed=3___tracetype=fwd_irf___target=Cross___kernel=MF.HMC
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/ba/cb9414a4df53d9eda5e17ef7606a6e/seed=3___tracetype=bwd_irf___target=Banana___kernel=MF.MALA seed=3___tracetype=bwd_irf___target=Banana___kernel=MF.MALA
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/89/f14b905998a07f5a637cb8a39cd367/seed=3___tracetype=mcmc___target=Banana___kernel=MF.RWMH seed=3___tracetype=mcmc___target=Banana___kernel=MF.RWMH
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/4f/8c20691f897351c95e84b655ee0937/seed=8___tracetype=fwd_homo___target=Cross___kernel=MF.HMC seed=8___tracetype=fwd_homo___target=Cross___kernel=MF.HMC
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/f4/322b5315beced0db1a2238dfd9c2ae/seed=1___tracetype=fwd_irf___target=Banana___kernel=MF.MALA seed=1___tracetype=fwd_irf___target=Banana___kernel=MF.MALA
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/c2/412b7eb0766ca2124b02cf4f80e8bf/seed=9___tracetype=inv_irf___target=Banana___kernel=MF.HMC seed=9___tracetype=inv_irf___target=Banana___kernel=MF.HMC
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/48/a38e05b6d832e291a4fdfd0336ce18/seed=4___tracetype=fwd_homo___target=Cross___kernel=MF.RWMH seed=4___tracetype=fwd_homo___target=Cross___kernel=MF.RWMH
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/9c/b5d351a90dcd229bea86a2aad77cfa/seed=9___tracetype=fwd_irf___target=Banana___kernel=MF.MALA seed=9___tracetype=fwd_irf___target=Banana___kernel=MF.MALA
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/d6/ef02913ac810208b6e08218893747b/seed=7___tracetype=mcmc___target=Cross___kernel=MF.MALA seed=7___tracetype=mcmc___target=Cross___kernel=MF.MALA
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/81/2d8b1d3240c3295e178b27a441f17f/seed=1___tracetype=inv_irf___target=Banana___kernel=MF.HMC seed=1___tracetype=inv_irf___target=Banana___kernel=MF.HMC
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/fa/224530afd226f2fbd2232d04b92852/seed=6___tracetype=bwd_inv_irf___target=Cross___kernel=MF.MALA seed=6___tracetype=bwd_inv_irf___target=Cross___kernel=MF.MALA
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/6d/3ccc65750fb5a73297ee30aa518ca2/seed=4___tracetype=fwd_irf___target=Banana___kernel=MF.RWMH seed=4___tracetype=fwd_irf___target=Banana___kernel=MF.RWMH
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/63/9d7d87abc6fee392a4333a9f43b4fc/seed=10___tracetype=mcmc___target=Banana___kernel=MF.MALA seed=10___tracetype=mcmc___target=Banana___kernel=MF.MALA
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/0d/5151b7c7eb13fa8ac7f2f2681603fe/seed=4___tracetype=mcmc___target=Banana___kernel=MF.RWMH seed=4___tracetype=mcmc___target=Banana___kernel=MF.RWMH
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/2d/268879fe21502c968e9c9564f926e0/seed=6___tracetype=bwd_irf___target=Banana___kernel=MF.RWMH seed=6___tracetype=bwd_irf___target=Banana___kernel=MF.RWMH
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/15/57fe25f34bd80169010377ec0afda1/seed=7___tracetype=bwd_irf___target=Banana___kernel=MF.MALA seed=7___tracetype=bwd_irf___target=Banana___kernel=MF.MALA
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/0c/ec205c8d0fd87c4f3ffdb93b3b0e7c/seed=6___tracetype=fwd_irf___target=Cross___kernel=MF.MALA seed=6___tracetype=fwd_irf___target=Cross___kernel=MF.MALA
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/e6/a82f4da0088f10b0ea06c83feb200e/seed=4___tracetype=fwd_irf___target=Cross___kernel=MF.RWMH seed=4___tracetype=fwd_irf___target=Cross___kernel=MF.RWMH
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/72/990943a2b270b0df40881c7f94021e/seed=4___tracetype=inv_irf___target=Banana___kernel=MF.MALA seed=4___tracetype=inv_irf___target=Banana___kernel=MF.MALA
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/95/24c7627b8991f5b0fbcb1eea8b4b5a/seed=5___tracetype=fwd_irf___target=Banana___kernel=MF.MALA seed=5___tracetype=fwd_irf___target=Banana___kernel=MF.MALA
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/1f/82936d5f5a55bdf838ee456f9df3dd/seed=10___tracetype=fwd_homo___target=Banana___kernel=MF.RWMH seed=10___tracetype=fwd_homo___target=Banana___kernel=MF.RWMH
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/de/e60ce9a7da117ec665c289a52590ae/seed=10___tracetype=fwd_homo___target=Cross___kernel=MF.RWMH seed=10___tracetype=fwd_homo___target=Cross___kernel=MF.RWMH
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/1b/5f2f4ee8c0049c91b433ed886e6c00/seed=2___tracetype=bwd_irf___target=Cross___kernel=MF.MALA seed=2___tracetype=bwd_irf___target=Cross___kernel=MF.MALA
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/3e/270fe1214d50300444687281af8b8d/seed=2___tracetype=bwd_irf___target=Banana___kernel=MF.RWMH seed=2___tracetype=bwd_irf___target=Banana___kernel=MF.RWMH
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/11/6442dea4eeb1e52f4bd5cf6d5ea0a2/seed=3___tracetype=inv_irf___target=Cross___kernel=MF.RWMH seed=3___tracetype=inv_irf___target=Cross___kernel=MF.RWMH
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/3e/d2b4c5ebde7cdba9cdc47fa15e2b8b/seed=4___tracetype=bwd_inv_irf___target=Cross___kernel=MF.RWMH seed=4___tracetype=bwd_inv_irf___target=Cross___kernel=MF.RWMH
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/09/a9de4b10cf17d2b6c34b0e5b4c3b30/seed=5___tracetype=fwd_homo___target=Cross___kernel=MF.MALA seed=5___tracetype=fwd_homo___target=Cross___kernel=MF.MALA
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/0b/f4756c1a096bdb8693fa2fd435c049/seed=6___tracetype=bwd_irf___target=Banana___kernel=MF.HMC seed=6___tracetype=bwd_irf___target=Banana___kernel=MF.HMC
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/4f/4663cb3651275894cd5b56939675d0/seed=4___tracetype=inv_irf___target=Cross___kernel=MF.RWMH seed=4___tracetype=inv_irf___target=Cross___kernel=MF.RWMH
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/f1/4c85d8f07969c262155a9be0ecd99b/seed=10___tracetype=fwd_irf___target=Cross___kernel=MF.RWMH seed=10___tracetype=fwd_irf___target=Cross___kernel=MF.RWMH
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/db/b4f12ad0d73497f65a124424de9fc9/seed=7___tracetype=bwd_irf___target=Cross___kernel=MF.RWMH seed=7___tracetype=bwd_irf___target=Cross___kernel=MF.RWMH
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/63/7bb9e2e8ddf63719eac6d17945ab1c/seed=5___tracetype=mcmc___target=Banana___kernel=MF.MALA seed=5___tracetype=mcmc___target=Banana___kernel=MF.MALA
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/a8/afbc6ebd7f3eb103c6c601ed24dd58/seed=1___tracetype=bwd_inv_irf___target=Banana___kernel=MF.RWMH seed=1___tracetype=bwd_inv_irf___target=Banana___kernel=MF.RWMH
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/df/9575d27dfa692a4360a5bd4c76c6a1/seed=5___tracetype=bwd_irf___target=Cross___kernel=MF.HMC seed=5___tracetype=bwd_irf___target=Cross___kernel=MF.HMC
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/00/8bdc09f6b7c4f2946032d360c34005/seed=7___tracetype=fwd_homo___target=Cross___kernel=MF.HMC seed=7___tracetype=fwd_homo___target=Cross___kernel=MF.HMC
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/ca/31e04e75bfebbde95c4bfe0b348379/seed=6___tracetype=inv_irf___target=Cross___kernel=MF.MALA seed=6___tracetype=inv_irf___target=Cross___kernel=MF.MALA
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/32/c13c0f1981a078bbd8712b270ba101/seed=5___tracetype=mcmc___target=Cross___kernel=MF.HMC seed=5___tracetype=mcmc___target=Cross___kernel=MF.HMC
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/f1/324d2727a1cd7f5bc7d3bf50df7580/seed=5___tracetype=bwd_inv_irf___target=Banana___kernel=MF.HMC seed=5___tracetype=bwd_inv_irf___target=Banana___kernel=MF.HMC
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/f8/dccb4a89362c726fb2f5cd64673088/seed=9___tracetype=bwd_irf___target=Banana___kernel=MF.RWMH seed=9___tracetype=bwd_irf___target=Banana___kernel=MF.RWMH
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/6c/08d6f04a6af22a1fc0ddd614f1326a/seed=8___tracetype=mcmc___target=Cross___kernel=MF.HMC seed=8___tracetype=mcmc___target=Cross___kernel=MF.HMC
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/35/02ab0fce99835248dac19961f8026a/seed=8___tracetype=fwd_irf___target=Banana___kernel=MF.RWMH seed=8___tracetype=fwd_irf___target=Banana___kernel=MF.RWMH
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/3a/49f7bb2d17a47049a47d61ad3137f6/seed=9___tracetype=bwd_irf___target=Cross___kernel=MF.MALA seed=9___tracetype=bwd_irf___target=Cross___kernel=MF.MALA
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/29/847ae9df7e409c19f4257f5c045b90/seed=8___tracetype=inv_irf___target=Banana___kernel=MF.HMC seed=8___tracetype=inv_irf___target=Banana___kernel=MF.HMC
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/05/031fd52abd6ccdad93ba3b2a8700d6/seed=1___tracetype=fwd_homo___target=Cross___kernel=MF.MALA seed=1___tracetype=fwd_homo___target=Cross___kernel=MF.MALA
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/21/eacacc3d3dc97498fc8d4aadb9c808/seed=1___tracetype=bwd_irf___target=Cross___kernel=MF.HMC seed=1___tracetype=bwd_irf___target=Cross___kernel=MF.HMC
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/a5/c7d4187e8e8b5b5e48a7c701b2d0a7/seed=10___tracetype=mcmc___target=Cross___kernel=MF.HMC seed=10___tracetype=mcmc___target=Cross___kernel=MF.HMC
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/5f/a8e9b9ceeb5e9d49abc67a5cd7dca1/seed=4___tracetype=bwd_inv_irf___target=Banana___kernel=MF.RWMH seed=4___tracetype=bwd_inv_irf___target=Banana___kernel=MF.RWMH
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/ca/a2aab7ad0025485a6ceaf4118f5817/seed=9___tracetype=mcmc___target=Banana___kernel=MF.HMC seed=9___tracetype=mcmc___target=Banana___kernel=MF.HMC
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/7b/c21edf0f6c2cece809e76b6d6637d9/seed=7___tracetype=bwd_inv_irf___target=Cross___kernel=MF.RWMH seed=7___tracetype=bwd_inv_irf___target=Cross___kernel=MF.RWMH
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/59/398814c2a15b9eee555a9064bb34f7/seed=3___tracetype=fwd_irf___target=Cross___kernel=MF.RWMH seed=3___tracetype=fwd_irf___target=Cross___kernel=MF.RWMH
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/3b/36cc23b6d90651b0bbca1eb08dfdf1/seed=9___tracetype=bwd_irf___target=Cross___kernel=MF.HMC seed=9___tracetype=bwd_irf___target=Cross___kernel=MF.HMC
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/1d/68dd6226b02e227b91dd8653f757ab/seed=3___tracetype=fwd_homo___target=Banana___kernel=MF.HMC seed=3___tracetype=fwd_homo___target=Banana___kernel=MF.HMC
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/06/03c6a0ff1176bf55f8bb3fda631ee7/seed=3___tracetype=fwd_irf___target=Banana___kernel=MF.HMC seed=3___tracetype=fwd_irf___target=Banana___kernel=MF.HMC
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/44/785ab3b5aab4d8906989972914e9cf/seed=3___tracetype=bwd_inv_irf___target=Cross___kernel=MF.MALA seed=3___tracetype=bwd_inv_irf___target=Cross___kernel=MF.MALA
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/14/a14b393615149be8b16145dad1515a/seed=5___tracetype=fwd_irf___target=Cross___kernel=MF.MALA seed=5___tracetype=fwd_irf___target=Cross___kernel=MF.MALA
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/4f/c30e005ce97e7279d5d2b307df97f5/seed=3___tracetype=bwd_inv_irf___target=Banana___kernel=MF.RWMH seed=3___tracetype=bwd_inv_irf___target=Banana___kernel=MF.RWMH
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/b0/99d3f50f13f776a5b47e950caee2ce/seed=5___tracetype=bwd_irf___target=Banana___kernel=MF.RWMH seed=5___tracetype=bwd_irf___target=Banana___kernel=MF.RWMH
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/a0/1e99f133e19ac3f902ee47c5d79986/seed=2___tracetype=bwd_inv_irf___target=Banana___kernel=MF.RWMH seed=2___tracetype=bwd_inv_irf___target=Banana___kernel=MF.RWMH
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/40/63637175129e5ba8f6ac35cd4da688/seed=2___tracetype=bwd_inv_irf___target=Cross___kernel=MF.HMC seed=2___tracetype=bwd_inv_irf___target=Cross___kernel=MF.HMC
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/3c/e24db81a7cb42b67d49767d0afe649/seed=7___tracetype=bwd_irf___target=Banana___kernel=MF.HMC seed=7___tracetype=bwd_irf___target=Banana___kernel=MF.HMC
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/a1/a6505119ad69983711a2d6a8f0491f/seed=10___tracetype=bwd_irf___target=Banana___kernel=MF.HMC seed=10___tracetype=bwd_irf___target=Banana___kernel=MF.HMC
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/0a/312d64198fa39b60cc6520572bf0d5/seed=7___tracetype=inv_irf___target=Banana___kernel=MF.RWMH seed=7___tracetype=inv_irf___target=Banana___kernel=MF.RWMH
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/6d/5ce495d5f72bd87e404699ca9b81d6/seed=1___tracetype=mcmc___target=Cross___kernel=MF.HMC seed=1___tracetype=mcmc___target=Cross___kernel=MF.HMC
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/c5/31a1e9ea6431fcf86c66a597338ea4/seed=1___tracetype=bwd_irf___target=Banana___kernel=MF.RWMH seed=1___tracetype=bwd_irf___target=Banana___kernel=MF.RWMH
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/44/c5a98e53f39375461a663c37ff3017/seed=1___tracetype=inv_irf___target=Banana___kernel=MF.MALA seed=1___tracetype=inv_irf___target=Banana___kernel=MF.MALA
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/81/f989ecd1ef6fa7b7a01895f8429e71/seed=6___tracetype=fwd_homo___target=Cross___kernel=MF.HMC seed=6___tracetype=fwd_homo___target=Cross___kernel=MF.HMC
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/d7/68608170567164277ee5ba6257ffbf/seed=5___tracetype=bwd_inv_irf___target=Banana___kernel=MF.RWMH seed=5___tracetype=bwd_inv_irf___target=Banana___kernel=MF.RWMH
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/ca/2d595fd00b146c7ae4554e8aa9557a/seed=9___tracetype=inv_irf___target=Banana___kernel=MF.MALA seed=9___tracetype=inv_irf___target=Banana___kernel=MF.MALA
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/a5/95b974e5f9af9694febfcb7d713a76/seed=2___tracetype=inv_irf___target=Banana___kernel=MF.RWMH seed=2___tracetype=inv_irf___target=Banana___kernel=MF.RWMH
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/89/833eb7d8a070e20a7ff65c01c24dcb/seed=4___tracetype=mcmc___target=Cross___kernel=MF.MALA seed=4___tracetype=mcmc___target=Cross___kernel=MF.MALA
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/20/da11105032ad28dedd996c3d285e43/seed=10___tracetype=fwd_homo___target=Cross___kernel=MF.MALA seed=10___tracetype=fwd_homo___target=Cross___kernel=MF.MALA
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/78/3fad73511d5c9092056b9a9fcfa819/seed=10___tracetype=mcmc___target=Banana___kernel=MF.RWMH seed=10___tracetype=mcmc___target=Banana___kernel=MF.RWMH
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/13/a1919b27e227fc073081e325bbe9ea/seed=2___tracetype=bwd_inv_irf___target=Banana___kernel=MF.HMC seed=2___tracetype=bwd_inv_irf___target=Banana___kernel=MF.HMC
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/b0/9521184f90d5ca05d84818c9150746/seed=5___tracetype=inv_irf___target=Cross___kernel=MF.RWMH seed=5___tracetype=inv_irf___target=Cross___kernel=MF.RWMH
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/9e/ab7c1f045a4223407a345bf5662170/seed=9___tracetype=inv_irf___target=Cross___kernel=MF.HMC seed=9___tracetype=inv_irf___target=Cross___kernel=MF.HMC
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/d8/dc298959e6f9b98ed7d4d2c11927f1/seed=4___tracetype=fwd_irf___target=Banana___kernel=MF.MALA seed=4___tracetype=fwd_irf___target=Banana___kernel=MF.MALA
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/d5/acd8ead2516839d6894a0107e3edd2/seed=8___tracetype=bwd_inv_irf___target=Cross___kernel=MF.RWMH seed=8___tracetype=bwd_inv_irf___target=Cross___kernel=MF.RWMH
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/dc/36e16085b1be17a9d8d72395f7fe4a/seed=6___tracetype=bwd_irf___target=Banana___kernel=MF.MALA seed=6___tracetype=bwd_irf___target=Banana___kernel=MF.MALA
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/20/954b7c948dd3ad51cd198d2472186c/seed=8___tracetype=fwd_irf___target=Cross___kernel=MF.MALA seed=8___tracetype=fwd_irf___target=Cross___kernel=MF.MALA
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/41/4b2ad28dd6772aab1d25899c303d38/seed=9___tracetype=bwd_inv_irf___target=Banana___kernel=MF.HMC seed=9___tracetype=bwd_inv_irf___target=Banana___kernel=MF.HMC
+    ln -s /home/zuheng/Research/MixFlow.jl/example/nf-nest/combine_env combine_env
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/67/16020cec308ff034e60551c29ac713/seed=4___tracetype=fwd_irf___target=Cross___kernel=MF.HMC seed=4___tracetype=fwd_irf___target=Cross___kernel=MF.HMC
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/40/6be9c6beaa97aa1910b3c2123ee258/seed=3___tracetype=fwd_homo___target=Cross___kernel=MF.RWMH seed=3___tracetype=fwd_homo___target=Cross___kernel=MF.RWMH
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/39/0e9fbf221fb93e69d8e0837b461b6b/seed=6___tracetype=fwd_homo___target=Banana___kernel=MF.HMC seed=6___tracetype=fwd_homo___target=Banana___kernel=MF.HMC
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/6d/c8ade6f778f36c2363d8ca67606aba/seed=3___tracetype=inv_irf___target=Cross___kernel=MF.HMC seed=3___tracetype=inv_irf___target=Cross___kernel=MF.HMC
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/c4/ca0bb94c52b719bedf28325358522d/seed=4___tracetype=fwd_homo___target=Banana___kernel=MF.HMC seed=4___tracetype=fwd_homo___target=Banana___kernel=MF.HMC
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/34/278d07f5084f3e7781a3f53ef75bf2/seed=4___tracetype=bwd_irf___target=Banana___kernel=MF.MALA seed=4___tracetype=bwd_irf___target=Banana___kernel=MF.MALA
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/a7/b849870a5896d29e0ffbb3b2bdcb41/seed=5___tracetype=fwd_homo___target=Cross___kernel=MF.RWMH seed=5___tracetype=fwd_homo___target=Cross___kernel=MF.RWMH
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/5c/bb54d8699588356e38f59c3460e692/seed=1___tracetype=fwd_irf___target=Banana___kernel=MF.HMC seed=1___tracetype=fwd_irf___target=Banana___kernel=MF.HMC
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/ef/a76a98008c7d2c165b4d965c50472e/seed=2___tracetype=mcmc___target=Banana___kernel=MF.HMC seed=2___tracetype=mcmc___target=Banana___kernel=MF.HMC
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/ba/5f67b78720b7312888aa4655e1cc4a/seed=3___tracetype=inv_irf___target=Cross___kernel=MF.MALA seed=3___tracetype=inv_irf___target=Cross___kernel=MF.MALA
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/f0/727dad4fa17cef4b4ee892acd2e98f/seed=3___tracetype=fwd_homo___target=Banana___kernel=MF.RWMH seed=3___tracetype=fwd_homo___target=Banana___kernel=MF.RWMH
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/78/118c3b8159d213267624a44fd80c57/seed=2___tracetype=fwd_irf___target=Cross___kernel=MF.HMC seed=2___tracetype=fwd_irf___target=Cross___kernel=MF.HMC
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/38/ba914cd73828fc5c9f9882e525218d/seed=4___tracetype=fwd_irf___target=Banana___kernel=MF.HMC seed=4___tracetype=fwd_irf___target=Banana___kernel=MF.HMC
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/17/1df3e3e13aae939bc04a9c5c62ba50/seed=10___tracetype=fwd_homo___target=Banana___kernel=MF.MALA seed=10___tracetype=fwd_homo___target=Banana___kernel=MF.MALA
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/e6/c02bc76f1d693a55d26308f7a29f52/seed=2___tracetype=fwd_homo___target=Banana___kernel=MF.RWMH seed=2___tracetype=fwd_homo___target=Banana___kernel=MF.RWMH
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/23/e9f399468480cd9abb2f34ef622565/seed=2___tracetype=fwd_irf___target=Cross___kernel=MF.RWMH seed=2___tracetype=fwd_irf___target=Cross___kernel=MF.RWMH
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/8d/ec63d7d45f6d93ac9200545ff20d23/seed=4___tracetype=bwd_irf___target=Cross___kernel=MF.MALA seed=4___tracetype=bwd_irf___target=Cross___kernel=MF.MALA
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/42/06ab58b1d23f564ea25f6a5e9f43f7/seed=6___tracetype=bwd_inv_irf___target=Cross___kernel=MF.HMC seed=6___tracetype=bwd_inv_irf___target=Cross___kernel=MF.HMC
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/04/0ae81fab612239e00d61d7640d6802/seed=10___tracetype=bwd_inv_irf___target=Cross___kernel=MF.MALA seed=10___tracetype=bwd_inv_irf___target=Cross___kernel=MF.MALA
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/45/b85fe5732d59f1f811878eefd14df2/seed=3___tracetype=mcmc___target=Banana___kernel=MF.MALA seed=3___tracetype=mcmc___target=Banana___kernel=MF.MALA
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/13/409173f59e9bd428c5c848cc6b830e/seed=3___tracetype=inv_irf___target=Banana___kernel=MF.HMC seed=3___tracetype=inv_irf___target=Banana___kernel=MF.HMC
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/66/32a115bbc16e90344e1942c7647ed0/seed=2___tracetype=mcmc___target=Cross___kernel=MF.MALA seed=2___tracetype=mcmc___target=Cross___kernel=MF.MALA
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/0c/60d9374afe61b0be4f58415cfe2092/seed=7___tracetype=mcmc___target=Cross___kernel=MF.RWMH seed=7___tracetype=mcmc___target=Cross___kernel=MF.RWMH
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/55/f0ea22ddb22f8561e8a6ab554d607e/seed=5___tracetype=bwd_inv_irf___target=Cross___kernel=MF.MALA seed=5___tracetype=bwd_inv_irf___target=Cross___kernel=MF.MALA
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/ba/29caed27fe004d234e4239ef0ab55f/seed=8___tracetype=inv_irf___target=Banana___kernel=MF.RWMH seed=8___tracetype=inv_irf___target=Banana___kernel=MF.RWMH
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/61/b043a13d7cf1c1633d4155130d53a9/seed=8___tracetype=bwd_irf___target=Banana___kernel=MF.HMC seed=8___tracetype=bwd_irf___target=Banana___kernel=MF.HMC
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/6d/23b06f3aa59e68ed59e90359c3bb95/seed=5___tracetype=mcmc___target=Cross___kernel=MF.RWMH seed=5___tracetype=mcmc___target=Cross___kernel=MF.RWMH
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/a9/fb6fa92ea09b02191ed6cd851de323/seed=1___tracetype=mcmc___target=Banana___kernel=MF.RWMH seed=1___tracetype=mcmc___target=Banana___kernel=MF.RWMH
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/56/4146d75821cffe0c0f987b52c06586/seed=5___tracetype=bwd_inv_irf___target=Cross___kernel=MF.HMC seed=5___tracetype=bwd_inv_irf___target=Cross___kernel=MF.HMC
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/34/998083d0eb9cf7fab8065918cbc0ef/seed=8___tracetype=mcmc___target=Banana___kernel=MF.MALA seed=8___tracetype=mcmc___target=Banana___kernel=MF.MALA
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/bf/0d9adda633ba28359caf459d4cdff8/seed=6___tracetype=mcmc___target=Banana___kernel=MF.RWMH seed=6___tracetype=mcmc___target=Banana___kernel=MF.RWMH
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/21/a6ad9320ce680835ea97a70afe6056/seed=6___tracetype=bwd_irf___target=Cross___kernel=MF.RWMH seed=6___tracetype=bwd_irf___target=Cross___kernel=MF.RWMH
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/e7/e61df52259cedb7b1ffee575f97990/seed=9___tracetype=fwd_irf___target=Banana___kernel=MF.HMC seed=9___tracetype=fwd_irf___target=Banana___kernel=MF.HMC
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/53/9cf31e575b2856de390e08dd54b1df/seed=6___tracetype=mcmc___target=Cross___kernel=MF.HMC seed=6___tracetype=mcmc___target=Cross___kernel=MF.HMC
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/4c/d53628597d9a3f959977898e6127cf/seed=10___tracetype=fwd_irf___target=Banana___kernel=MF.RWMH seed=10___tracetype=fwd_irf___target=Banana___kernel=MF.RWMH
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/af/f97a4bce7e4fe37e832c1fa4eae9af/seed=9___tracetype=bwd_irf___target=Cross___kernel=MF.RWMH seed=9___tracetype=bwd_irf___target=Cross___kernel=MF.RWMH
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/34/8e1502314a0166bf639e42eaea2af6/seed=8___tracetype=inv_irf___target=Cross___kernel=MF.MALA seed=8___tracetype=inv_irf___target=Cross___kernel=MF.MALA
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/ab/1e383d0eae1b5874812018c951d585/seed=10___tracetype=mcmc___target=Cross___kernel=MF.RWMH seed=10___tracetype=mcmc___target=Cross___kernel=MF.RWMH
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/48/1d806e436ac272d73f2e9f723ea7fd/seed=6___tracetype=inv_irf___target=Banana___kernel=MF.HMC seed=6___tracetype=inv_irf___target=Banana___kernel=MF.HMC
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/bb/05d512c3032518afb2a8722d31848c/seed=9___tracetype=bwd_inv_irf___target=Cross___kernel=MF.HMC seed=9___tracetype=bwd_inv_irf___target=Cross___kernel=MF.HMC
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/a3/cbda0a54411a9557be306b08360184/seed=2___tracetype=bwd_irf___target=Banana___kernel=MF.HMC seed=2___tracetype=bwd_irf___target=Banana___kernel=MF.HMC
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/7a/46b9a1193f8da7163207fab7049c3e/seed=10___tracetype=bwd_irf___target=Banana___kernel=MF.RWMH seed=10___tracetype=bwd_irf___target=Banana___kernel=MF.RWMH
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/25/23f50ed91c84390994f21aebb38b67/seed=6___tracetype=bwd_inv_irf___target=Banana___kernel=MF.HMC seed=6___tracetype=bwd_inv_irf___target=Banana___kernel=MF.HMC
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/d8/8205168d62d28d001e08e2c785b4d5/seed=9___tracetype=bwd_inv_irf___target=Banana___kernel=MF.RWMH seed=9___tracetype=bwd_inv_irf___target=Banana___kernel=MF.RWMH
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/ec/63ff3910719668a3af8432de413586/seed=3___tracetype=bwd_irf___target=Cross___kernel=MF.HMC seed=3___tracetype=bwd_irf___target=Cross___kernel=MF.HMC
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/2d/e9b817d3cc78167d45b8e8a8eab631/seed=1___tracetype=mcmc___target=Banana___kernel=MF.HMC seed=1___tracetype=mcmc___target=Banana___kernel=MF.HMC
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/a3/ed6e4032393dd2c56883eef29ac2a9/seed=7___tracetype=bwd_irf___target=Cross___kernel=MF.MALA seed=7___tracetype=bwd_irf___target=Cross___kernel=MF.MALA
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/2d/f9df90ed790567bec15f63f81885e7/seed=9___tracetype=mcmc___target=Banana___kernel=MF.RWMH seed=9___tracetype=mcmc___target=Banana___kernel=MF.RWMH
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/df/829363a42bb614abbcc416b54e060e/seed=6___tracetype=fwd_homo___target=Banana___kernel=MF.RWMH seed=6___tracetype=fwd_homo___target=Banana___kernel=MF.RWMH
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/e1/e9cea9b2183db469aa04f7640cf340/seed=7___tracetype=fwd_homo___target=Banana___kernel=MF.MALA seed=7___tracetype=fwd_homo___target=Banana___kernel=MF.MALA
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/10/a595b11936c7baf7523b8847036dbd/seed=6___tracetype=fwd_irf___target=Banana___kernel=MF.RWMH seed=6___tracetype=fwd_irf___target=Banana___kernel=MF.RWMH
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/26/6db25eb6a72ba5cadf5c13c0dc898f/seed=2___tracetype=bwd_irf___target=Cross___kernel=MF.HMC seed=2___tracetype=bwd_irf___target=Cross___kernel=MF.HMC
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/bd/063f5f9abc60984496e66dad6a3e78/seed=9___tracetype=fwd_homo___target=Cross___kernel=MF.HMC seed=9___tracetype=fwd_homo___target=Cross___kernel=MF.HMC
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/82/9959e4a0faf85c7263d99a335cfa07/seed=1___tracetype=fwd_homo___target=Cross___kernel=MF.HMC seed=1___tracetype=fwd_homo___target=Cross___kernel=MF.HMC
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/9f/4cfe2dbd42d5c8adf217b0d246bea5/seed=10___tracetype=bwd_inv_irf___target=Cross___kernel=MF.HMC seed=10___tracetype=bwd_inv_irf___target=Cross___kernel=MF.HMC
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/b4/59982b7bf7ba5b335dc81fdf398dfb/seed=1___tracetype=fwd_homo___target=Banana___kernel=MF.HMC seed=1___tracetype=fwd_homo___target=Banana___kernel=MF.HMC
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/22/dc30374f7b27e5d7e3e10cb0cdf06e/seed=8___tracetype=bwd_inv_irf___target=Cross___kernel=MF.HMC seed=8___tracetype=bwd_inv_irf___target=Cross___kernel=MF.HMC
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/2f/4f4b2f00b19470ef29d679a30ea0cd/seed=5___tracetype=bwd_irf___target=Banana___kernel=MF.HMC seed=5___tracetype=bwd_irf___target=Banana___kernel=MF.HMC
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/06/22554158229770117015d7bc503989/seed=10___tracetype=bwd_inv_irf___target=Banana___kernel=MF.HMC seed=10___tracetype=bwd_inv_irf___target=Banana___kernel=MF.HMC
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/3b/71b17556e6c0429cfe716cfa7a951c/seed=9___tracetype=bwd_inv_irf___target=Cross___kernel=MF.MALA seed=9___tracetype=bwd_inv_irf___target=Cross___kernel=MF.MALA
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/03/b2a91b235eda8b95ea37cced66c8a9/seed=1___tracetype=bwd_irf___target=Cross___kernel=MF.RWMH seed=1___tracetype=bwd_irf___target=Cross___kernel=MF.RWMH
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/d4/a58dec2a3ea7f3699cb728a143fb28/seed=10___tracetype=fwd_irf___target=Cross___kernel=MF.MALA seed=10___tracetype=fwd_irf___target=Cross___kernel=MF.MALA
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/ee/cf8bf1f98d624a9c2f37df98b36a0b/seed=1___tracetype=inv_irf___target=Cross___kernel=MF.HMC seed=1___tracetype=inv_irf___target=Cross___kernel=MF.HMC
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/9d/f5466fa8b00c04d618212c90b16b36/seed=2___tracetype=mcmc___target=Cross___kernel=MF.HMC seed=2___tracetype=mcmc___target=Cross___kernel=MF.HMC
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/99/b746e049daff203e1948f88833d4ff/seed=3___tracetype=fwd_irf___target=Banana___kernel=MF.RWMH seed=3___tracetype=fwd_irf___target=Banana___kernel=MF.RWMH
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/a7/7c4fee32cc2cc878fbd45b0bc18fe9/seed=3___tracetype=fwd_irf___target=Cross___kernel=MF.MALA seed=3___tracetype=fwd_irf___target=Cross___kernel=MF.MALA
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/0b/d6b89adafa9bbc30dab352f2e60bc4/seed=5___tracetype=fwd_irf___target=Cross___kernel=MF.RWMH seed=5___tracetype=fwd_irf___target=Cross___kernel=MF.RWMH
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/9d/717c5eda9642aca8e708aec7a2a8da/seed=3___tracetype=inv_irf___target=Banana___kernel=MF.MALA seed=3___tracetype=inv_irf___target=Banana___kernel=MF.MALA
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/c8/95e08c90f07e8e6a73189f7e81e42a/seed=2___tracetype=bwd_inv_irf___target=Cross___kernel=MF.MALA seed=2___tracetype=bwd_inv_irf___target=Cross___kernel=MF.MALA
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/2e/730dc9f8478545b1c97b7c64a89064/seed=5___tracetype=inv_irf___target=Banana___kernel=MF.RWMH seed=5___tracetype=inv_irf___target=Banana___kernel=MF.RWMH
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/f9/1e7c284e7dc3332d6622ebbbe97181/seed=6___tracetype=fwd_homo___target=Cross___kernel=MF.MALA seed=6___tracetype=fwd_homo___target=Cross___kernel=MF.MALA
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/6f/95a82b8ac26d7159b79bb86ab00987/seed=1___tracetype=bwd_inv_irf___target=Cross___kernel=MF.RWMH seed=1___tracetype=bwd_inv_irf___target=Cross___kernel=MF.RWMH
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/c9/8251fbe6ef3ea9452a783815feee07/seed=3___tracetype=bwd_irf___target=Banana___kernel=MF.RWMH seed=3___tracetype=bwd_irf___target=Banana___kernel=MF.RWMH
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/32/a5ce59f57b26e638e3d1a1bbeb8f46/seed=2___tracetype=inv_irf___target=Cross___kernel=MF.RWMH seed=2___tracetype=inv_irf___target=Cross___kernel=MF.RWMH
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/db/4a8bb8b57d44db0e4f7449cc1f575e/seed=1___tracetype=bwd_inv_irf___target=Cross___kernel=MF.MALA seed=1___tracetype=bwd_inv_irf___target=Cross___kernel=MF.MALA
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/19/ce4e1fa3ce4714efaefe20ab93f1db/seed=1___tracetype=bwd_irf___target=Banana___kernel=MF.MALA seed=1___tracetype=bwd_irf___target=Banana___kernel=MF.MALA
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/87/a7553207601006bffd65b13256c260/seed=4___tracetype=bwd_inv_irf___target=Cross___kernel=MF.HMC seed=4___tracetype=bwd_inv_irf___target=Cross___kernel=MF.HMC
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/33/0d5f646c1fe25bc6202d409650e5a3/seed=9___tracetype=bwd_inv_irf___target=Cross___kernel=MF.RWMH seed=9___tracetype=bwd_inv_irf___target=Cross___kernel=MF.RWMH
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/31/dff34570433414586a4e527b229864/seed=6___tracetype=fwd_homo___target=Cross___kernel=MF.RWMH seed=6___tracetype=fwd_homo___target=Cross___kernel=MF.RWMH
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/e1/f99d234e8ed7599f8f2c2b38b426c4/seed=8___tracetype=bwd_inv_irf___target=Cross___kernel=MF.MALA seed=8___tracetype=bwd_inv_irf___target=Cross___kernel=MF.MALA
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/88/1db316ac487be87475397614664146/seed=3___tracetype=fwd_homo___target=Banana___kernel=MF.MALA seed=3___tracetype=fwd_homo___target=Banana___kernel=MF.MALA
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/b7/bc817aa117f497d9a52a024a6d5171/seed=9___tracetype=fwd_homo___target=Banana___kernel=MF.HMC seed=9___tracetype=fwd_homo___target=Banana___kernel=MF.HMC
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/79/81d158704521e2bcdccb04a9afd770/seed=10___tracetype=inv_irf___target=Banana___kernel=MF.HMC seed=10___tracetype=inv_irf___target=Banana___kernel=MF.HMC
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/6b/661a21d6741be055a415f61ef9971f/seed=6___tracetype=inv_irf___target=Cross___kernel=MF.HMC seed=6___tracetype=inv_irf___target=Cross___kernel=MF.HMC
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/5c/ca01b8c00ff30c5860e08a5683591c/seed=5___tracetype=inv_irf___target=Banana___kernel=MF.HMC seed=5___tracetype=inv_irf___target=Banana___kernel=MF.HMC
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/21/1bff9d370ec576b6240c93ee9929c9/seed=5___tracetype=fwd_irf___target=Cross___kernel=MF.HMC seed=5___tracetype=fwd_irf___target=Cross___kernel=MF.HMC
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/21/d3d9ea6839bc1c2c0e0f25621ea41b/seed=2___tracetype=fwd_homo___target=Banana___kernel=MF.MALA seed=2___tracetype=fwd_homo___target=Banana___kernel=MF.MALA
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/a1/dbc5e17c24184c6d90900382c24fd6/seed=2___tracetype=bwd_inv_irf___target=Cross___kernel=MF.RWMH seed=2___tracetype=bwd_inv_irf___target=Cross___kernel=MF.RWMH
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/5d/bdbe9a66da7a28477e9a060190141d/seed=2___tracetype=fwd_homo___target=Cross___kernel=MF.RWMH seed=2___tracetype=fwd_homo___target=Cross___kernel=MF.RWMH
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/e7/840c35d16c64d9b45676dbcb96fed9/seed=3___tracetype=mcmc___target=Banana___kernel=MF.HMC seed=3___tracetype=mcmc___target=Banana___kernel=MF.HMC
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/51/094adb9d87a2256d285d6c24797735/seed=9___tracetype=fwd_irf___target=Cross___kernel=MF.HMC seed=9___tracetype=fwd_irf___target=Cross___kernel=MF.HMC
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/cf/8836c7b53c38a4c02f070645117be9/seed=3___tracetype=fwd_irf___target=Banana___kernel=MF.MALA seed=3___tracetype=fwd_irf___target=Banana___kernel=MF.MALA
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/f6/4472c431d67f5c40a9af975d337728/seed=7___tracetype=inv_irf___target=Cross___kernel=MF.RWMH seed=7___tracetype=inv_irf___target=Cross___kernel=MF.RWMH
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/12/d1ee97eeb83cb192c4e0fac00151d0/seed=6___tracetype=inv_irf___target=Banana___kernel=MF.MALA seed=6___tracetype=inv_irf___target=Banana___kernel=MF.MALA
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/24/82e199dd23ae0437f7cc1649490f7d/seed=5___tracetype=bwd_irf___target=Banana___kernel=MF.MALA seed=5___tracetype=bwd_irf___target=Banana___kernel=MF.MALA
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/1b/b8f2121bdc4752dffee2abec80c0eb/seed=8___tracetype=mcmc___target=Banana___kernel=MF.RWMH seed=8___tracetype=mcmc___target=Banana___kernel=MF.RWMH
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/0a/c1ccb42a3d7a6157192b5a5ddb76c7/seed=1___tracetype=fwd_irf___target=Cross___kernel=MF.RWMH seed=1___tracetype=fwd_irf___target=Cross___kernel=MF.RWMH
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/e7/2c5f1109fb884a79e73db4a8478c37/seed=1___tracetype=inv_irf___target=Banana___kernel=MF.RWMH seed=1___tracetype=inv_irf___target=Banana___kernel=MF.RWMH
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/5c/5d54e1bd829f8af146319b8c8014fa/seed=4___tracetype=fwd_homo___target=Banana___kernel=MF.MALA seed=4___tracetype=fwd_homo___target=Banana___kernel=MF.MALA
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/0b/4918f62f58cb2bf70daaedb0c63eed/seed=5___tracetype=mcmc___target=Cross___kernel=MF.MALA seed=5___tracetype=mcmc___target=Cross___kernel=MF.MALA
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/db/516a100738b2accc35a8cd039de80c/seed=5___tracetype=fwd_homo___target=Banana___kernel=MF.HMC seed=5___tracetype=fwd_homo___target=Banana___kernel=MF.HMC
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/6d/65d120170c3b8d900186546539db45/seed=9___tracetype=fwd_homo___target=Banana___kernel=MF.RWMH seed=9___tracetype=fwd_homo___target=Banana___kernel=MF.RWMH
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/b0/a61d0e9d97df8ad6735a8030bba102/seed=3___tracetype=fwd_homo___target=Cross___kernel=MF.MALA seed=3___tracetype=fwd_homo___target=Cross___kernel=MF.MALA
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/7b/eebc6fcb4701f14103d103fc10f328/seed=2___tracetype=inv_irf___target=Cross___kernel=MF.HMC seed=2___tracetype=inv_irf___target=Cross___kernel=MF.HMC
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/6b/989a794dc2092aa02e362a76c7d64a/seed=2___tracetype=fwd_irf___target=Banana___kernel=MF.RWMH seed=2___tracetype=fwd_irf___target=Banana___kernel=MF.RWMH
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/5e/4a346a37a526399609b3a429df67f3/seed=1___tracetype=mcmc___target=Banana___kernel=MF.MALA seed=1___tracetype=mcmc___target=Banana___kernel=MF.MALA
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/7a/6fbc5366afaca3977c8ba8200fb29a/seed=4___tracetype=bwd_irf___target=Banana___kernel=MF.RWMH seed=4___tracetype=bwd_irf___target=Banana___kernel=MF.RWMH
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/18/36b064fbb903ea0891d9ecd802505a/seed=6___tracetype=bwd_irf___target=Cross___kernel=MF.MALA seed=6___tracetype=bwd_irf___target=Cross___kernel=MF.MALA
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/df/41148ed2569ababaf8676019ea24f3/seed=3___tracetype=bwd_inv_irf___target=Banana___kernel=MF.HMC seed=3___tracetype=bwd_inv_irf___target=Banana___kernel=MF.HMC
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/2c/0046a8c88eca4fb66c3a1740e3515f/seed=7___tracetype=mcmc___target=Banana___kernel=MF.HMC seed=7___tracetype=mcmc___target=Banana___kernel=MF.HMC
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/d0/c478f898f1c2f00bdae11d3764896c/seed=1___tracetype=inv_irf___target=Cross___kernel=MF.MALA seed=1___tracetype=inv_irf___target=Cross___kernel=MF.MALA
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/6c/c431c5b5c55e60ec3895bd03035b02/seed=8___tracetype=bwd_inv_irf___target=Banana___kernel=MF.RWMH seed=8___tracetype=bwd_inv_irf___target=Banana___kernel=MF.RWMH
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/1d/87c61a42884cf7565768e2f532e28e/seed=4___tracetype=fwd_homo___target=Cross___kernel=MF.HMC seed=4___tracetype=fwd_homo___target=Cross___kernel=MF.HMC
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/91/9af98b0cced234ce04257a3669da9c/seed=8___tracetype=fwd_homo___target=Banana___kernel=MF.RWMH seed=8___tracetype=fwd_homo___target=Banana___kernel=MF.RWMH
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/59/25475a7467bb240c0f33516d119619/seed=7___tracetype=fwd_homo___target=Cross___kernel=MF.MALA seed=7___tracetype=fwd_homo___target=Cross___kernel=MF.MALA
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/32/f8a8a7399cdea36035fbd9432aaa44/seed=6___tracetype=fwd_irf___target=Banana___kernel=MF.HMC seed=6___tracetype=fwd_irf___target=Banana___kernel=MF.HMC
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/52/d82731a77ebcb5ceefd61d006a17a6/seed=4___tracetype=bwd_irf___target=Cross___kernel=MF.RWMH seed=4___tracetype=bwd_irf___target=Cross___kernel=MF.RWMH
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/5c/bb7d6918f0aec39b2a2f617eb59d06/seed=7___tracetype=mcmc___target=Cross___kernel=MF.HMC seed=7___tracetype=mcmc___target=Cross___kernel=MF.HMC
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/db/d4c80a31952dc1b4f6ca3249d7a39e/seed=10___tracetype=inv_irf___target=Cross___kernel=MF.HMC seed=10___tracetype=inv_irf___target=Cross___kernel=MF.HMC
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/60/b0570185a84ac13914c6541b8e5880/seed=2___tracetype=inv_irf___target=Banana___kernel=MF.MALA seed=2___tracetype=inv_irf___target=Banana___kernel=MF.MALA
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/a3/097fa573f2d852f7799451fa14985e/seed=9___tracetype=mcmc___target=Cross___kernel=MF.MALA seed=9___tracetype=mcmc___target=Cross___kernel=MF.MALA
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/9f/780bceca4d2b03cc602dda5dac1214/seed=8___tracetype=fwd_irf___target=Cross___kernel=MF.RWMH seed=8___tracetype=fwd_irf___target=Cross___kernel=MF.RWMH
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/ed/eea8c1e9618742afef82b586de2edf/seed=9___tracetype=bwd_irf___target=Banana___kernel=MF.MALA seed=9___tracetype=bwd_irf___target=Banana___kernel=MF.MALA
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/b9/8a41dd7dbb5b1c571f29c67ef3fbbd/seed=7___tracetype=bwd_inv_irf___target=Banana___kernel=MF.RWMH seed=7___tracetype=bwd_inv_irf___target=Banana___kernel=MF.RWMH
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/f8/5aa039f678af13b0cf8dafba397ae8/seed=2___tracetype=fwd_irf___target=Cross___kernel=MF.MALA seed=2___tracetype=fwd_irf___target=Cross___kernel=MF.MALA
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/cd/3a9d3939d0e18d11d371c77229ab59/seed=7___tracetype=fwd_irf___target=Banana___kernel=MF.MALA seed=7___tracetype=fwd_irf___target=Banana___kernel=MF.MALA
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/3a/aa965089c58677d1f0beb0abfb18fc/seed=6___tracetype=fwd_homo___target=Banana___kernel=MF.MALA seed=6___tracetype=fwd_homo___target=Banana___kernel=MF.MALA
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/1d/b1f61ac8e585cba8ec2d321bee3858/seed=7___tracetype=fwd_homo___target=Banana___kernel=MF.RWMH seed=7___tracetype=fwd_homo___target=Banana___kernel=MF.RWMH
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/98/c5a47cd598d16c3fbc4c53237db2d2/seed=10___tracetype=bwd_irf___target=Cross___kernel=MF.RWMH seed=10___tracetype=bwd_irf___target=Cross___kernel=MF.RWMH
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/e1/394da6c9673e4f76af27a577d30b01/seed=7___tracetype=mcmc___target=Banana___kernel=MF.RWMH seed=7___tracetype=mcmc___target=Banana___kernel=MF.RWMH
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/b4/0f7fb7b715e3cb78d61aa1d3e65f9d/seed=7___tracetype=fwd_irf___target=Cross___kernel=MF.RWMH seed=7___tracetype=fwd_irf___target=Cross___kernel=MF.RWMH
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/71/15b72eb8c36c8c215e4c78ee5cf2e0/seed=10___tracetype=fwd_homo___target=Cross___kernel=MF.HMC seed=10___tracetype=fwd_homo___target=Cross___kernel=MF.HMC
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/81/cf0a158b2054213117bf98e5a3ce56/seed=5___tracetype=bwd_inv_irf___target=Cross___kernel=MF.RWMH seed=5___tracetype=bwd_inv_irf___target=Cross___kernel=MF.RWMH
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/27/9f8e01367ec14e1116fa0a1998d4a1/seed=6___tracetype=bwd_inv_irf___target=Banana___kernel=MF.RWMH seed=6___tracetype=bwd_inv_irf___target=Banana___kernel=MF.RWMH
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/b8/30a0be1d2c60d5b0decc65652e7d5f/seed=4___tracetype=bwd_irf___target=Cross___kernel=MF.HMC seed=4___tracetype=bwd_irf___target=Cross___kernel=MF.HMC
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/15/438211a7404cba136fda0bf97625e5/seed=9___tracetype=fwd_irf___target=Banana___kernel=MF.RWMH seed=9___tracetype=fwd_irf___target=Banana___kernel=MF.RWMH
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/28/7566f635d5db0e75ec785debc35a64/seed=10___tracetype=mcmc___target=Cross___kernel=MF.MALA seed=10___tracetype=mcmc___target=Cross___kernel=MF.MALA
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/06/471b1ebd68cab12028cbf0cad6beec/seed=8___tracetype=inv_irf___target=Cross___kernel=MF.RWMH seed=8___tracetype=inv_irf___target=Cross___kernel=MF.RWMH
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/82/fb9c364abfd2022af16a7056951cff/seed=3___tracetype=mcmc___target=Cross___kernel=MF.HMC seed=3___tracetype=mcmc___target=Cross___kernel=MF.HMC
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/dc/f6ae0b0a54b261d224362db053d6fa/seed=5___tracetype=fwd_irf___target=Banana___kernel=MF.RWMH seed=5___tracetype=fwd_irf___target=Banana___kernel=MF.RWMH
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/14/cfa9c559d45d852b3c6bd613f12f19/seed=8___tracetype=bwd_irf___target=Banana___kernel=MF.RWMH seed=8___tracetype=bwd_irf___target=Banana___kernel=MF.RWMH
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/93/a0379c925b42381f51599db24b307d/seed=9___tracetype=fwd_irf___target=Cross___kernel=MF.MALA seed=9___tracetype=fwd_irf___target=Cross___kernel=MF.MALA
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/4a/82c9d65568764fb1074acf294ef03e/seed=1___tracetype=fwd_homo___target=Banana___kernel=MF.MALA seed=1___tracetype=fwd_homo___target=Banana___kernel=MF.MALA
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/57/7be24e28eaf764fc341fc1eb720279/seed=1___tracetype=mcmc___target=Cross___kernel=MF.MALA seed=1___tracetype=mcmc___target=Cross___kernel=MF.MALA
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/b3/d1ceace88cc16a1a4f12f45d737b9d/seed=2___tracetype=inv_irf___target=Cross___kernel=MF.MALA seed=2___tracetype=inv_irf___target=Cross___kernel=MF.MALA
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/71/1d35d5ac6126fa33716480f933773c/seed=5___tracetype=bwd_irf___target=Cross___kernel=MF.MALA seed=5___tracetype=bwd_irf___target=Cross___kernel=MF.MALA
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/ff/b820df9a5fb91086cfed09422dec43/seed=2___tracetype=mcmc___target=Banana___kernel=MF.MALA seed=2___tracetype=mcmc___target=Banana___kernel=MF.MALA
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/ec/be93fd0292cfa2e7dbdf15ba686e3b/seed=8___tracetype=mcmc___target=Banana___kernel=MF.HMC seed=8___tracetype=mcmc___target=Banana___kernel=MF.HMC
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/5b/c65fcac3b9516f2793ba5cd9bd5934/seed=4___tracetype=fwd_homo___target=Cross___kernel=MF.MALA seed=4___tracetype=fwd_homo___target=Cross___kernel=MF.MALA
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/4b/f6ee66d122c4f18313281f91d6b386/seed=10___tracetype=bwd_inv_irf___target=Banana___kernel=MF.MALA seed=10___tracetype=bwd_inv_irf___target=Banana___kernel=MF.MALA
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/57/5c23403a261250c3c0536ed15db48e/seed=3___tracetype=bwd_irf___target=Banana___kernel=MF.HMC seed=3___tracetype=bwd_irf___target=Banana___kernel=MF.HMC
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/d7/0bdb749546df543db6bccc497b9408/seed=5___tracetype=fwd_homo___target=Banana___kernel=MF.RWMH seed=5___tracetype=fwd_homo___target=Banana___kernel=MF.RWMH
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/83/fc6aa6e6dd029760111a5cf2ab7a6c/seed=8___tracetype=mcmc___target=Cross___kernel=MF.RWMH seed=8___tracetype=mcmc___target=Cross___kernel=MF.RWMH
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/85/68bb82c166388e8ff01360ea2137a3/seed=3___tracetype=bwd_irf___target=Cross___kernel=MF.RWMH seed=3___tracetype=bwd_irf___target=Cross___kernel=MF.RWMH
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/15/62d3a472e225c267bff8f917e331d2/seed=4___tracetype=mcmc___target=Cross___kernel=MF.RWMH seed=4___tracetype=mcmc___target=Cross___kernel=MF.RWMH
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/d5/3d411af5800db745b90d416525548c/seed=1___tracetype=fwd_irf___target=Cross___kernel=MF.HMC seed=1___tracetype=fwd_irf___target=Cross___kernel=MF.HMC
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/a9/2ad327b7dfe63eb7ea5674b98a28e4/seed=3___tracetype=bwd_inv_irf___target=Cross___kernel=MF.HMC seed=3___tracetype=bwd_inv_irf___target=Cross___kernel=MF.HMC
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/a1/c34437a62a0faa6332b316cbc7214b/seed=10___tracetype=inv_irf___target=Banana___kernel=MF.RWMH seed=10___tracetype=inv_irf___target=Banana___kernel=MF.RWMH
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/c1/e1b103371a1585106a855a0a0f2d11/seed=8___tracetype=fwd_homo___target=Cross___kernel=MF.MALA seed=8___tracetype=fwd_homo___target=Cross___kernel=MF.MALA
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/ab/02fa6f6fdae35b225c538d2603b976/seed=7___tracetype=fwd_irf___target=Banana___kernel=MF.HMC seed=7___tracetype=fwd_irf___target=Banana___kernel=MF.HMC
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/c0/f7303fae4f732ab3d4e4eedbbe42a7/seed=10___tracetype=fwd_irf___target=Banana___kernel=MF.HMC seed=10___tracetype=fwd_irf___target=Banana___kernel=MF.HMC
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/9b/73dcf857e608c3f519d4f0b6dcb704/seed=3___tracetype=fwd_homo___target=Cross___kernel=MF.HMC seed=3___tracetype=fwd_homo___target=Cross___kernel=MF.HMC
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/84/1f75b7b0c5dbc99ec2e49316b2bcfa/seed=4___tracetype=inv_irf___target=Banana___kernel=MF.HMC seed=4___tracetype=inv_irf___target=Banana___kernel=MF.HMC
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/26/765bacbf5842dec8374607f64fdb27/seed=9___tracetype=mcmc___target=Banana___kernel=MF.MALA seed=9___tracetype=mcmc___target=Banana___kernel=MF.MALA
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/02/660c2f9de216bfd38b8fd3efe82d49/seed=6___tracetype=fwd_irf___target=Banana___kernel=MF.MALA seed=6___tracetype=fwd_irf___target=Banana___kernel=MF.MALA
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/a3/057bc74b5a3b07123d2eb4eb975d8b/seed=9___tracetype=inv_irf___target=Cross___kernel=MF.MALA seed=9___tracetype=inv_irf___target=Cross___kernel=MF.MALA
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/17/4bcbf56d6a36e813ccea524f4e42bc/seed=1___tracetype=fwd_irf___target=Banana___kernel=MF.RWMH seed=1___tracetype=fwd_irf___target=Banana___kernel=MF.RWMH
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/b9/6bfef276d4420f8dd79703568cfca3/seed=6___tracetype=fwd_irf___target=Cross___kernel=MF.HMC seed=6___tracetype=fwd_irf___target=Cross___kernel=MF.HMC
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/44/bf48ef4f61e77cd4c8b5444ebcf30b/seed=7___tracetype=bwd_inv_irf___target=Banana___kernel=MF.HMC seed=7___tracetype=bwd_inv_irf___target=Banana___kernel=MF.HMC
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/8a/296b895a50a17b161f2291233fbdb5/seed=7___tracetype=fwd_homo___target=Cross___kernel=MF.RWMH seed=7___tracetype=fwd_homo___target=Cross___kernel=MF.RWMH
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/e4/c28def14170cc300f353a65026d3ea/seed=10___tracetype=fwd_homo___target=Banana___kernel=MF.HMC seed=10___tracetype=fwd_homo___target=Banana___kernel=MF.HMC
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/8b/9a1e42c065abd65469b04ab3540cfe/seed=7___tracetype=inv_irf___target=Cross___kernel=MF.HMC seed=7___tracetype=inv_irf___target=Cross___kernel=MF.HMC
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/02/43497fc1bba39bd22996210ec53795/seed=1___tracetype=fwd_irf___target=Cross___kernel=MF.MALA seed=1___tracetype=fwd_irf___target=Cross___kernel=MF.MALA
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/f8/768aa342f507c8f4c62cd6cae0e67f/seed=1___tracetype=bwd_irf___target=Cross___kernel=MF.MALA seed=1___tracetype=bwd_irf___target=Cross___kernel=MF.MALA
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/b4/cbf4dd0931105ef9472f711f98b576/seed=4___tracetype=fwd_homo___target=Banana___kernel=MF.RWMH seed=4___tracetype=fwd_homo___target=Banana___kernel=MF.RWMH
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/c3/2b74ca9e460978281ed43b3281435d/seed=9___tracetype=fwd_homo___target=Banana___kernel=MF.MALA seed=9___tracetype=fwd_homo___target=Banana___kernel=MF.MALA
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/f9/6532997d9235f2e030b433fec6ae66/seed=2___tracetype=bwd_irf___target=Banana___kernel=MF.MALA seed=2___tracetype=bwd_irf___target=Banana___kernel=MF.MALA
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/8b/5e5e626c98b6d5b1b2e351c64040fd/seed=4___tracetype=mcmc___target=Banana___kernel=MF.HMC seed=4___tracetype=mcmc___target=Banana___kernel=MF.HMC
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/a8/ff4503f04e4e48abc852114bde7188/seed=8___tracetype=fwd_homo___target=Banana___kernel=MF.HMC seed=8___tracetype=fwd_homo___target=Banana___kernel=MF.HMC
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/fa/882d7f66dec2dce847dc198756d89b/seed=4___tracetype=mcmc___target=Banana___kernel=MF.MALA seed=4___tracetype=mcmc___target=Banana___kernel=MF.MALA
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/1c/9e5336614beab1e54c6366d2cdd728/seed=7___tracetype=inv_irf___target=Banana___kernel=MF.HMC seed=7___tracetype=inv_irf___target=Banana___kernel=MF.HMC
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/92/cf577935dc2f19e8813b55b04afd16/seed=8___tracetype=fwd_irf___target=Cross___kernel=MF.HMC seed=8___tracetype=fwd_irf___target=Cross___kernel=MF.HMC
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/e0/83102efc6a936c0c2baf61c958904f/seed=8___tracetype=bwd_inv_irf___target=Banana___kernel=MF.MALA seed=8___tracetype=bwd_inv_irf___target=Banana___kernel=MF.MALA
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/0f/e80c7361cedd74322ed2bdca2d606a/seed=10___tracetype=fwd_irf___target=Cross___kernel=MF.HMC seed=10___tracetype=fwd_irf___target=Cross___kernel=MF.HMC
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/b6/23b619a8bb7448b32e346e021a632d/seed=4___tracetype=inv_irf___target=Banana___kernel=MF.RWMH seed=4___tracetype=inv_irf___target=Banana___kernel=MF.RWMH
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/04/dbc23cac35b10236e40fa43a1f3d0e/seed=5___tracetype=inv_irf___target=Banana___kernel=MF.MALA seed=5___tracetype=inv_irf___target=Banana___kernel=MF.MALA
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/8b/a065fa01be6e81d817cc6436f71ecf/seed=7___tracetype=inv_irf___target=Cross___kernel=MF.MALA seed=7___tracetype=inv_irf___target=Cross___kernel=MF.MALA
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/42/548cdfd7b7041a5f696b29e58ad3a9/seed=3___tracetype=bwd_inv_irf___target=Cross___kernel=MF.RWMH seed=3___tracetype=bwd_inv_irf___target=Cross___kernel=MF.RWMH
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/ea/dbb90491c807fd8844b803201e80cf/seed=8___tracetype=bwd_irf___target=Cross___kernel=MF.MALA seed=8___tracetype=bwd_irf___target=Cross___kernel=MF.MALA
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/df/3a8cbfdd4848f916d0ccdaac18629f/seed=5___tracetype=inv_irf___target=Cross___kernel=MF.HMC seed=5___tracetype=inv_irf___target=Cross___kernel=MF.HMC
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/fb/ce552d34e5767bf7e017af9b587ebb/seed=1___tracetype=bwd_irf___target=Banana___kernel=MF.HMC seed=1___tracetype=bwd_irf___target=Banana___kernel=MF.HMC
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/5c/59918874c828265257862ea41acee5/seed=10___tracetype=inv_irf___target=Cross___kernel=MF.RWMH seed=10___tracetype=inv_irf___target=Cross___kernel=MF.RWMH
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/b3/d6473fd854556447b412918192135f/seed=6___tracetype=mcmc___target=Cross___kernel=MF.MALA seed=6___tracetype=mcmc___target=Cross___kernel=MF.MALA
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/f3/184fe4eeb19e0e0625d290bc449bdd/seed=2___tracetype=fwd_irf___target=Banana___kernel=MF.MALA seed=2___tracetype=fwd_irf___target=Banana___kernel=MF.MALA
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/67/36cf7972418153091aead9105965cf/seed=7___tracetype=inv_irf___target=Banana___kernel=MF.MALA seed=7___tracetype=inv_irf___target=Banana___kernel=MF.MALA
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/8b/0b9798ce1c75774657f89db6f512f5/seed=7___tracetype=bwd_inv_irf___target=Cross___kernel=MF.MALA seed=7___tracetype=bwd_inv_irf___target=Cross___kernel=MF.MALA
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/9d/7dfc070c06466a9006af7c3229cd0e/seed=9___tracetype=inv_irf___target=Cross___kernel=MF.RWMH seed=9___tracetype=inv_irf___target=Cross___kernel=MF.RWMH
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/20/1646f0abf4fb434fb8c262f583c279/seed=10___tracetype=bwd_irf___target=Banana___kernel=MF.MALA seed=10___tracetype=bwd_irf___target=Banana___kernel=MF.MALA
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/ca/14891b125f7d6714d574aea580f0b1/seed=4___tracetype=bwd_irf___target=Banana___kernel=MF.HMC seed=4___tracetype=bwd_irf___target=Banana___kernel=MF.HMC
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/ed/a59c6ea03ab9f3b8f8f5c3fd3b52be/seed=9___tracetype=mcmc___target=Cross___kernel=MF.RWMH seed=9___tracetype=mcmc___target=Cross___kernel=MF.RWMH
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/c4/b17a01a1ec1a67eb4d6c1ca0703ff4/seed=3___tracetype=mcmc___target=Cross___kernel=MF.RWMH seed=3___tracetype=mcmc___target=Cross___kernel=MF.RWMH
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/10/e980dc06c75fb585d746408d3eff94/seed=8___tracetype=fwd_homo___target=Banana___kernel=MF.MALA seed=8___tracetype=fwd_homo___target=Banana___kernel=MF.MALA
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/67/f490e55a7fdfd2cfc15e1c65f8e746/seed=10___tracetype=fwd_irf___target=Banana___kernel=MF.MALA seed=10___tracetype=fwd_irf___target=Banana___kernel=MF.MALA
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/9c/bc4032de6f26f1a6450c4274374406/seed=2___tracetype=fwd_homo___target=Banana___kernel=MF.HMC seed=2___tracetype=fwd_homo___target=Banana___kernel=MF.HMC
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/f4/80c8f23a27594ad50b97e65f8d8410/seed=8___tracetype=bwd_irf___target=Cross___kernel=MF.HMC seed=8___tracetype=bwd_irf___target=Cross___kernel=MF.HMC
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/b0/e2c44504bd6e2cbbfdc5cd2b93f66c/seed=2___tracetype=bwd_irf___target=Cross___kernel=MF.RWMH seed=2___tracetype=bwd_irf___target=Cross___kernel=MF.RWMH
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/8e/1cacf2b8560eea41c3a1433bda434c/seed=4___tracetype=bwd_inv_irf___target=Banana___kernel=MF.HMC seed=4___tracetype=bwd_inv_irf___target=Banana___kernel=MF.HMC
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/46/29df988121faa6a10a81d314ad791d/seed=1___tracetype=inv_irf___target=Cross___kernel=MF.RWMH seed=1___tracetype=inv_irf___target=Cross___kernel=MF.RWMH
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/9d/e2a1984c1c549661648f6447f0ad32/seed=1___tracetype=fwd_homo___target=Banana___kernel=MF.RWMH seed=1___tracetype=fwd_homo___target=Banana___kernel=MF.RWMH
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/65/d052aacae5fd5be1cd4f26b32a852e/seed=4___tracetype=fwd_irf___target=Cross___kernel=MF.MALA seed=4___tracetype=fwd_irf___target=Cross___kernel=MF.MALA
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/ca/d5bf8f22081148065a594e2629b074/seed=6___tracetype=fwd_irf___target=Cross___kernel=MF.RWMH seed=6___tracetype=fwd_irf___target=Cross___kernel=MF.RWMH
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/89/63477face169075e37702183f01ba4/seed=8___tracetype=fwd_irf___target=Banana___kernel=MF.HMC seed=8___tracetype=fwd_irf___target=Banana___kernel=MF.HMC
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/c9/ab4c813ee9070e08f87e0e92ec0c03/seed=6___tracetype=bwd_irf___target=Cross___kernel=MF.HMC seed=6___tracetype=bwd_irf___target=Cross___kernel=MF.HMC
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/ee/6f910662bcf02c1d741b1e70dd741a/seed=9___tracetype=fwd_homo___target=Cross___kernel=MF.RWMH seed=9___tracetype=fwd_homo___target=Cross___kernel=MF.RWMH
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/e3/475c3b5dec5a935d228ae802505567/seed=2___tracetype=fwd_homo___target=Cross___kernel=MF.HMC seed=2___tracetype=fwd_homo___target=Cross___kernel=MF.HMC
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/2a/b2d068b1a322763bb9d3b77811824c/seed=6___tracetype=inv_irf___target=Banana___kernel=MF.RWMH seed=6___tracetype=inv_irf___target=Banana___kernel=MF.RWMH
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/a0/5e9876fdaf42620ea6346266a846ab/seed=9___tracetype=bwd_inv_irf___target=Banana___kernel=MF.MALA seed=9___tracetype=bwd_inv_irf___target=Banana___kernel=MF.MALA
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/b1/f51768799553224dbe20d421014946/seed=4___tracetype=bwd_inv_irf___target=Banana___kernel=MF.MALA seed=4___tracetype=bwd_inv_irf___target=Banana___kernel=MF.MALA
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/12/dcd0c250296e6f01284071438a2d8d/seed=10___tracetype=mcmc___target=Banana___kernel=MF.HMC seed=10___tracetype=mcmc___target=Banana___kernel=MF.HMC
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/73/96102aa0e2bf41b8d2c15a09078149/seed=9___tracetype=bwd_irf___target=Banana___kernel=MF.HMC seed=9___tracetype=bwd_irf___target=Banana___kernel=MF.HMC
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/67/1750e55cc1a9498509d6b6e2e875d1/seed=5___tracetype=fwd_homo___target=Cross___kernel=MF.HMC seed=5___tracetype=fwd_homo___target=Cross___kernel=MF.HMC
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/b6/c8a84999d30176945d53a35056cd1d/seed=6___tracetype=inv_irf___target=Cross___kernel=MF.RWMH seed=6___tracetype=inv_irf___target=Cross___kernel=MF.RWMH
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/be/3f21147c46de0adfc4963362ed4703/seed=2___tracetype=fwd_irf___target=Banana___kernel=MF.HMC seed=2___tracetype=fwd_irf___target=Banana___kernel=MF.HMC
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/e4/1693909c123f0a493ae9593d1d71fb/seed=6___tracetype=bwd_inv_irf___target=Cross___kernel=MF.RWMH seed=6___tracetype=bwd_inv_irf___target=Cross___kernel=MF.RWMH
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/c1/983110c347b18b1667c68fd6d56495/seed=7___tracetype=fwd_irf___target=Banana___kernel=MF.RWMH seed=7___tracetype=fwd_irf___target=Banana___kernel=MF.RWMH
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/79/88436d240a526a68700a43cfadc751/seed=10___tracetype=bwd_inv_irf___target=Cross___kernel=MF.RWMH seed=10___tracetype=bwd_inv_irf___target=Cross___kernel=MF.RWMH
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/a5/9c3ec9b7d31ca956dad883283a908c/seed=4___tracetype=mcmc___target=Cross___kernel=MF.HMC seed=4___tracetype=mcmc___target=Cross___kernel=MF.HMC
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/66/ab04fa7bb5f99a66c1e6f78bbf0172/seed=1___tracetype=mcmc___target=Cross___kernel=MF.RWMH seed=1___tracetype=mcmc___target=Cross___kernel=MF.RWMH
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/48/1ddc98d0482dcc7f789b9f344974fc/seed=7___tracetype=bwd_inv_irf___target=Banana___kernel=MF.MALA seed=7___tracetype=bwd_inv_irf___target=Banana___kernel=MF.MALA
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/4f/289157c2e38cfcbc1ff04abc8a6878/seed=4___tracetype=bwd_inv_irf___target=Cross___kernel=MF.MALA seed=4___tracetype=bwd_inv_irf___target=Cross___kernel=MF.MALA
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/58/70e76b30c0584ce53173042da1b960/seed=7___tracetype=bwd_irf___target=Banana___kernel=MF.RWMH seed=7___tracetype=bwd_irf___target=Banana___kernel=MF.RWMH
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/db/45242fe43b6824fa4fce143f371e1e/seed=10___tracetype=bwd_irf___target=Cross___kernel=MF.MALA seed=10___tracetype=bwd_irf___target=Cross___kernel=MF.MALA
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/cc/cf9d9343208d562715df1dd8e93b6e/seed=9___tracetype=mcmc___target=Cross___kernel=MF.HMC seed=9___tracetype=mcmc___target=Cross___kernel=MF.HMC
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/54/c940a4f74746f742393ea5f55a57cd/seed=4___tracetype=inv_irf___target=Cross___kernel=MF.MALA seed=4___tracetype=inv_irf___target=Cross___kernel=MF.MALA
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/c9/cdce0762f3a5704fb2c750211ae0d0/seed=1___tracetype=bwd_inv_irf___target=Banana___kernel=MF.MALA seed=1___tracetype=bwd_inv_irf___target=Banana___kernel=MF.MALA
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/5c/4182c432f0583ada6e504499f1f7e1/seed=2___tracetype=mcmc___target=Cross___kernel=MF.RWMH seed=2___tracetype=mcmc___target=Cross___kernel=MF.RWMH
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/0f/6be9a582cba20c900e3b4160ec75af/seed=6___tracetype=bwd_inv_irf___target=Banana___kernel=MF.MALA seed=6___tracetype=bwd_inv_irf___target=Banana___kernel=MF.MALA
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/a7/93d6164c971e27f2411f4813269b67/seed=2___tracetype=bwd_inv_irf___target=Banana___kernel=MF.MALA seed=2___tracetype=bwd_inv_irf___target=Banana___kernel=MF.MALA
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/13/c5cd90d0f7e0bd1f238b93f16cb574/seed=8___tracetype=fwd_irf___target=Banana___kernel=MF.MALA seed=8___tracetype=fwd_irf___target=Banana___kernel=MF.MALA
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/8a/22896668040edfcf4329682885ab1b/seed=7___tracetype=mcmc___target=Banana___kernel=MF.MALA seed=7___tracetype=mcmc___target=Banana___kernel=MF.MALA
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/9c/68a4b5ed75d5bdf1f5413ceeabf35b/seed=7___tracetype=fwd_irf___target=Cross___kernel=MF.MALA seed=7___tracetype=fwd_irf___target=Cross___kernel=MF.MALA
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/ab/d0d07809ffab665d0a4981cea1c6fc/seed=10___tracetype=bwd_irf___target=Cross___kernel=MF.HMC seed=10___tracetype=bwd_irf___target=Cross___kernel=MF.HMC
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/5a/f715eec28da95793afc85b950c879e/seed=2___tracetype=fwd_homo___target=Cross___kernel=MF.MALA seed=2___tracetype=fwd_homo___target=Cross___kernel=MF.MALA
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/c2/6641c581b73cbc82ac68bec7beb6a5/seed=1___tracetype=fwd_homo___target=Cross___kernel=MF.RWMH seed=1___tracetype=fwd_homo___target=Cross___kernel=MF.RWMH
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/e8/0021627a9ce015f5e1abf08562f08e/seed=5___tracetype=fwd_homo___target=Banana___kernel=MF.MALA seed=5___tracetype=fwd_homo___target=Banana___kernel=MF.MALA
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/50/3051a317bc8d95fb88ef2a7898a34e/seed=5___tracetype=fwd_irf___target=Banana___kernel=MF.HMC seed=5___tracetype=fwd_irf___target=Banana___kernel=MF.HMC
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/20/feef8f0d703eda9fd26b75e326ab32/seed=9___tracetype=inv_irf___target=Banana___kernel=MF.RWMH seed=9___tracetype=inv_irf___target=Banana___kernel=MF.RWMH
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/76/689eedc61f11af9f535927521fcc4b/seed=2___tracetype=mcmc___target=Banana___kernel=MF.RWMH seed=2___tracetype=mcmc___target=Banana___kernel=MF.RWMH
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/7c/73c595c849b15ddc607a1fe19e7493/seed=3___tracetype=bwd_irf___target=Cross___kernel=MF.MALA seed=3___tracetype=bwd_irf___target=Cross___kernel=MF.MALA
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/44/da2a559f15cf0e668ccc1db5fa350f/seed=7___tracetype=bwd_irf___target=Cross___kernel=MF.HMC seed=7___tracetype=bwd_irf___target=Cross___kernel=MF.HMC
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/42/e05b3f53f09ae6cd1d52a9af209742/seed=6___tracetype=mcmc___target=Banana___kernel=MF.HMC seed=6___tracetype=mcmc___target=Banana___kernel=MF.HMC
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/b9/24a0999a29cf50b9e3ba3353d3efd0/seed=5___tracetype=mcmc___target=Banana___kernel=MF.RWMH seed=5___tracetype=mcmc___target=Banana___kernel=MF.RWMH
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/f8/0f31cc67246f241c7a4ce131879a9a/seed=5___tracetype=bwd_irf___target=Cross___kernel=MF.RWMH seed=5___tracetype=bwd_irf___target=Cross___kernel=MF.RWMH
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/df/71408b752ce935c255a0eb0ecde4d9/seed=8___tracetype=mcmc___target=Cross___kernel=MF.MALA seed=8___tracetype=mcmc___target=Cross___kernel=MF.MALA
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/c6/c4d3714cd0352ba44ec30faef86f93/seed=3___tracetype=bwd_inv_irf___target=Banana___kernel=MF.MALA seed=3___tracetype=bwd_inv_irf___target=Banana___kernel=MF.MALA
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/fc/100d04bd2092ad016027acbe79f623/seed=2___tracetype=inv_irf___target=Banana___kernel=MF.HMC seed=2___tracetype=inv_irf___target=Banana___kernel=MF.HMC
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/28/46e67cb3148c9e7bcbd21647142ae6/seed=8___tracetype=bwd_irf___target=Banana___kernel=MF.MALA seed=8___tracetype=bwd_irf___target=Banana___kernel=MF.MALA
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/da/70a4e2456ab43739e88e6848328db3/seed=1___tracetype=bwd_inv_irf___target=Banana___kernel=MF.HMC seed=1___tracetype=bwd_inv_irf___target=Banana___kernel=MF.HMC
+    ln -s /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/20/35e593a6fc88967b4205c1fd31b9b8/seed=9___tracetype=fwd_irf___target=Cross___kernel=MF.RWMH seed=9___tracetype=fwd_irf___target=Cross___kernel=MF.RWMH
+}
+
+nxf_unstage() {
+    true
+    [[ ${nxf_main_ret:=0} != 0 ]] && return
+}
+
+nxf_main() {
+    trap on_exit EXIT
+    trap on_term TERM INT USR2
+    trap '' USR1
+
+    [[ "${NXF_CHDIR:-}" ]] && cd "$NXF_CHDIR"
+    NXF_SCRATCH=''
+    [[ $NXF_DEBUG > 0 ]] && nxf_env
+    touch /home/zuheng/Research/MixFlow.jl/example/compare_traces/work/2b/efe4d88664cfe3a82ab527240f2344/.command.begin
+    set +u
+    set -u
+    [[ $NXF_SCRATCH ]] && cd $NXF_SCRATCH
+    export NXF_TASK_WORKDIR="$PWD"
+    nxf_stage
+
+    set +e
+    (set -o pipefail; (nxf_launch | tee .command.out) 3>&1 1>&2 2>&3 | tee .command.err) &
+    pid=$!
+    wait $pid || nxf_main_ret=$?
+    nxf_unstage
+}
+
+$NXF_ENTRY
