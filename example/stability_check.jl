@@ -51,7 +51,6 @@ function check_error(prob, K, mixer, Ts::Vector{Int})
     stats = []
     for T in Ts
         err, _, _ = check_error(prob, K, mixer, T)
-        # stat = (T=T, error=err)
         push!(stats, err)
     end
     return map(identity, stats)
@@ -68,7 +67,7 @@ function GetInvError(name::String, K::MultivariateInvolutiveKernel, seed::Int; t
 
     dims = LogDensityProblems.dimension(target_ad)
 
-    T_max = 20_000
+    T_max = 3_000
 
     if type == "homogeneous"
         mixer = ErgodicShift(dims, T_max)
@@ -82,7 +81,6 @@ function GetInvError(name::String, K::MultivariateInvolutiveKernel, seed::Int; t
 
     err = check_error(prob, K, mixer, Ts)
     df = DataFrame(
-        mcmc = _get_kernel_name(K),
         id = seed,
         Ts = Ts,
         errors = err,
