@@ -7,14 +7,13 @@ using LogDensityProblems, LogDensityProblemsAD
 using Bijectors
 using DataFrames, CSV
 using MCMCChains
+using StatsPlots, Plots
 
 using MixFlow 
 using MixFlow: _rand_joint_reference, _log_density_ratio
 
 const MF = MixFlow
 
-include(joinpath(@__DIR__, "../mfvi.jl"))
-include(joinpath(@__DIR__, "../Model.jl"))
 include(joinpath(@__DIR__, "../utils.jl"))
 include(joinpath(@__DIR__, "../plotting.jl"))
 
@@ -188,15 +187,61 @@ function grouped_ess_plot(
     end
 end
 
+# turn "MF.HMC" to "HMC"
+function _get_kernel_name(str::String)
+    name = split(str, ".", limit = 2)[2]
+    return name
+end
 
-# combined_csvs_folder = "deliverables/scriptName=elbo.nf___dryRun=false___n_sample=512___nrunThreads=1/"
-# df_e = _remove_nan(df_e)
-# selector = Dict(
-#     :target => "Cross", 
-#     # :kernel => "MF.HMC",
+function trace_meanplot(
+    combined_csvs_folder::String,
+    target::String,
+    kernel_str::String;
+    plot_kwargs...
+)
+    df = CSV.read(joinpath(combined_csvs_folder, "summary.csv"), DataFrame)
+    trace_types = unique(df.tracetype)
+
+    for t in trace_types
+        fg_name = "$(target)_$(_get_kernel_name(kernel_str))_$(t)"
+        chn, _ = chain_from_combine_csvs(
+            combined_csvs_folder,
+            target,
+            kernel_str,
+            t;
+            compute_ess = false,
+        )
+        fg = meanplot(chn)
+        plot!(
+            fg,
+            plot_title = fg_name; 
+            plot_kwargs...,
+        )
+        savefig(fg, fg_name * ".png")
+    end 
+end
+
+# trace_meanplot(
+#     ".",
+#     "Cross", 
+#     "MF.RWMH";
+#     dpi = 1000,
+#     margin = 5Plots.mm,
+#     xguidefontsize = 18,
+#     yguidefontsize = 18,
+# ) 
+
+
+
+# chn, _ = chain_from_combine_csvs(
+#     ".",
+#     "Cross",
+#     "MF.RWMH",
+#     "fwd_homo"; 
+#     compute_ess = false,
 # )
-# df_e_sub = _subset_expt(df_e, selector)
-# df_e_sub = _remove_nan(df_e_sub)
-# # fg = @df df_e_sub groupedboxplot(:kernel, :dr, group = :tracetype, yscale = :log10)
-# fg = @df df_e_sub groupedboxplot(:kernel, :dr, group = :tracetype, yscale = :log10, legend = false, xtickfontsize = 18)
+# fg = plot(chn)
+# savefig(fg, "../traceplot/Cross_homo_trace.png")
 
+# fg1 = meanplot(chn)
+# plot!(fg1, dpi = 1000, margin = 5Plots.mm, xguidefontsize = 18, yguidefontsize = 18, plot_title = "Banana MALA bwd_inv_IRF", legend = false)

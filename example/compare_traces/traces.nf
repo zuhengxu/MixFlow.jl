@@ -78,6 +78,16 @@ process plot {
         xtickfontsize = 18, ytickfontsize = 18, yguidefontsize = 18,
         legendfontsize = 11, titlefontsize = 18,
     )
+
+    trace_meanplot(
+        "$combined_csvs_folder", 
+        "Banana", 
+        "MF.RWMH";
+        dpi = 1000,
+        margin = 5Plots.mm,
+        xguidefontsize = 18,
+        yguidefontsize = 18,
+    )
     """
 }
 

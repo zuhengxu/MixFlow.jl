@@ -1,2 +1,0 @@
-loading startup.jl
-[ Info: Running mcmc on Funnel MALA{Float64}(0.1, [1.0 0.0; 0.0 1.0]) with T_max = 3000
