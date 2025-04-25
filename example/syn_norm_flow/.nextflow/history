@@ -1,9 +1,0 @@
-2025-04-24 23:25:38	4.6s	clever_hawking	ERR	fea2d6b09b6d74c8dcc62ab103195ce8	c36cedea-2bb4-4c24-9b43-86e8e72aad12	nextflow run normflow.nf --dryRun
-2025-04-24 23:46:59	-	thirsty_descartes	-	e7457e703fe29cd70e03685537e058b5	9dcaccc5-fbc7-41b2-96a2-b840726e0698	nextflow run normflow.nf --dryRun
-2025-04-24 23:47:16	2m 36s	fabulous_brattain	ERR	4f7b84c4a504b4d73f6f6b087899c0e2	6415b21c-8ad2-40f7-a4a5-d10fb0824941	nextflow run normflow.nf --dryRun
-2025-04-24 23:54:19	2m 14s	clever_neumann	OK	b48a50a7bb2c268f3642dcbecfc4c2a3	08d561b5-8dde-488e-87c0-35b35d40ab5f	nextflow run normflow.nf --dryRun
-2025-04-24 23:56:51	24s	golden_sax	ERR	3f77a60f83c7bf41add0534b19618743	c63531bc-5876-4d5d-9015-27f2e52bda27	nextflow run normflow.nf --dryRun
-2025-04-24 23:57:16	2m 13s	soggy_bardeen	ERR	6f74cf688620d0695f355e0501ff8276	d2f3efc5-e2b1-480c-8204-99ce104cdf1f	nextflow run normflow.nf --dryRun
-2025-04-25 00:00:43	2m 17s	cheeky_liskov	OK	ff6b99e6db220adefc0a36af769fdc18	4cf58b8e-fc13-4e8a-894f-908699c712f6	nextflow run normflow.nf --dryRun
-2025-04-25 00:04:08	3m 30s	pensive_lumiere	ERR	93fb107b13fd3714462d9da11c9a794c	920f9f7e-87e4-4e66-b915-ba21e59a091e	nextflow run normflow.nf
-2025-04-25 00:08:43	1h 40m 43s	furious_venter	OK	5551881f298b9e5b1be396575c71d187	920f9f7e-87e4-4e66-b915-ba21e59a091e	nextflow run normflow.nf -resume
