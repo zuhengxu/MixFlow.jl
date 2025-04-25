@@ -9,7 +9,7 @@ example/work/
 *.html
 
 **.nextflow/*
-**work/*
+**work/**
 **.nextflow.log**
 **summary.csv
 nextflow
