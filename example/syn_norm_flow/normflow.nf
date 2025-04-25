@@ -3,7 +3,7 @@ include { instantiate; precompile; activate } from '../nf-nest/pkg.nf'
 include { combine_csvs; } from '../nf-nest/combine.nf'
 
 params.dryRun = false
-params.n_sample_eval = params.dryRun ? 8 : 512
+params.n_sample_eval = params.dryRun ? 8 : 1024
 params.nrunThreads = 2
 
 def julia_env = file("${moduleDir}/../")
@@ -14,10 +14,10 @@ def variables = [
     target: ["Banana", "Funnel", "WarpedGaussian", "Cross"], 
     // flowtype: ["neural_spline_flow", "real_nvp"],
     // lr: ["1e-3", "1e-2", "1e-4"],
-    flowtype: ["real_nvp"],
-    lr: ["1e-3"],
+    flowtype: ["real_nvp", "neural_spline_flow"],
+    lr: ["1e-3", "1e-4", "1e-2"],
     batchsize: [64],
-    niters: [50000],
+    niters: [100000],
 ]
 
 workflow {

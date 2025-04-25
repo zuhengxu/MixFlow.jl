@@ -11,7 +11,8 @@ function log_normalize_weights(log_weights::AbstractVector{T}) where T
     return ℓW
 end
 
-function ess_from_logweights(logw::AbstractVector{T}) where T ℓW = log_normalize_weights(logw)
+function ess_from_logweights(logw::AbstractVector{T}) where T 
+    ℓW = log_normalize_weights(logw)
     return exp(-LogExpFunctions.logsumexp(2 * ℓW))
 end
 

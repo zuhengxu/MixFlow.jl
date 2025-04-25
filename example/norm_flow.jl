@@ -12,6 +12,7 @@ using LogExpFunctions
 using DataFrames, CSV
 using JLD2
 
+using MixFlow
 
 
 include(joinpath( @__DIR__, "Model.jl"))
@@ -150,7 +151,7 @@ function Bijectors.transform(af::AffineCoupling, x::AbstractVector)
 end
 
 function (af::AffineCoupling)(x::AbstractArray)
-    return transform(af, x)
+    return Bijectors.transform(af, x)
 end
 
 function Bijectors.with_logabsdet_jacobian(af::AffineCoupling, x::AbstractVector)
@@ -192,7 +193,7 @@ end
 
 function create_flow(Ls, q₀)
     ts =  reduce(∘, Ls)
-    return transformed(q₀, ts)
+    return Bijectors.transformed(q₀, ts)
 end
 
 function create_neural_spline_flow()
@@ -235,6 +236,8 @@ end
 
 flow_elbo_est(logp, flow; nsample = 128) = NormalizingFlows.elbo(flow, logp, nsample)
 
+_is_nan_or_inf(x) = isnan(x) || isinf(x)
+
 # running function on trained flow
 function run_norm_flow(
     seed, name::String, flowname::String, lr; 
@@ -259,7 +262,7 @@ function run_norm_flow(
     # #############
     
     adtype = ADTypes.AutoMooncake(; config = Mooncake.Config())
-    checkconv(iter, stat, re, θ, st) = stat.gradient_norm < 1e-3
+    checkconv(iter, stat, re, θ, st) = _is_nan_or_inf(stat.loss) || (stat.gradient_norm < 1e-3)
 
     flow_trained, stats, _ = train_flow(
         elbo,
@@ -274,9 +277,16 @@ function run_norm_flow(
     )
     @info "Training finished"
 
+    # generate new samples
+    ys = rand(flow_trained, nsample_eval)
+
     # losses = map(x -> x.loss, stats)
     tv = flow_tv_est(target, flow_trained; nsample = nsample_eval)
-    el = flow_elbo_est(logp, flow_trained; nsample = nsample_eval)
+
+    logws = map(x -> NormalizingFlows.elbo_single_sample(flow_trained, logp, x), eachcol(ys))
+    el = mean(logws)
+    logz = MixFlow.log_normalization_constant(logws)
+    es = MixFlow.ess_from_logweights(logws)/nsample_eval
     
     # # save the trained flow
     # res_dir = joinpath(@__DIR__, "result/")
@@ -291,12 +301,14 @@ function run_norm_flow(
     return DataFrame(
         tv=tv,
         elbo=el,
+        logZ=logz,
+        ess=es,
     )
 end
 
 # df = run_norm_flow(
-#     1, "Banana", "neural_spline_flow", 1e-3; 
-#     batchsize=64, niters=300, show_progress=true,
+#     1, "Funnel", "real_nvp", 1e-3; 
+#     batchsize=64, niters=10000, show_progress=true,
 #     nsample_eval=512,
 # )
 
