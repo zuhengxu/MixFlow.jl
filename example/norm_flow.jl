@@ -226,15 +226,36 @@ function create_real_nvp()
 end
 
 function flow_tv_est(target, flow; nsample = 128)
-    Xs = rand(target, nsample)
-    ldrs = [
-        logpdf(flow, x) - logpdf(target, x) for x in eachcol(Xs)
-    ]
-    drs = abs.(expm1.(ldrs)) 
-    return mean(drs)/2
+    try
+        Xs = rand(target, nsample)
+        ldrs = [
+            (logpdf(flow, Xs[:, i]) - logpdf(target, Xs[:, i])) for i in 1:nsample
+        ]
+        drs = abs.(expm1.(ldrs)) 
+        return mean(drs)/2
+    catch e
+        println("Error in flow_tv_est: $e")
+        return NaN
+    end
 end
 
-flow_elbo_est(logp, flow; nsample = 128) = NormalizingFlows.elbo(flow, logp, nsample)
+# flow_elbo_est(logp, flow; nsample = 128) = NormalizingFlows.elbo(flow, logp, nsample)
+
+function flow_sample_eval(flow; nsample = 128)
+    # generate new samples from flow
+    try 
+        ys = rand(flow_trained, nsample_eval)
+
+        logws = map(x -> NormalizingFlows.elbo_single_sample(flow_trained, logp, x), eachcol(ys))
+        el = mean(logws)
+        logz = MixFlow.log_normalization_constant(logws)
+        es = MixFlow.ess_from_logweights(logws)/nsample_eval
+        return el, logz, es
+    catch e
+        println("Error in flow_sample_eval: $e")
+        return NaN, NaN, NaN
+    end
+end
 
 _is_nan_or_inf(x) = isnan(x) || isinf(x)
 
@@ -277,16 +298,20 @@ function run_norm_flow(
     )
     @info "Training finished"
 
-    # generate new samples
-    ys = rand(flow_trained, nsample_eval)
+    if _is_nan_or_inf(stats[end].loss)
+        println("Training failed: loss is NaN or Inf")
+        return DataFrame(
+            tv = NaN,
+            elbo = NaN,
+            logZ = NaN,
+            ess = NaN,
+        )
+    end
 
     # losses = map(x -> x.loss, stats)
+    # try and if error happens, return NaN
     tv = flow_tv_est(target, flow_trained; nsample = nsample_eval)
-
-    logws = map(x -> NormalizingFlows.elbo_single_sample(flow_trained, logp, x), eachcol(ys))
-    el = mean(logws)
-    logz = MixFlow.log_normalization_constant(logws)
-    es = MixFlow.ess_from_logweights(logws)/nsample_eval
+    el, logz, es = flow_sample_eval(flow_trained; nsample = nsample_eval)
     
     # # save the trained flow
     # res_dir = joinpath(@__DIR__, "result/")
@@ -307,16 +332,16 @@ function run_norm_flow(
 end
 
 # df = run_norm_flow(
-#     1, "Funnel", "real_nvp", 1e-3; 
-#     batchsize=64, niters=10000, show_progress=true,
+#     1, "Funnel", "neural_spline_flow", 1e-3; 
+#     batchsize=32, niters=1000, show_progress=true,
 #     nsample_eval=512,
 # )
 
 # flowname = "neural_spline_flow"
-# name = "Banana"
+# name = "Funnel"
 # seed = 1
 # lr = 1e-3
 # batchsize = 32
-# niters = 500
+# niters = 1000
 
 # flow_elbo_est(logp, flow)
