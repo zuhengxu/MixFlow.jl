@@ -119,7 +119,7 @@ end
 
 
 ##################################
-# define affine coupling layer using Bijectors.jl interface
+# Real NVP (affine coupling) layer using Bijectors.jl interface
 #################################
 struct AffineCoupling <: Bijectors.Bijector
     dim::Int
@@ -229,7 +229,7 @@ function flow_tv_est(target, flow; nsample = 128)
     try
         Xs = rand(target, nsample)
         ldrs = [
-            (logpdf(flow, Xs[:, i]) - logpdf(target, Xs[:, i])) for i in 1:nsample
+            logpdf(flow,x) - logpdf(target, x) for x in eachcol(Xs)
         ]
         drs = abs.(expm1.(ldrs)) 
         return mean(drs)/2
@@ -241,15 +241,15 @@ end
 
 # flow_elbo_est(logp, flow; nsample = 128) = NormalizingFlows.elbo(flow, logp, nsample)
 
-function flow_sample_eval(flow; nsample = 128)
+function flow_sample_eval(logp, flow; nsample = 128)
     # generate new samples from flow
     try 
-        ys = rand(flow_trained, nsample_eval)
+        ys = rand(flow, nsample)
 
-        logws = map(x -> NormalizingFlows.elbo_single_sample(flow_trained, logp, x), eachcol(ys))
+        logws = map(x -> NormalizingFlows.elbo_single_sample(flow, logp, x), eachcol(ys))
         el = mean(logws)
         logz = MixFlow.log_normalization_constant(logws)
-        es = MixFlow.ess_from_logweights(logws)/nsample_eval
+        es = MixFlow.ess_from_logweights(logws)/nsample
         return el, logz, es
     catch e
         println("Error in flow_sample_eval: $e")
@@ -298,6 +298,7 @@ function run_norm_flow(
     )
     @info "Training finished"
 
+    # if early stop due to NaN or Inf, return NaN for all
     if _is_nan_or_inf(stats[end].loss)
         println("Training failed: loss is NaN or Inf")
         return DataFrame(
@@ -311,7 +312,7 @@ function run_norm_flow(
     # losses = map(x -> x.loss, stats)
     # try and if error happens, return NaN
     tv = flow_tv_est(target, flow_trained; nsample = nsample_eval)
-    el, logz, es = flow_sample_eval(flow_trained; nsample = nsample_eval)
+    el, logz, es = flow_sample_eval(logp, flow_trained; nsample = nsample_eval)
     
     # # save the trained flow
     # res_dir = joinpath(@__DIR__, "result/")
