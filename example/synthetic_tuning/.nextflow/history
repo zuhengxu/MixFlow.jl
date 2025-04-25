@@ -3,4 +3,8 @@
 2025-04-22 00:40:42	1m 24s	backstabbing_swirles	OK	53359c8e6de8f2f997e543236a2ba286	35134fea-8fef-411a-b687-3339f411027e	nextflow run tuning.nf --dryRun
 2025-04-22 00:42:37	1h 16m 45s	cheesy_bardeen	OK	53359c8e6de8f2f997e543236a2ba286	bfd99475-a68e-43ff-bcda-71ecb9817ad3	nextflow run tuning.nf
 2025-04-24 18:34:32	1m 8s	hopeful_hamilton	OK	801af79c21e886147d11935068a6c233	4b1adf82-5d67-41fe-9a9e-4e47044d528b	nextflow run elbo.nf --dryRun
-2025-04-24 18:36:42	-	cheeky_snyder	-	a064f92b5ac8b7ec24b4d731ad631763	cc1969f2-13e1-4768-883a-65e7859bc683	nextflow run elbo.nf
+2025-04-24 18:36:42	17m 52s	cheeky_snyder	ERR	a064f92b5ac8b7ec24b4d731ad631763	cc1969f2-13e1-4768-883a-65e7859bc683	nextflow run elbo.nf
+2025-04-24 18:55:50	2h 7m 27s	lonely_brattain	OK	a27f80b9ffc893c588ae95deb4683a61	e8c7c6f2-b77b-4c22-96af-0520a4ed7eaf	nextflow run elbo.nf
+2025-04-24 21:13:09	19.4s	amazing_hugle	ERR	3978cfa0e9677ffd0b26772ece8262af	e8c7c6f2-b77b-4c22-96af-0520a4ed7eaf	nextflow run elbo.nf -resume
+2025-04-24 21:14:07	13m 49s	mad_brenner	OK	3978cfa0e9677ffd0b26772ece8262af	b7aa90ab-a5d2-4b77-bbbf-814ac6214162	nextflow run elbo.nf
+2025-04-24 21:38:15	1h 45m	confident_swanson	OK	c9d1dbf7733d85b64a7f82c25261723e	b7aa90ab-a5d2-4b77-bbbf-814ac6214162	nextflow run elbo.nf -resume

@@ -31,7 +31,7 @@ workflow {
 
 process run_simulation {
     debug false 
-    memory { 5.GB * Math.pow(2, task.attempt-1) }
+    memory { 4.GB * Math.pow(2, task.attempt-1) }
     time { 30.hour * Math.pow(2, task.attempt-1) } 
     cpus 1 
     errorStrategy { task.attempt < 2 ? 'retry' : 'ignore' } 

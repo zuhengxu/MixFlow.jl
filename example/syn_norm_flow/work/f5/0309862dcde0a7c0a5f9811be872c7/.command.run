@@ -1,0 +1,213 @@
+#!/bin/bash
+### ---
+### name: 'combine_workflow:combine_process'
+### outputs:
+### - 'output'
+### ...
+set -e
+set -u
+NXF_DEBUG=${NXF_DEBUG:=0}; [[ $NXF_DEBUG > 1 ]] && set -x
+NXF_ENTRY=${1:-nxf_main}
+
+
+nxf_sleep() {
+  sleep $1 2>/dev/null || sleep 1;
+}
+
+nxf_date() {
+    local ts=$(date +%s%3N);
+    if [[ ${#ts} == 10 ]]; then echo ${ts}000
+    elif [[ $ts == *%3N ]]; then echo ${ts/\%3N/000}
+    elif [[ $ts == *3N ]]; then echo ${ts/3N/000}
+    elif [[ ${#ts} == 13 ]]; then echo $ts
+    else echo "Unexpected timestamp value: $ts"; exit 1
+    fi
+}
+
+nxf_env() {
+    echo '============= task environment ============='
+    env | sort | sed "s/\(.*\)AWS\(.*\)=\(.\{6\}\).*/\1AWS\2=\3xxxxxxxxxxxxx/"
+    echo '============= task output =================='
+}
+
+nxf_kill() {
+    declare -a children
+    while read P PP;do
+        children[$PP]+=" $P"
+    done < <(ps -e -o pid= -o ppid=)
+
+    kill_all() {
+        [[ $1 != $$ ]] && kill $1 2>/dev/null || true
+        for i in ${children[$1]:=}; do kill_all $i; done
+    }
+
+    kill_all $1
+}
+
+nxf_mktemp() {
+    local base=${1:-/tmp}
+    mkdir -p "$base"
+    if [[ $(uname) = Darwin ]]; then mktemp -d $base/nxf.XXXXXXXXXX
+    else TMPDIR="$base" mktemp -d -t nxf.XXXXXXXXXX
+    fi
+}
+
+nxf_fs_copy() {
+  local source=$1
+  local target=$2
+  local basedir=$(dirname $1)
+  mkdir -p $target/$basedir
+  cp -fRL $source $target/$basedir
+}
+
+nxf_fs_move() {
+  local source=$1
+  local target=$2
+  local basedir=$(dirname $1)
+  mkdir -p $target/$basedir
+  mv -f $source $target/$basedir
+}
+
+nxf_fs_rsync() {
+  rsync -rRl $1 $2
+}
+
+nxf_fs_rclone() {
+  rclone copyto $1 $2/$1
+}
+
+nxf_fs_fcp() {
+  fcp $1 $2/$1
+}
+
+on_exit() {
+    exit_status=${nxf_main_ret:=$?}
+    printf -- $exit_status > /home/zuheng/Research/MixFlow.jl/example/syn_norm_flow/work/f5/0309862dcde0a7c0a5f9811be872c7/.exitcode
+    set +u
+    exit $exit_status
+}
+
+on_term() {
+    set +e
+    [[ "$pid" ]] && nxf_kill $pid
+}
+
+nxf_launch() {
+    /usr/bin/env julia --threads=1 --project=combine_env /home/zuheng/Research/MixFlow.jl/example/syn_norm_flow/work/f5/0309862dcde0a7c0a5f9811be872c7/.command.sh
+}
+
+nxf_stage() {
+    true
+    # stage input files
+    rm -f seed=3___target=Banana___flowtype=real_nvp___lr=1e-3___batchsize=64___niters=50000
+    rm -f seed=10___target=Cross___flowtype=real_nvp___lr=1e-3___batchsize=64___niters=50000
+    rm -f seed=10___target=Banana___flowtype=real_nvp___lr=1e-3___batchsize=64___niters=50000
+    rm -f seed=2___target=Cross___flowtype=real_nvp___lr=1e-3___batchsize=64___niters=50000
+    rm -f seed=8___target=Banana___flowtype=real_nvp___lr=1e-3___batchsize=64___niters=50000
+    rm -f seed=3___target=WarpedGaussian___flowtype=real_nvp___lr=1e-3___batchsize=64___niters=50000
+    rm -f seed=10___target=Funnel___flowtype=real_nvp___lr=1e-3___batchsize=64___niters=50000
+    rm -f seed=6___target=WarpedGaussian___flowtype=real_nvp___lr=1e-3___batchsize=64___niters=50000
+    rm -f seed=2___target=Funnel___flowtype=real_nvp___lr=1e-3___batchsize=64___niters=50000
+    rm -f seed=4___target=Cross___flowtype=real_nvp___lr=1e-3___batchsize=64___niters=50000
+    rm -f seed=1___target=Cross___flowtype=real_nvp___lr=1e-3___batchsize=64___niters=50000
+    rm -f seed=8___target=Funnel___flowtype=real_nvp___lr=1e-3___batchsize=64___niters=50000
+    rm -f combine_env
+    rm -f seed=1___target=Funnel___flowtype=real_nvp___lr=1e-3___batchsize=64___niters=50000
+    rm -f seed=5___target=Cross___flowtype=real_nvp___lr=1e-3___batchsize=64___niters=50000
+    rm -f seed=4___target=Banana___flowtype=real_nvp___lr=1e-3___batchsize=64___niters=50000
+    rm -f seed=5___target=WarpedGaussian___flowtype=real_nvp___lr=1e-3___batchsize=64___niters=50000
+    rm -f seed=7___target=Banana___flowtype=real_nvp___lr=1e-3___batchsize=64___niters=50000
+    rm -f seed=9___target=Funnel___flowtype=real_nvp___lr=1e-3___batchsize=64___niters=50000
+    rm -f seed=9___target=WarpedGaussian___flowtype=real_nvp___lr=1e-3___batchsize=64___niters=50000
+    rm -f seed=2___target=WarpedGaussian___flowtype=real_nvp___lr=1e-3___batchsize=64___niters=50000
+    rm -f seed=6___target=Cross___flowtype=real_nvp___lr=1e-3___batchsize=64___niters=50000
+    rm -f seed=10___target=WarpedGaussian___flowtype=real_nvp___lr=1e-3___batchsize=64___niters=50000
+    rm -f seed=1___target=WarpedGaussian___flowtype=real_nvp___lr=1e-3___batchsize=64___niters=50000
+    rm -f seed=5___target=Funnel___flowtype=real_nvp___lr=1e-3___batchsize=64___niters=50000
+    rm -f seed=1___target=Banana___flowtype=real_nvp___lr=1e-3___batchsize=64___niters=50000
+    rm -f seed=4___target=WarpedGaussian___flowtype=real_nvp___lr=1e-3___batchsize=64___niters=50000
+    rm -f seed=7___target=Cross___flowtype=real_nvp___lr=1e-3___batchsize=64___niters=50000
+    rm -f seed=5___target=Banana___flowtype=real_nvp___lr=1e-3___batchsize=64___niters=50000
+    rm -f seed=6___target=Banana___flowtype=real_nvp___lr=1e-3___batchsize=64___niters=50000
+    rm -f seed=4___target=Funnel___flowtype=real_nvp___lr=1e-3___batchsize=64___niters=50000
+    rm -f seed=8___target=Cross___flowtype=real_nvp___lr=1e-3___batchsize=64___niters=50000
+    rm -f seed=8___target=WarpedGaussian___flowtype=real_nvp___lr=1e-3___batchsize=64___niters=50000
+    rm -f seed=6___target=Funnel___flowtype=real_nvp___lr=1e-3___batchsize=64___niters=50000
+    rm -f seed=9___target=Banana___flowtype=real_nvp___lr=1e-3___batchsize=64___niters=50000
+    rm -f seed=2___target=Banana___flowtype=real_nvp___lr=1e-3___batchsize=64___niters=50000
+    rm -f seed=9___target=Cross___flowtype=real_nvp___lr=1e-3___batchsize=64___niters=50000
+    rm -f seed=7___target=WarpedGaussian___flowtype=real_nvp___lr=1e-3___batchsize=64___niters=50000
+    rm -f seed=3___target=Funnel___flowtype=real_nvp___lr=1e-3___batchsize=64___niters=50000
+    rm -f seed=3___target=Cross___flowtype=real_nvp___lr=1e-3___batchsize=64___niters=50000
+    rm -f seed=7___target=Funnel___flowtype=real_nvp___lr=1e-3___batchsize=64___niters=50000
+    ln -s /home/zuheng/Research/MixFlow.jl/example/syn_norm_flow/work/1d/98dd9f97a9ffcffb0a7d57a6c73204/seed=3___target=Banana___flowtype=real_nvp___lr=1e-3___batchsize=64___niters=50000 seed=3___target=Banana___flowtype=real_nvp___lr=1e-3___batchsize=64___niters=50000
+    ln -s /home/zuheng/Research/MixFlow.jl/example/syn_norm_flow/work/7b/2c1eb3007edd598c33a2cf963b1af8/seed=10___target=Cross___flowtype=real_nvp___lr=1e-3___batchsize=64___niters=50000 seed=10___target=Cross___flowtype=real_nvp___lr=1e-3___batchsize=64___niters=50000
+    ln -s /home/zuheng/Research/MixFlow.jl/example/syn_norm_flow/work/88/083a3b2a5d57a0ea599513ef175f53/seed=10___target=Banana___flowtype=real_nvp___lr=1e-3___batchsize=64___niters=50000 seed=10___target=Banana___flowtype=real_nvp___lr=1e-3___batchsize=64___niters=50000
+    ln -s /home/zuheng/Research/MixFlow.jl/example/syn_norm_flow/work/43/72ddbd1421f2051ba77d8ad560a39b/seed=2___target=Cross___flowtype=real_nvp___lr=1e-3___batchsize=64___niters=50000 seed=2___target=Cross___flowtype=real_nvp___lr=1e-3___batchsize=64___niters=50000
+    ln -s /home/zuheng/Research/MixFlow.jl/example/syn_norm_flow/work/ae/d605958654f9f9d511b604d8473a5b/seed=8___target=Banana___flowtype=real_nvp___lr=1e-3___batchsize=64___niters=50000 seed=8___target=Banana___flowtype=real_nvp___lr=1e-3___batchsize=64___niters=50000
+    ln -s /home/zuheng/Research/MixFlow.jl/example/syn_norm_flow/work/40/29a30372353ba4192a82d58a8a324d/seed=3___target=WarpedGaussian___flowtype=real_nvp___lr=1e-3___batchsize=64___niters=50000 seed=3___target=WarpedGaussian___flowtype=real_nvp___lr=1e-3___batchsize=64___niters=50000
+    ln -s /home/zuheng/Research/MixFlow.jl/example/syn_norm_flow/work/e3/d9893c43d44e63ab9574d9aff5582c/seed=10___target=Funnel___flowtype=real_nvp___lr=1e-3___batchsize=64___niters=50000 seed=10___target=Funnel___flowtype=real_nvp___lr=1e-3___batchsize=64___niters=50000
+    ln -s /home/zuheng/Research/MixFlow.jl/example/syn_norm_flow/work/1c/d3b206451763e3fd6cd0c272274989/seed=6___target=WarpedGaussian___flowtype=real_nvp___lr=1e-3___batchsize=64___niters=50000 seed=6___target=WarpedGaussian___flowtype=real_nvp___lr=1e-3___batchsize=64___niters=50000
+    ln -s /home/zuheng/Research/MixFlow.jl/example/syn_norm_flow/work/07/1f78d5b52bab3bca1005a86dbdcf8e/seed=2___target=Funnel___flowtype=real_nvp___lr=1e-3___batchsize=64___niters=50000 seed=2___target=Funnel___flowtype=real_nvp___lr=1e-3___batchsize=64___niters=50000
+    ln -s /home/zuheng/Research/MixFlow.jl/example/syn_norm_flow/work/c3/48dcde3703af88f37a5fdcf50c76d2/seed=4___target=Cross___flowtype=real_nvp___lr=1e-3___batchsize=64___niters=50000 seed=4___target=Cross___flowtype=real_nvp___lr=1e-3___batchsize=64___niters=50000
+    ln -s /home/zuheng/Research/MixFlow.jl/example/syn_norm_flow/work/1b/8a827a96daf9161e6707daa9fff182/seed=1___target=Cross___flowtype=real_nvp___lr=1e-3___batchsize=64___niters=50000 seed=1___target=Cross___flowtype=real_nvp___lr=1e-3___batchsize=64___niters=50000
+    ln -s /home/zuheng/Research/MixFlow.jl/example/syn_norm_flow/work/4e/ec1fe5fda1ee53ea3582b333b1a25d/seed=8___target=Funnel___flowtype=real_nvp___lr=1e-3___batchsize=64___niters=50000 seed=8___target=Funnel___flowtype=real_nvp___lr=1e-3___batchsize=64___niters=50000
+    ln -s /home/zuheng/Research/MixFlow.jl/example/nf-nest/combine_env combine_env
+    ln -s /home/zuheng/Research/MixFlow.jl/example/syn_norm_flow/work/86/ee651a3d15b42d347d41e526a93fa3/seed=1___target=Funnel___flowtype=real_nvp___lr=1e-3___batchsize=64___niters=50000 seed=1___target=Funnel___flowtype=real_nvp___lr=1e-3___batchsize=64___niters=50000
+    ln -s /home/zuheng/Research/MixFlow.jl/example/syn_norm_flow/work/23/50aaab4d34efcb9bac6a31f39f118b/seed=5___target=Cross___flowtype=real_nvp___lr=1e-3___batchsize=64___niters=50000 seed=5___target=Cross___flowtype=real_nvp___lr=1e-3___batchsize=64___niters=50000
+    ln -s /home/zuheng/Research/MixFlow.jl/example/syn_norm_flow/work/e3/96308c0f792e998507c4939604250e/seed=4___target=Banana___flowtype=real_nvp___lr=1e-3___batchsize=64___niters=50000 seed=4___target=Banana___flowtype=real_nvp___lr=1e-3___batchsize=64___niters=50000
+    ln -s /home/zuheng/Research/MixFlow.jl/example/syn_norm_flow/work/8f/9a3b953e78aa0bcb1f97f793279df8/seed=5___target=WarpedGaussian___flowtype=real_nvp___lr=1e-3___batchsize=64___niters=50000 seed=5___target=WarpedGaussian___flowtype=real_nvp___lr=1e-3___batchsize=64___niters=50000
+    ln -s /home/zuheng/Research/MixFlow.jl/example/syn_norm_flow/work/d9/9a9890adc555ad5095cf316af9c1f2/seed=7___target=Banana___flowtype=real_nvp___lr=1e-3___batchsize=64___niters=50000 seed=7___target=Banana___flowtype=real_nvp___lr=1e-3___batchsize=64___niters=50000
+    ln -s /home/zuheng/Research/MixFlow.jl/example/syn_norm_flow/work/be/9aac395b8fab0a06add4e58bc0ab9a/seed=9___target=Funnel___flowtype=real_nvp___lr=1e-3___batchsize=64___niters=50000 seed=9___target=Funnel___flowtype=real_nvp___lr=1e-3___batchsize=64___niters=50000
+    ln -s /home/zuheng/Research/MixFlow.jl/example/syn_norm_flow/work/4b/d6318a1ea6c92fbfb0939662ae3e65/seed=9___target=WarpedGaussian___flowtype=real_nvp___lr=1e-3___batchsize=64___niters=50000 seed=9___target=WarpedGaussian___flowtype=real_nvp___lr=1e-3___batchsize=64___niters=50000
+    ln -s /home/zuheng/Research/MixFlow.jl/example/syn_norm_flow/work/47/478ae82fdd8679f75fefb07940ac04/seed=2___target=WarpedGaussian___flowtype=real_nvp___lr=1e-3___batchsize=64___niters=50000 seed=2___target=WarpedGaussian___flowtype=real_nvp___lr=1e-3___batchsize=64___niters=50000
+    ln -s /home/zuheng/Research/MixFlow.jl/example/syn_norm_flow/work/6d/6beca3b55fb285ee6e736728ebb981/seed=6___target=Cross___flowtype=real_nvp___lr=1e-3___batchsize=64___niters=50000 seed=6___target=Cross___flowtype=real_nvp___lr=1e-3___batchsize=64___niters=50000
+    ln -s /home/zuheng/Research/MixFlow.jl/example/syn_norm_flow/work/fd/0c00560ece4e31de0536c997ee0641/seed=10___target=WarpedGaussian___flowtype=real_nvp___lr=1e-3___batchsize=64___niters=50000 seed=10___target=WarpedGaussian___flowtype=real_nvp___lr=1e-3___batchsize=64___niters=50000
+    ln -s /home/zuheng/Research/MixFlow.jl/example/syn_norm_flow/work/35/7d84cfea48e64c6402a8b2cdcb7a72/seed=1___target=WarpedGaussian___flowtype=real_nvp___lr=1e-3___batchsize=64___niters=50000 seed=1___target=WarpedGaussian___flowtype=real_nvp___lr=1e-3___batchsize=64___niters=50000
+    ln -s /home/zuheng/Research/MixFlow.jl/example/syn_norm_flow/work/8e/3bd3809d4d2af45c11facbfbcc9d2e/seed=5___target=Funnel___flowtype=real_nvp___lr=1e-3___batchsize=64___niters=50000 seed=5___target=Funnel___flowtype=real_nvp___lr=1e-3___batchsize=64___niters=50000
+    ln -s /home/zuheng/Research/MixFlow.jl/example/syn_norm_flow/work/26/184e94587c54c42fb5304b3dad51e1/seed=1___target=Banana___flowtype=real_nvp___lr=1e-3___batchsize=64___niters=50000 seed=1___target=Banana___flowtype=real_nvp___lr=1e-3___batchsize=64___niters=50000
+    ln -s /home/zuheng/Research/MixFlow.jl/example/syn_norm_flow/work/e0/268928a92c2ff38052666454c4d6c6/seed=4___target=WarpedGaussian___flowtype=real_nvp___lr=1e-3___batchsize=64___niters=50000 seed=4___target=WarpedGaussian___flowtype=real_nvp___lr=1e-3___batchsize=64___niters=50000
+    ln -s /home/zuheng/Research/MixFlow.jl/example/syn_norm_flow/work/f8/f5a9fac1760d5f20eb827234d4b01c/seed=7___target=Cross___flowtype=real_nvp___lr=1e-3___batchsize=64___niters=50000 seed=7___target=Cross___flowtype=real_nvp___lr=1e-3___batchsize=64___niters=50000
+    ln -s /home/zuheng/Research/MixFlow.jl/example/syn_norm_flow/work/fd/b1bfa40043cdc0bc435d0a16a4347e/seed=5___target=Banana___flowtype=real_nvp___lr=1e-3___batchsize=64___niters=50000 seed=5___target=Banana___flowtype=real_nvp___lr=1e-3___batchsize=64___niters=50000
+    ln -s /home/zuheng/Research/MixFlow.jl/example/syn_norm_flow/work/59/62f019045a63ec082bca69f13ef649/seed=6___target=Banana___flowtype=real_nvp___lr=1e-3___batchsize=64___niters=50000 seed=6___target=Banana___flowtype=real_nvp___lr=1e-3___batchsize=64___niters=50000
+    ln -s /home/zuheng/Research/MixFlow.jl/example/syn_norm_flow/work/73/8228da10c3f75831ed383c2b637884/seed=4___target=Funnel___flowtype=real_nvp___lr=1e-3___batchsize=64___niters=50000 seed=4___target=Funnel___flowtype=real_nvp___lr=1e-3___batchsize=64___niters=50000
+    ln -s /home/zuheng/Research/MixFlow.jl/example/syn_norm_flow/work/9a/cbd6f10b06b47facd9a18119106f2b/seed=8___target=Cross___flowtype=real_nvp___lr=1e-3___batchsize=64___niters=50000 seed=8___target=Cross___flowtype=real_nvp___lr=1e-3___batchsize=64___niters=50000
+    ln -s /home/zuheng/Research/MixFlow.jl/example/syn_norm_flow/work/8d/22488e9626218505324b4e7be6b7f1/seed=8___target=WarpedGaussian___flowtype=real_nvp___lr=1e-3___batchsize=64___niters=50000 seed=8___target=WarpedGaussian___flowtype=real_nvp___lr=1e-3___batchsize=64___niters=50000
+    ln -s /home/zuheng/Research/MixFlow.jl/example/syn_norm_flow/work/7b/f8580dfd1c6675797f98f8c4a133f1/seed=6___target=Funnel___flowtype=real_nvp___lr=1e-3___batchsize=64___niters=50000 seed=6___target=Funnel___flowtype=real_nvp___lr=1e-3___batchsize=64___niters=50000
+    ln -s /home/zuheng/Research/MixFlow.jl/example/syn_norm_flow/work/3e/9531b5f4b0427543ffb99c31e35e7c/seed=9___target=Banana___flowtype=real_nvp___lr=1e-3___batchsize=64___niters=50000 seed=9___target=Banana___flowtype=real_nvp___lr=1e-3___batchsize=64___niters=50000
+    ln -s /home/zuheng/Research/MixFlow.jl/example/syn_norm_flow/work/0b/aaeaa0a7fa2ad7a65a52359a3f0838/seed=2___target=Banana___flowtype=real_nvp___lr=1e-3___batchsize=64___niters=50000 seed=2___target=Banana___flowtype=real_nvp___lr=1e-3___batchsize=64___niters=50000
+    ln -s /home/zuheng/Research/MixFlow.jl/example/syn_norm_flow/work/6a/91869b05fbd6aeb275a4d651435f86/seed=9___target=Cross___flowtype=real_nvp___lr=1e-3___batchsize=64___niters=50000 seed=9___target=Cross___flowtype=real_nvp___lr=1e-3___batchsize=64___niters=50000
+    ln -s /home/zuheng/Research/MixFlow.jl/example/syn_norm_flow/work/80/280877ed1c5bb6af6b16e3978d49d3/seed=7___target=WarpedGaussian___flowtype=real_nvp___lr=1e-3___batchsize=64___niters=50000 seed=7___target=WarpedGaussian___flowtype=real_nvp___lr=1e-3___batchsize=64___niters=50000
+    ln -s /home/zuheng/Research/MixFlow.jl/example/syn_norm_flow/work/b0/1fe04549fca078d5699904a6ce3ff4/seed=3___target=Funnel___flowtype=real_nvp___lr=1e-3___batchsize=64___niters=50000 seed=3___target=Funnel___flowtype=real_nvp___lr=1e-3___batchsize=64___niters=50000
+    ln -s /home/zuheng/Research/MixFlow.jl/example/syn_norm_flow/work/0b/6e3c89083d8c02038fa4bfa5ef441f/seed=3___target=Cross___flowtype=real_nvp___lr=1e-3___batchsize=64___niters=50000 seed=3___target=Cross___flowtype=real_nvp___lr=1e-3___batchsize=64___niters=50000
+    ln -s /home/zuheng/Research/MixFlow.jl/example/syn_norm_flow/work/44/820aa2e81091505f2a6683c9ae6f4f/seed=7___target=Funnel___flowtype=real_nvp___lr=1e-3___batchsize=64___niters=50000 seed=7___target=Funnel___flowtype=real_nvp___lr=1e-3___batchsize=64___niters=50000
+}
+
+nxf_unstage() {
+    true
+    [[ ${nxf_main_ret:=0} != 0 ]] && return
+}
+
+nxf_main() {
+    trap on_exit EXIT
+    trap on_term TERM INT USR2
+    trap '' USR1
+
+    [[ "${NXF_CHDIR:-}" ]] && cd "$NXF_CHDIR"
+    NXF_SCRATCH=''
+    [[ $NXF_DEBUG > 0 ]] && nxf_env
+    touch /home/zuheng/Research/MixFlow.jl/example/syn_norm_flow/work/f5/0309862dcde0a7c0a5f9811be872c7/.command.begin
+    set +u
+    set -u
+    [[ $NXF_SCRATCH ]] && cd $NXF_SCRATCH
+    export NXF_TASK_WORKDIR="$PWD"
+    nxf_stage
+
+    set +e
+    (set -o pipefail; (nxf_launch | tee .command.out) 3>&1 1>&2 2>&3 | tee .command.err) &
+    pid=$!
+    wait $pid || nxf_main_ret=$?
+    nxf_unstage
+}
+
+$NXF_ENTRY

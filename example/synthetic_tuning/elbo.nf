@@ -12,9 +12,9 @@ def julia_script = file(moduleDir/'metric_mixflow.jl')
 def variables = [
     seed: 1..32,
     kernel: ["MF.HMC"],
-    step_size: [0.2],
+    step_size: [0.1],
     flow_length: [150],
-    target: ["Banana", "Cross"], 
+    target: ["Cross"], 
     flowtype: ["MF.DeterministicMixFlow", "MF.BackwardIRFMixFlow", "MF.IRFMixFlow"],
 ]
 

@@ -1,0 +1,7 @@
+[ Info: Training finished
+ERROR: LoadError: UndefVarError: `CSV` not defined in `Main`
+Suggestion: check for spelling errors or missing imports.
+Stacktrace:
+ [1] top-level scope
+   @ ~/Research/MixFlow.jl/example/syn_norm_flow/work/4c/72eabfc53ee55774e77799230ca2db/.command.sh:22
+in expression starting at /home/zuheng/Research/MixFlow.jl/example/syn_norm_flow/work/4c/72eabfc53ee55774e77799230ca2db/.command.sh:22

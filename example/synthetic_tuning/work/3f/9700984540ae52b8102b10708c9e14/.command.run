@@ -1,0 +1,325 @@
+#!/bin/bash
+### ---
+### name: 'combine_workflow:combine_process'
+### outputs:
+### - 'output'
+### ...
+set -e
+set -u
+NXF_DEBUG=${NXF_DEBUG:=0}; [[ $NXF_DEBUG > 1 ]] && set -x
+NXF_ENTRY=${1:-nxf_main}
+
+
+nxf_sleep() {
+  sleep $1 2>/dev/null || sleep 1;
+}
+
+nxf_date() {
+    local ts=$(date +%s%3N);
+    if [[ ${#ts} == 10 ]]; then echo ${ts}000
+    elif [[ $ts == *%3N ]]; then echo ${ts/\%3N/000}
+    elif [[ $ts == *3N ]]; then echo ${ts/3N/000}
+    elif [[ ${#ts} == 13 ]]; then echo $ts
+    else echo "Unexpected timestamp value: $ts"; exit 1
+    fi
+}
+
+nxf_env() {
+    echo '============= task environment ============='
+    env | sort | sed "s/\(.*\)AWS\(.*\)=\(.\{6\}\).*/\1AWS\2=\3xxxxxxxxxxxxx/"
+    echo '============= task output =================='
+}
+
+nxf_kill() {
+    declare -a children
+    while read P PP;do
+        children[$PP]+=" $P"
+    done < <(ps -e -o pid= -o ppid=)
+
+    kill_all() {
+        [[ $1 != $$ ]] && kill $1 2>/dev/null || true
+        for i in ${children[$1]:=}; do kill_all $i; done
+    }
+
+    kill_all $1
+}
+
+nxf_mktemp() {
+    local base=${1:-/tmp}
+    mkdir -p "$base"
+    if [[ $(uname) = Darwin ]]; then mktemp -d $base/nxf.XXXXXXXXXX
+    else TMPDIR="$base" mktemp -d -t nxf.XXXXXXXXXX
+    fi
+}
+
+nxf_fs_copy() {
+  local source=$1
+  local target=$2
+  local basedir=$(dirname $1)
+  mkdir -p $target/$basedir
+  cp -fRL $source $target/$basedir
+}
+
+nxf_fs_move() {
+  local source=$1
+  local target=$2
+  local basedir=$(dirname $1)
+  mkdir -p $target/$basedir
+  mv -f $source $target/$basedir
+}
+
+nxf_fs_rsync() {
+  rsync -rRl $1 $2
+}
+
+nxf_fs_rclone() {
+  rclone copyto $1 $2/$1
+}
+
+nxf_fs_fcp() {
+  fcp $1 $2/$1
+}
+
+on_exit() {
+    exit_status=${nxf_main_ret:=$?}
+    printf -- $exit_status > /home/zuheng/Research/MixFlow.jl/example/synthetic_tuning/work/3f/9700984540ae52b8102b10708c9e14/.exitcode
+    set +u
+    exit $exit_status
+}
+
+on_term() {
+    set +e
+    [[ "$pid" ]] && nxf_kill $pid
+}
+
+nxf_launch() {
+    /usr/bin/env julia --threads=1 --project=combine_env /home/zuheng/Research/MixFlow.jl/example/synthetic_tuning/work/3f/9700984540ae52b8102b10708c9e14/.command.sh
+}
+
+nxf_stage() {
+    true
+    # stage input files
+    rm -f seed=25___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.BackwardIRFMixFlow
+    rm -f seed=31___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.IRFMixFlow
+    rm -f seed=21___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.DeterministicMixFlow
+    rm -f seed=10___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.IRFMixFlow
+    rm -f seed=26___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.BackwardIRFMixFlow
+    rm -f seed=24___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.BackwardIRFMixFlow
+    rm -f seed=23___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.IRFMixFlow
+    rm -f seed=22___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.BackwardIRFMixFlow
+    rm -f seed=23___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.BackwardIRFMixFlow
+    rm -f seed=16___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.DeterministicMixFlow
+    rm -f seed=21___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.BackwardIRFMixFlow
+    rm -f seed=15___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.IRFMixFlow
+    rm -f seed=29___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.BackwardIRFMixFlow
+    rm -f seed=25___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.IRFMixFlow
+    rm -f seed=1___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.BackwardIRFMixFlow
+    rm -f seed=6___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.DeterministicMixFlow
+    rm -f seed=2___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.BackwardIRFMixFlow
+    rm -f seed=2___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.IRFMixFlow
+    rm -f seed=23___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.DeterministicMixFlow
+    rm -f seed=3___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.BackwardIRFMixFlow
+    rm -f seed=25___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.DeterministicMixFlow
+    rm -f seed=27___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.BackwardIRFMixFlow
+    rm -f seed=8___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.DeterministicMixFlow
+    rm -f seed=14___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.DeterministicMixFlow
+    rm -f seed=28___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.BackwardIRFMixFlow
+    rm -f seed=5___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.BackwardIRFMixFlow
+    rm -f seed=4___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.DeterministicMixFlow
+    rm -f seed=13___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.IRFMixFlow
+    rm -f seed=17___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.BackwardIRFMixFlow
+    rm -f seed=31___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.DeterministicMixFlow
+    rm -f seed=31___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.BackwardIRFMixFlow
+    rm -f seed=28___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.DeterministicMixFlow
+    rm -f seed=19___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.BackwardIRFMixFlow
+    rm -f seed=26___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.IRFMixFlow
+    rm -f seed=15___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.BackwardIRFMixFlow
+    rm -f seed=12___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.IRFMixFlow
+    rm -f seed=26___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.DeterministicMixFlow
+    rm -f seed=11___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.DeterministicMixFlow
+    rm -f seed=13___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.BackwardIRFMixFlow
+    rm -f seed=28___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.IRFMixFlow
+    rm -f seed=32___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.IRFMixFlow
+    rm -f seed=30___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.IRFMixFlow
+    rm -f seed=27___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.IRFMixFlow
+    rm -f seed=11___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.IRFMixFlow
+    rm -f seed=2___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.DeterministicMixFlow
+    rm -f seed=18___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.DeterministicMixFlow
+    rm -f seed=11___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.BackwardIRFMixFlow
+    rm -f seed=16___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.IRFMixFlow
+    rm -f seed=29___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.IRFMixFlow
+    rm -f seed=6___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.IRFMixFlow
+    rm -f seed=17___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.DeterministicMixFlow
+    rm -f seed=9___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.DeterministicMixFlow
+    rm -f seed=20___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.DeterministicMixFlow
+    rm -f combine_env
+    rm -f seed=22___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.DeterministicMixFlow
+    rm -f seed=1___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.IRFMixFlow
+    rm -f seed=7___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.DeterministicMixFlow
+    rm -f seed=13___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.DeterministicMixFlow
+    rm -f seed=9___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.BackwardIRFMixFlow
+    rm -f seed=15___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.DeterministicMixFlow
+    rm -f seed=7___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.BackwardIRFMixFlow
+    rm -f seed=14___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.IRFMixFlow
+    rm -f seed=8___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.BackwardIRFMixFlow
+    rm -f seed=24___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.IRFMixFlow
+    rm -f seed=9___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.IRFMixFlow
+    rm -f seed=6___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.BackwardIRFMixFlow
+    rm -f seed=24___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.DeterministicMixFlow
+    rm -f seed=3___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.IRFMixFlow
+    rm -f seed=32___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.BackwardIRFMixFlow
+    rm -f seed=27___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.DeterministicMixFlow
+    rm -f seed=3___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.DeterministicMixFlow
+    rm -f seed=4___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.BackwardIRFMixFlow
+    rm -f seed=30___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.DeterministicMixFlow
+    rm -f seed=18___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.BackwardIRFMixFlow
+    rm -f seed=10___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.DeterministicMixFlow
+    rm -f seed=19___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.IRFMixFlow
+    rm -f seed=30___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.BackwardIRFMixFlow
+    rm -f seed=12___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.DeterministicMixFlow
+    rm -f seed=8___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.IRFMixFlow
+    rm -f seed=18___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.IRFMixFlow
+    rm -f seed=32___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.DeterministicMixFlow
+    rm -f seed=14___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.BackwardIRFMixFlow
+    rm -f seed=16___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.BackwardIRFMixFlow
+    rm -f seed=4___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.IRFMixFlow
+    rm -f seed=5___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.DeterministicMixFlow
+    rm -f seed=20___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.BackwardIRFMixFlow
+    rm -f seed=22___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.IRFMixFlow
+    rm -f seed=7___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.IRFMixFlow
+    rm -f seed=17___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.IRFMixFlow
+    rm -f seed=1___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.DeterministicMixFlow
+    rm -f seed=12___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.BackwardIRFMixFlow
+    rm -f seed=5___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.IRFMixFlow
+    rm -f seed=20___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.IRFMixFlow
+    rm -f seed=10___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.BackwardIRFMixFlow
+    rm -f seed=21___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.IRFMixFlow
+    rm -f seed=29___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.DeterministicMixFlow
+    rm -f seed=19___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.DeterministicMixFlow
+    ln -s /home/zuheng/Research/MixFlow.jl/example/synthetic_tuning/work/80/f94679284e93e16cb336822b298dc5/seed=25___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.BackwardIRFMixFlow seed=25___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.BackwardIRFMixFlow
+    ln -s /home/zuheng/Research/MixFlow.jl/example/synthetic_tuning/work/9b/d86244a767c821a86578328e6d893d/seed=31___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.IRFMixFlow seed=31___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.IRFMixFlow
+    ln -s /home/zuheng/Research/MixFlow.jl/example/synthetic_tuning/work/82/224af727a6a1d637aa0d61e22004e9/seed=21___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.DeterministicMixFlow seed=21___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.DeterministicMixFlow
+    ln -s /home/zuheng/Research/MixFlow.jl/example/synthetic_tuning/work/bc/219c2c8b2c66bfc3b77049000b5def/seed=10___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.IRFMixFlow seed=10___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.IRFMixFlow
+    ln -s /home/zuheng/Research/MixFlow.jl/example/synthetic_tuning/work/e4/1ec0fbc9b851f2dfca918d42a99088/seed=26___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.BackwardIRFMixFlow seed=26___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.BackwardIRFMixFlow
+    ln -s /home/zuheng/Research/MixFlow.jl/example/synthetic_tuning/work/f4/47e95ee44c08e81460d16775efa4b0/seed=24___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.BackwardIRFMixFlow seed=24___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.BackwardIRFMixFlow
+    ln -s /home/zuheng/Research/MixFlow.jl/example/synthetic_tuning/work/a1/b81d1f98977c1baa2c098fc0fc3961/seed=23___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.IRFMixFlow seed=23___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.IRFMixFlow
+    ln -s /home/zuheng/Research/MixFlow.jl/example/synthetic_tuning/work/c0/e951b262ce15ec052030fec977b67c/seed=22___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.BackwardIRFMixFlow seed=22___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.BackwardIRFMixFlow
+    ln -s /home/zuheng/Research/MixFlow.jl/example/synthetic_tuning/work/4f/121b181357fee2317691de27703899/seed=23___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.BackwardIRFMixFlow seed=23___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.BackwardIRFMixFlow
+    ln -s /home/zuheng/Research/MixFlow.jl/example/synthetic_tuning/work/6c/33b338cef7d5cdd2ae0188be0672e3/seed=16___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.DeterministicMixFlow seed=16___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.DeterministicMixFlow
+    ln -s /home/zuheng/Research/MixFlow.jl/example/synthetic_tuning/work/94/2f249ad86cb1f56458ef6e681cb836/seed=21___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.BackwardIRFMixFlow seed=21___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.BackwardIRFMixFlow
+    ln -s /home/zuheng/Research/MixFlow.jl/example/synthetic_tuning/work/f0/2aab815c9cf71aa2a907f6b42d0f0d/seed=15___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.IRFMixFlow seed=15___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.IRFMixFlow
+    ln -s /home/zuheng/Research/MixFlow.jl/example/synthetic_tuning/work/e2/807c16eb1037b2ee06ea9b0fc8a8d5/seed=29___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.BackwardIRFMixFlow seed=29___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.BackwardIRFMixFlow
+    ln -s /home/zuheng/Research/MixFlow.jl/example/synthetic_tuning/work/34/bf072da9b0dcdac572764c9251280a/seed=25___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.IRFMixFlow seed=25___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.IRFMixFlow
+    ln -s /home/zuheng/Research/MixFlow.jl/example/synthetic_tuning/work/79/93001df093a32a9bd6f67ca6bebbb6/seed=1___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.BackwardIRFMixFlow seed=1___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.BackwardIRFMixFlow
+    ln -s /home/zuheng/Research/MixFlow.jl/example/synthetic_tuning/work/86/44db9c915dc3e21b6bc36dc79662a1/seed=6___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.DeterministicMixFlow seed=6___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.DeterministicMixFlow
+    ln -s /home/zuheng/Research/MixFlow.jl/example/synthetic_tuning/work/79/501e0d863999b3e5beb17b11dd81e7/seed=2___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.BackwardIRFMixFlow seed=2___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.BackwardIRFMixFlow
+    ln -s /home/zuheng/Research/MixFlow.jl/example/synthetic_tuning/work/e1/a4a1c7fd7ba6e838d688757f847d02/seed=2___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.IRFMixFlow seed=2___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.IRFMixFlow
+    ln -s /home/zuheng/Research/MixFlow.jl/example/synthetic_tuning/work/22/b59e3c5f08ede52f197960fb3ec7cf/seed=23___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.DeterministicMixFlow seed=23___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.DeterministicMixFlow
+    ln -s /home/zuheng/Research/MixFlow.jl/example/synthetic_tuning/work/39/c27767aaa3daf3539002681ac6cd2b/seed=3___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.BackwardIRFMixFlow seed=3___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.BackwardIRFMixFlow
+    ln -s /home/zuheng/Research/MixFlow.jl/example/synthetic_tuning/work/37/ba93373a7d0371c6a2fcdbb71df366/seed=25___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.DeterministicMixFlow seed=25___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.DeterministicMixFlow
+    ln -s /home/zuheng/Research/MixFlow.jl/example/synthetic_tuning/work/22/8915ba8b014570c1c70dcd9467ebff/seed=27___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.BackwardIRFMixFlow seed=27___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.BackwardIRFMixFlow
+    ln -s /home/zuheng/Research/MixFlow.jl/example/synthetic_tuning/work/6e/e7c0832b8d333050b5e20c5024886c/seed=8___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.DeterministicMixFlow seed=8___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.DeterministicMixFlow
+    ln -s /home/zuheng/Research/MixFlow.jl/example/synthetic_tuning/work/36/6bec4061ca4c3ff603b23707566ea1/seed=14___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.DeterministicMixFlow seed=14___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.DeterministicMixFlow
+    ln -s /home/zuheng/Research/MixFlow.jl/example/synthetic_tuning/work/3a/943709abdf4b4cfd9d529a7d53d0a3/seed=28___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.BackwardIRFMixFlow seed=28___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.BackwardIRFMixFlow
+    ln -s /home/zuheng/Research/MixFlow.jl/example/synthetic_tuning/work/da/f72739579979a6d4327a8e4adae9a1/seed=5___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.BackwardIRFMixFlow seed=5___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.BackwardIRFMixFlow
+    ln -s /home/zuheng/Research/MixFlow.jl/example/synthetic_tuning/work/f9/25fcfb75293274e9976d4ef59407d5/seed=4___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.DeterministicMixFlow seed=4___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.DeterministicMixFlow
+    ln -s /home/zuheng/Research/MixFlow.jl/example/synthetic_tuning/work/d3/c3227145db31da820de8d39f5c5aa5/seed=13___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.IRFMixFlow seed=13___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.IRFMixFlow
+    ln -s /home/zuheng/Research/MixFlow.jl/example/synthetic_tuning/work/e7/506f458b3e34ed360c0719f6b2eda3/seed=17___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.BackwardIRFMixFlow seed=17___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.BackwardIRFMixFlow
+    ln -s /home/zuheng/Research/MixFlow.jl/example/synthetic_tuning/work/7b/21a299025208c5a864b9a0b2d86d80/seed=31___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.DeterministicMixFlow seed=31___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.DeterministicMixFlow
+    ln -s /home/zuheng/Research/MixFlow.jl/example/synthetic_tuning/work/ae/88529867f3380ada6fb0f57e368388/seed=31___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.BackwardIRFMixFlow seed=31___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.BackwardIRFMixFlow
+    ln -s /home/zuheng/Research/MixFlow.jl/example/synthetic_tuning/work/92/bc0e14c1b738af2383d3c527410b45/seed=28___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.DeterministicMixFlow seed=28___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.DeterministicMixFlow
+    ln -s /home/zuheng/Research/MixFlow.jl/example/synthetic_tuning/work/cd/5d95d385480a7e439e307c08c6936d/seed=19___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.BackwardIRFMixFlow seed=19___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.BackwardIRFMixFlow
+    ln -s /home/zuheng/Research/MixFlow.jl/example/synthetic_tuning/work/57/1fa8d5b1c9877ee66f9c797906f453/seed=26___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.IRFMixFlow seed=26___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.IRFMixFlow
+    ln -s /home/zuheng/Research/MixFlow.jl/example/synthetic_tuning/work/fe/f5cce63146b3671790062a4cb5f55e/seed=15___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.BackwardIRFMixFlow seed=15___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.BackwardIRFMixFlow
+    ln -s /home/zuheng/Research/MixFlow.jl/example/synthetic_tuning/work/bf/620d6609779a513ef796cee506ae91/seed=12___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.IRFMixFlow seed=12___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.IRFMixFlow
+    ln -s /home/zuheng/Research/MixFlow.jl/example/synthetic_tuning/work/63/66371e3e44d504b995771267e7ffd5/seed=26___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.DeterministicMixFlow seed=26___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.DeterministicMixFlow
+    ln -s /home/zuheng/Research/MixFlow.jl/example/synthetic_tuning/work/de/c9056d61109f8cbd925d87f620cb6d/seed=11___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.DeterministicMixFlow seed=11___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.DeterministicMixFlow
+    ln -s /home/zuheng/Research/MixFlow.jl/example/synthetic_tuning/work/08/0e5e090d88e85229e0d3c5a5922d53/seed=13___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.BackwardIRFMixFlow seed=13___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.BackwardIRFMixFlow
+    ln -s /home/zuheng/Research/MixFlow.jl/example/synthetic_tuning/work/c6/2d01e076cdef3656f00f22b74f420c/seed=28___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.IRFMixFlow seed=28___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.IRFMixFlow
+    ln -s /home/zuheng/Research/MixFlow.jl/example/synthetic_tuning/work/43/084570331fc29eac23b6bc1c651599/seed=32___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.IRFMixFlow seed=32___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.IRFMixFlow
+    ln -s /home/zuheng/Research/MixFlow.jl/example/synthetic_tuning/work/5d/14ceea3ebdb4a4f1dd9df06e8f4f44/seed=30___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.IRFMixFlow seed=30___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.IRFMixFlow
+    ln -s /home/zuheng/Research/MixFlow.jl/example/synthetic_tuning/work/92/e3497aa8402f50022c0276f3ea810d/seed=27___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.IRFMixFlow seed=27___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.IRFMixFlow
+    ln -s /home/zuheng/Research/MixFlow.jl/example/synthetic_tuning/work/93/2c7cff9b6a77c7814fe1202b6a8f5f/seed=11___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.IRFMixFlow seed=11___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.IRFMixFlow
+    ln -s /home/zuheng/Research/MixFlow.jl/example/synthetic_tuning/work/30/ba91cd3b7e73b2c3580ccd5eca9cbd/seed=2___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.DeterministicMixFlow seed=2___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.DeterministicMixFlow
+    ln -s /home/zuheng/Research/MixFlow.jl/example/synthetic_tuning/work/33/fb69db2ad351fb35c9e86c7c6278c7/seed=18___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.DeterministicMixFlow seed=18___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.DeterministicMixFlow
+    ln -s /home/zuheng/Research/MixFlow.jl/example/synthetic_tuning/work/ea/ff276c3bdad2aa11b830db95c36aa2/seed=11___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.BackwardIRFMixFlow seed=11___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.BackwardIRFMixFlow
+    ln -s /home/zuheng/Research/MixFlow.jl/example/synthetic_tuning/work/ba/bca6841a93c89d72b1f2c62a5ffd3d/seed=16___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.IRFMixFlow seed=16___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.IRFMixFlow
+    ln -s /home/zuheng/Research/MixFlow.jl/example/synthetic_tuning/work/ba/d3fc5dc17f15d7618d456376353102/seed=29___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.IRFMixFlow seed=29___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.IRFMixFlow
+    ln -s /home/zuheng/Research/MixFlow.jl/example/synthetic_tuning/work/04/0d70123241d7529e04dbe2a70adc53/seed=6___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.IRFMixFlow seed=6___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.IRFMixFlow
+    ln -s /home/zuheng/Research/MixFlow.jl/example/synthetic_tuning/work/88/bdfef84be6c112abf09187dd695322/seed=17___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.DeterministicMixFlow seed=17___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.DeterministicMixFlow
+    ln -s /home/zuheng/Research/MixFlow.jl/example/synthetic_tuning/work/6f/92ca6c4fde13ab10b006a38faacf7a/seed=9___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.DeterministicMixFlow seed=9___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.DeterministicMixFlow
+    ln -s /home/zuheng/Research/MixFlow.jl/example/synthetic_tuning/work/02/2d101fc98db4f0009065fddbba139a/seed=20___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.DeterministicMixFlow seed=20___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.DeterministicMixFlow
+    ln -s /home/zuheng/Research/MixFlow.jl/example/nf-nest/combine_env combine_env
+    ln -s /home/zuheng/Research/MixFlow.jl/example/synthetic_tuning/work/ab/8f92a3f6f189b1a63358447a865562/seed=22___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.DeterministicMixFlow seed=22___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.DeterministicMixFlow
+    ln -s /home/zuheng/Research/MixFlow.jl/example/synthetic_tuning/work/33/a566f21f47b14e0fe52421ee99abab/seed=1___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.IRFMixFlow seed=1___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.IRFMixFlow
+    ln -s /home/zuheng/Research/MixFlow.jl/example/synthetic_tuning/work/ba/22a83192e03288b3edd4669ebd343f/seed=7___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.DeterministicMixFlow seed=7___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.DeterministicMixFlow
+    ln -s /home/zuheng/Research/MixFlow.jl/example/synthetic_tuning/work/43/0807356b31ed98154c8c45addc6e81/seed=13___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.DeterministicMixFlow seed=13___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.DeterministicMixFlow
+    ln -s /home/zuheng/Research/MixFlow.jl/example/synthetic_tuning/work/ab/63c9ff5289bfa425c999f346b2031d/seed=9___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.BackwardIRFMixFlow seed=9___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.BackwardIRFMixFlow
+    ln -s /home/zuheng/Research/MixFlow.jl/example/synthetic_tuning/work/f2/ac4d9a0150b33c2c555b45c796faa5/seed=15___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.DeterministicMixFlow seed=15___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.DeterministicMixFlow
+    ln -s /home/zuheng/Research/MixFlow.jl/example/synthetic_tuning/work/b0/6191e4372477fa7cd3385bb8323f5f/seed=7___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.BackwardIRFMixFlow seed=7___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.BackwardIRFMixFlow
+    ln -s /home/zuheng/Research/MixFlow.jl/example/synthetic_tuning/work/48/75411a728e07a087d67f1d30ca3688/seed=14___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.IRFMixFlow seed=14___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.IRFMixFlow
+    ln -s /home/zuheng/Research/MixFlow.jl/example/synthetic_tuning/work/b3/c23b82e85d63c8379fac20c1c88053/seed=8___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.BackwardIRFMixFlow seed=8___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.BackwardIRFMixFlow
+    ln -s /home/zuheng/Research/MixFlow.jl/example/synthetic_tuning/work/c4/65f7c2a7b428e27ff8d7d59fb3811e/seed=24___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.IRFMixFlow seed=24___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.IRFMixFlow
+    ln -s /home/zuheng/Research/MixFlow.jl/example/synthetic_tuning/work/e9/5e5db9fcba16c8d1cb67384ab7285f/seed=9___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.IRFMixFlow seed=9___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.IRFMixFlow
+    ln -s /home/zuheng/Research/MixFlow.jl/example/synthetic_tuning/work/8c/be50eb87266cf31046df23131a3c20/seed=6___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.BackwardIRFMixFlow seed=6___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.BackwardIRFMixFlow
+    ln -s /home/zuheng/Research/MixFlow.jl/example/synthetic_tuning/work/1e/0a190e9592dfb1c816baea7ba6cd3a/seed=24___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.DeterministicMixFlow seed=24___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.DeterministicMixFlow
+    ln -s /home/zuheng/Research/MixFlow.jl/example/synthetic_tuning/work/1d/60eecb160ca777be8ce0a47e68f797/seed=3___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.IRFMixFlow seed=3___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.IRFMixFlow
+    ln -s /home/zuheng/Research/MixFlow.jl/example/synthetic_tuning/work/54/f9b1a5a5f9e041227b4661a50fce03/seed=32___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.BackwardIRFMixFlow seed=32___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.BackwardIRFMixFlow
+    ln -s /home/zuheng/Research/MixFlow.jl/example/synthetic_tuning/work/27/313dc55f4eb75a1d1a7bc8bdbd07d3/seed=27___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.DeterministicMixFlow seed=27___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.DeterministicMixFlow
+    ln -s /home/zuheng/Research/MixFlow.jl/example/synthetic_tuning/work/6c/ac1e0608bc29ad7073563d5e7e7cf2/seed=3___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.DeterministicMixFlow seed=3___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.DeterministicMixFlow
+    ln -s /home/zuheng/Research/MixFlow.jl/example/synthetic_tuning/work/47/421744fbc2eef54eb0d7ecc1d97371/seed=4___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.BackwardIRFMixFlow seed=4___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.BackwardIRFMixFlow
+    ln -s /home/zuheng/Research/MixFlow.jl/example/synthetic_tuning/work/a9/cca84c9815f84762fac94b27a62697/seed=30___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.DeterministicMixFlow seed=30___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.DeterministicMixFlow
+    ln -s /home/zuheng/Research/MixFlow.jl/example/synthetic_tuning/work/da/720433a4324654f496b4532c2ca376/seed=18___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.BackwardIRFMixFlow seed=18___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.BackwardIRFMixFlow
+    ln -s /home/zuheng/Research/MixFlow.jl/example/synthetic_tuning/work/62/3802b4a1e221c70639901f22dee956/seed=10___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.DeterministicMixFlow seed=10___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.DeterministicMixFlow
+    ln -s /home/zuheng/Research/MixFlow.jl/example/synthetic_tuning/work/e6/4a1205a8c93449f610930c8071015a/seed=19___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.IRFMixFlow seed=19___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.IRFMixFlow
+    ln -s /home/zuheng/Research/MixFlow.jl/example/synthetic_tuning/work/5b/03270a6e6377268c0c0cc24c4806f5/seed=30___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.BackwardIRFMixFlow seed=30___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.BackwardIRFMixFlow
+    ln -s /home/zuheng/Research/MixFlow.jl/example/synthetic_tuning/work/84/04ba5b624d732350f291a383cf3461/seed=12___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.DeterministicMixFlow seed=12___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.DeterministicMixFlow
+    ln -s /home/zuheng/Research/MixFlow.jl/example/synthetic_tuning/work/09/6eb11a970f83943d3e99f8ee5f5fdd/seed=8___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.IRFMixFlow seed=8___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.IRFMixFlow
+    ln -s /home/zuheng/Research/MixFlow.jl/example/synthetic_tuning/work/1b/35e8a53c9594222643f754373331b3/seed=18___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.IRFMixFlow seed=18___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.IRFMixFlow
+    ln -s /home/zuheng/Research/MixFlow.jl/example/synthetic_tuning/work/9e/d5c798cb1974b0b9188be37d8708cb/seed=32___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.DeterministicMixFlow seed=32___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.DeterministicMixFlow
+    ln -s /home/zuheng/Research/MixFlow.jl/example/synthetic_tuning/work/16/0743b3d0c097b44e8bc6b04b5d1f7b/seed=14___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.BackwardIRFMixFlow seed=14___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.BackwardIRFMixFlow
+    ln -s /home/zuheng/Research/MixFlow.jl/example/synthetic_tuning/work/4d/6499aa53c5eca5edf66b47255ab52f/seed=16___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.BackwardIRFMixFlow seed=16___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.BackwardIRFMixFlow
+    ln -s /home/zuheng/Research/MixFlow.jl/example/synthetic_tuning/work/e8/ae818f215c20e427be1d85554af7aa/seed=4___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.IRFMixFlow seed=4___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.IRFMixFlow
+    ln -s /home/zuheng/Research/MixFlow.jl/example/synthetic_tuning/work/c4/3a97757d5cf01c4efc5155b72357c1/seed=5___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.DeterministicMixFlow seed=5___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.DeterministicMixFlow
+    ln -s /home/zuheng/Research/MixFlow.jl/example/synthetic_tuning/work/e9/003f3f34c3123bc377b3efd08b6683/seed=20___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.BackwardIRFMixFlow seed=20___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.BackwardIRFMixFlow
+    ln -s /home/zuheng/Research/MixFlow.jl/example/synthetic_tuning/work/d5/567acbd956a793b3eea1ecfebb3322/seed=22___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.IRFMixFlow seed=22___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.IRFMixFlow
+    ln -s /home/zuheng/Research/MixFlow.jl/example/synthetic_tuning/work/ba/77302b64c36ed3867f3f68e8defd38/seed=7___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.IRFMixFlow seed=7___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.IRFMixFlow
+    ln -s /home/zuheng/Research/MixFlow.jl/example/synthetic_tuning/work/26/3491f501d70a094dd341b502c6709f/seed=17___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.IRFMixFlow seed=17___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.IRFMixFlow
+    ln -s /home/zuheng/Research/MixFlow.jl/example/synthetic_tuning/work/e6/39650bd9d5943c2d84212893d2f107/seed=1___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.DeterministicMixFlow seed=1___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.DeterministicMixFlow
+    ln -s /home/zuheng/Research/MixFlow.jl/example/synthetic_tuning/work/05/8f61a95460a8aed4ce50e007cdb25d/seed=12___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.BackwardIRFMixFlow seed=12___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.BackwardIRFMixFlow
+    ln -s /home/zuheng/Research/MixFlow.jl/example/synthetic_tuning/work/6e/7304a132d71489241ad53e70e9e117/seed=5___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.IRFMixFlow seed=5___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.IRFMixFlow
+    ln -s /home/zuheng/Research/MixFlow.jl/example/synthetic_tuning/work/da/186999493465411257e4586cff0cfb/seed=20___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.IRFMixFlow seed=20___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.IRFMixFlow
+    ln -s /home/zuheng/Research/MixFlow.jl/example/synthetic_tuning/work/1c/04106e855548095930f82fe11f4771/seed=10___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.BackwardIRFMixFlow seed=10___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.BackwardIRFMixFlow
+    ln -s /home/zuheng/Research/MixFlow.jl/example/synthetic_tuning/work/ea/5547b4eb28629ff5868a49f717bff8/seed=21___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.IRFMixFlow seed=21___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.IRFMixFlow
+    ln -s /home/zuheng/Research/MixFlow.jl/example/synthetic_tuning/work/06/ca37c0de11734649ca214f0ccaefec/seed=29___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.DeterministicMixFlow seed=29___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.DeterministicMixFlow
+    ln -s /home/zuheng/Research/MixFlow.jl/example/synthetic_tuning/work/17/eb8cd316a292e875458cd67df4fd0d/seed=19___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.DeterministicMixFlow seed=19___kernel=MF.HMC___step_size=0.1___flow_length=150___target=Cross___flowtype=MF.DeterministicMixFlow
+}
+
+nxf_unstage() {
+    true
+    [[ ${nxf_main_ret:=0} != 0 ]] && return
+}
+
+nxf_main() {
+    trap on_exit EXIT
+    trap on_term TERM INT USR2
+    trap '' USR1
+
+    [[ "${NXF_CHDIR:-}" ]] && cd "$NXF_CHDIR"
+    NXF_SCRATCH=''
+    [[ $NXF_DEBUG > 0 ]] && nxf_env
+    touch /home/zuheng/Research/MixFlow.jl/example/synthetic_tuning/work/3f/9700984540ae52b8102b10708c9e14/.command.begin
+    set +u
+    set -u
+    [[ $NXF_SCRATCH ]] && cd $NXF_SCRATCH
+    export NXF_TASK_WORKDIR="$PWD"
+    nxf_stage
+
+    set +e
+    (set -o pipefail; (nxf_launch | tee .command.out) 3>&1 1>&2 2>&3 | tee .command.err) &
+    pid=$!
+    wait $pid || nxf_main_ret=$?
+    nxf_unstage
+}
+
+$NXF_ENTRY
