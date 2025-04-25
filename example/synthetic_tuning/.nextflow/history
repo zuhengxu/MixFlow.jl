@@ -2,3 +2,5 @@
 2025-04-22 00:39:12	24.5s	grave_davinci	OK	42e5873d35dbcc42bf9e9f0cf6749a24	b35a69dc-204c-46c4-a479-ec24b884e354	nextflow run tuning.nf --dryRun
 2025-04-22 00:40:42	1m 24s	backstabbing_swirles	OK	53359c8e6de8f2f997e543236a2ba286	35134fea-8fef-411a-b687-3339f411027e	nextflow run tuning.nf --dryRun
 2025-04-22 00:42:37	1h 16m 45s	cheesy_bardeen	OK	53359c8e6de8f2f997e543236a2ba286	bfd99475-a68e-43ff-bcda-71ecb9817ad3	nextflow run tuning.nf
+2025-04-24 18:34:32	1m 8s	hopeful_hamilton	OK	801af79c21e886147d11935068a6c233	4b1adf82-5d67-41fe-9a9e-4e47044d528b	nextflow run elbo.nf --dryRun
+2025-04-24 18:36:42	-	cheeky_snyder	-	a064f92b5ac8b7ec24b4d731ad631763	cc1969f2-13e1-4768-883a-65e7859bc683	nextflow run elbo.nf

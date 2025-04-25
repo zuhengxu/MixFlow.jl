@@ -3,7 +3,7 @@ struct HMC{T} <: MultivariateInvolutiveKernel
     n_leapfrog::Int        
     ϵ::T
     function HMC(n_leapfrog::Int, ϵ::T) where T
-        if n_leapfrog <= 1
+        if n_leapfrog < 1
             throw(ArgumentError("hmc n_leapfrog must be ≥ 1"))
         end
         if ϵ <= 0
