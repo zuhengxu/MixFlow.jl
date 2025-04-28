@@ -8,3 +8,6 @@
 2025-04-24 21:13:09	19.4s	amazing_hugle	ERR	3978cfa0e9677ffd0b26772ece8262af	e8c7c6f2-b77b-4c22-96af-0520a4ed7eaf	nextflow run elbo.nf -resume
 2025-04-24 21:14:07	13m 49s	mad_brenner	OK	3978cfa0e9677ffd0b26772ece8262af	b7aa90ab-a5d2-4b77-bbbf-814ac6214162	nextflow run elbo.nf
 2025-04-24 21:38:15	1h 45m	confident_swanson	OK	c9d1dbf7733d85b64a7f82c25261723e	b7aa90ab-a5d2-4b77-bbbf-814ac6214162	nextflow run elbo.nf -resume
+2025-04-25 18:14:49	1d 7h 4m 51s	naughty_cantor	OK	cccc9a7a262a16a275c4d789e8fb762c	7a09a19c-da96-4117-ab7b-420bbf1df1b9	nextflow tv.nf
+2025-04-27 16:04:44	7h 19m 18s	goofy_gautier	ERR	a5e2c1f0c8f3f23e53093854dc0cb5ea	7a09a19c-da96-4117-ab7b-420bbf1df1b9	nextflow tv.nf -resume
+2025-04-27 23:25:18	-	suspicious_majorana	-	d6a3c595f59c68f37ec433ba607178d7	7a09a19c-da96-4117-ab7b-420bbf1df1b9	nextflow tv.nf -resume

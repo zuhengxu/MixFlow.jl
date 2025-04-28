@@ -118,12 +118,13 @@ function run_elbo(
 end
 
 
-# kernel = MF.MALA
-# stepsize = 0.1
-# T = 2000
+# target = "WarpedGaussian"
+# kernel = MF.HMC
+# stepsize = 0.2
+# T = 200
 
-# df = run_tv(1, "Banana", MF.BackwardIRFMixFlow, 3000, kernel, stepsize; nsample = 32)
-# df2 = run_tv(1, "Banana", MF.IRFMixFlow, 300, kernel, stepsize; nsample = 32)
+# df = run_tv(1, target, MF.BackwardIRFMixFlow, T, kernel, stepsize; nsample = 32)
+# df2 = run_tv(1, target, MF.IRFMixFlow, T, kernel, stepsize; nsample = 32)
 
 
 # plot(df.tv)

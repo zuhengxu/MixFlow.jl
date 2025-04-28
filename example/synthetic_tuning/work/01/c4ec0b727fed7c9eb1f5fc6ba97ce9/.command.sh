@@ -1,0 +1,18 @@
+#!/usr/bin/env julia --threads=1 --project=/home/zuheng/Research/MixFlow.jl/example
+
+include("/home/zuheng/Research/MixFlow.jl/example/synthetic_tuning/metric_mixflow.jl")
+
+# get configurations
+seed = 31
+name = "Banana"
+flowtype = MF.IRFMixFlow
+kernel = MF.HMC
+step_size = 0.2
+flow_length = 200
+
+# run simulation
+df = run_tv(seed, name, flowtype, flow_length, kernel, step_size; nsample = 64)
+
+# store output
+mkdir("seed=31___target=Banana___flowtype=MF.IRFMixFlow___kernel=MF.HMC___step_size=0.2___flow_length=200")
+CSV.write("seed=31___target=Banana___flowtype=MF.IRFMixFlow___kernel=MF.HMC___step_size=0.2___flow_length=200/summary.csv", df)
