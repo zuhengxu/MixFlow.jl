@@ -15,7 +15,7 @@ def variables = [
     target: ["Banana", "Cross", "Funnel", "WarpedGaussian"], 
     // target: ["Banana", "Cross", "Funnel"], 
     flowtype: ["MF.DeterministicMixFlow", "MF.BackwardIRFMixFlow", "MF.IRFMixFlow"],
-    kernel: ["MF.RWMH"],
+    kernel: ["MF.MALA"],
     step_size: [0.05, 0.2, 1.0],
     // flow_length: [3000],
     flow_length: [2000]
