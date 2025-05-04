@@ -20,7 +20,7 @@ function get_percentiles(dat; p1=25, p2=75)
     phigh = zeros(n)
 
     for i in 1:n
-        2      # dat_remove_nan = (dat[i, :])[iszero.(isnan.(dat[i,:]))]
+        # dat_remove_nan = (dat[i, :])[iszero.(isnan.(dat[i,:]))]
         dat_remove_nan = _remove_nan(dat[i, :])
         median_remove_nan = median(dat_remove_nan)
         plow[i] = median_remove_nan - percentile(vec(dat_remove_nan), p1)

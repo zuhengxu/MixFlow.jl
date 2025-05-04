@@ -12,4 +12,7 @@ example/work/
 **/work
 **.nextflow.log**
 **summary.csv
+**.csv
+
+**play_csvs.jl
 nextflow
