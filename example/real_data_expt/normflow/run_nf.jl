@@ -10,10 +10,10 @@ function create_neural_spline_flow(name, nlayers)
     # reference
     q0 = JLD2.load(joinpath(@__DIR__, "../reference/result/$(name)_mfvi.jld2"))["reference"]
 
-    hdims = length(q0)
-    dims = hdims
-    mask_idx1 = 1:2:hdims
-    mask_idx2 = 2:2:hdims
+    dims = length(q0)
+    hdims = min(dims, 100)
+    mask_idx1 = 1:2:dims
+    mask_idx2 = 2:2:dims
 
     K = 10
     B = 30
@@ -27,10 +27,10 @@ function create_real_nvp(name, nlayers)
     # reference
     q0 = JLD2.load(joinpath(@__DIR__, "../reference/result/$(name)_mfvi.jld2"))["reference"]
 
-    hdims = length(q0)
-    dims = hdims
-    mask_idx1 = 1:2:hdims
-    mask_idx2 = 2:2:hdims
+    dims = length(q0)
+    hdims = min(dims, 100)
+    mask_idx1 = 1:2:dims
+    mask_idx2 = 2:2:dims
 
     Ls = [ AffineCoupling(dims, hdims, mask_idx1) ∘ AffineCoupling(dims, hdims, mask_idx2) for _ in 1:nlayers ]
 
