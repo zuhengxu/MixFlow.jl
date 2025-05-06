@@ -2,7 +2,7 @@
 
 julia_version = "1.11.5"
 manifest_format = "2.0"
-project_hash = "0a330c8908170dd61741488cb6603850af26d18b"
+project_hash = "62696965c463cf8937558f15a20ba2fe67e2f3cf"
 
 [[deps.ADTypes]]
 git-tree-sha1 = "e2478490447631aedba0823d4d7a80b2cc8cdb32"
@@ -71,6 +71,14 @@ weakdeps = ["SparseArrays", "StaticArrays"]
     [deps.Adapt.extensions]
     AdaptSparseArraysExt = "SparseArrays"
     AdaptStaticArraysExt = "StaticArrays"
+
+[[deps.AdaptiveAIS]]
+deps = ["ADTypes", "Adapt", "DifferentiationInterface", "Distributions", "Functors", "LinearAlgebra", "LogDensityProblems", "LogExpFunctions", "Optimisers", "Pigeons", "ProgressMeter", "Random", "Roots", "SimpleUnPack", "SplittableRandoms", "Statistics", "StatsBase"]
+git-tree-sha1 = "4911b332222cd85de74ade90b903f95a94894ee8"
+repo-rev = "main"
+repo-url = "git@github.com:zuhengxu/AdaptiveAIS.jl.git"
+uuid = "6fb7a829-3708-49bf-b99d-2469cbd06686"
+version = "1.0.0-DEV"
 
 [[deps.AdvancedHMC]]
 deps = ["AbstractMCMC", "ArgCheck", "DocStringExtensions", "LinearAlgebra", "LogDensityProblems", "LogDensityProblemsAD", "ProgressMeter", "Random", "Requires", "Setfield", "SimpleUnPack", "Statistics", "StatsBase", "StatsFuns"]

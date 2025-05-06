@@ -13,6 +13,7 @@ example/work/
 **.nextflow.log**
 **summary.csv
 **.csv
+**.zip
 
 **play_csvs.jl
 nextflow

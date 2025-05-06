@@ -7,16 +7,14 @@ params.n_sample_eval = params.dryRun ? 8 : 1024
 params.nrunThreads = 2
 
 def julia_env = file("${moduleDir}/../")
-def julia_script = file("${moduleDir}/../norm_flow.jl")
+def julia_script = file("${moduleDir}/normflow.jl")
 
 def variables = [
     seed: 1..10,
     target: ["Banana", "Funnel", "WarpedGaussian", "Cross"], 
-    // flowtype: ["neural_spline_flow", "real_nvp"],
-    // lr: ["1e-3", "1e-2", "1e-4"],
     flowtype: ["real_nvp", "neural_spline_flow"],
     lr: ["1e-3", "1e-4", "1e-2"],
-    batchsize: [64],
+    batchsize: [32],
     niters: [100000],
 ]
 
@@ -78,21 +76,3 @@ process final_deliverable {
     ${activate(julia_env)}
     """
 }
-
-
-// process plot {
-//     input:
-//         path julia_env 
-//         path plot_script
-//         path combined_csvs_folder 
-//     output:
-//         path '*.png'
-//         path combined_csvs_folder
-//     publishDir "${deliverables(workflow, params)}", mode: 'copy', overwrite: true
-//     """
-//     ${activate(julia_env)}
-
-//     include("$plot_script")
-//     create_plots("$combined_csvs_folder")
-//     """
-// }

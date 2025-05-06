@@ -1,0 +1,3 @@
+2025-05-05 18:03:58	-	reverent_noether	-	60cc726e3989a2ebad91521b358f6706	0737bc26-93b3-4d38-8a94-01f0884f3f56	nextflow run run_nf.nf --dryRun
+2025-05-05 18:04:16	-	tiny_lichterman	-	c9273579b5d07215069eb1bd8f7463d3	9391e838-192f-4b66-9bcb-8b49e97e2eb5	nextflow run run_nf.nf --dryRun
+2025-05-05 18:04:24	8m 24s	happy_cajal	ERR	9671aff535b67b14bb35384a2431ee8a	f1933071-708b-42a1-bfd1-1f4d865c4c12	nextflow run run_nf.nf --dryRun

@@ -78,6 +78,6 @@ function _load_lgcp()
     target = LogGaussianCoxProcess()
     ad = AutoMooncake(; config = Mooncake.Config())
     dims = LogDensityProblems.dimension(target)
-    target_ad = ADgradient(ad, target; x = randn(dims))
-    return target_ad, dims, ad 
+    # target_ad = ADgradient(ad, target; x = randn(dims))
+    return target, dims, ad 
 end
