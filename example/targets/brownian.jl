@@ -9,8 +9,8 @@ end
 function LogDensityProblems.logdensity(prob::BrownianMotion, θ)
     (; y, obs_idx) = prob
     x     = @view(θ[1:30])
-    α_inn = softplus(θ[31])
-    α_obs = softplus(θ[32])
+    α_inn = StatsFuns.softplus(θ[31])
+    α_obs = StatsFuns.softplus(θ[32])
 
     ℓjac_α_inn = loglogistic(α_inn)
     ℓjac_α_obs = loglogistic(α_obs)

@@ -40,7 +40,7 @@ function LogDensityProblems.logdensity(prob::SparseRegression, z)
     ℓprior_s = -0.5 * (s^2) - 0.5 * log(2π)
 
     Tβ = β.^2.0.*[-50.0 -0.005] .- [log(0.1) log(10)]
-    ℓprior_β = sum(logsumexp(Tβ; dims =2)) - (d-1)*(0.5*log(2π) +log(2.0))  
+    ℓprior_β = sum(LogExpFunctions.logsumexp(Tβ; dims =2)) - (d-1)*(0.5*log(2π) +log(2.0))  
 
     #  β:= β₁,...,βₚ,β_{p+1}
     diffs = rs .- fs * β
@@ -62,7 +62,7 @@ function LogDensityProblems.logdensity_and_gradient(prob::SparseRegression, z)
     ℓprior_s = -0.5 * (s^2) - 0.5 * log(2π)
 
     Tβ = β.^2.0.*[-50.0 -0.005] .- [log(0.1) log(10)]
-    ℓprior_β = sum(logsumexp(Tβ; dims =2)) - (d-1)*(0.5*log(2π) +log(2.0))  
+    ℓprior_β = sum(LogExpFunctions.logsumexp(Tβ; dims =2)) - (d-1)*(0.5*log(2π) +log(2.0))  
 
     #  β:= β₁,...,βₚ,β_{p+1}
     diffs = rs .- fs * β

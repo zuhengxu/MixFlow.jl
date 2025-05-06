@@ -1,3 +1,15 @@
 2025-05-05 18:03:58	-	reverent_noether	-	60cc726e3989a2ebad91521b358f6706	0737bc26-93b3-4d38-8a94-01f0884f3f56	nextflow run run_nf.nf --dryRun
 2025-05-05 18:04:16	-	tiny_lichterman	-	c9273579b5d07215069eb1bd8f7463d3	9391e838-192f-4b66-9bcb-8b49e97e2eb5	nextflow run run_nf.nf --dryRun
 2025-05-05 18:04:24	8m 24s	happy_cajal	ERR	9671aff535b67b14bb35384a2431ee8a	f1933071-708b-42a1-bfd1-1f4d865c4c12	nextflow run run_nf.nf --dryRun
+2025-05-05 21:42:06	1m 7s	fabulous_marconi	ERR	4b5d5a4171ab59edbc7e8b99c98645f4	f1933071-708b-42a1-bfd1-1f4d865c4c12	nextflow run_nf.nf -resume
+2025-05-05 21:43:47	23.2s	serene_stonebraker	ERR	20994d4ec8ea51e6dc84958324c8d248	f1933071-708b-42a1-bfd1-1f4d865c4c12	nextflow run_nf.nf -resume
+2025-05-05 21:44:16	15.7s	desperate_lamport	ERR	682ab9640f695aa32d243db2ed8231f7	f1933071-708b-42a1-bfd1-1f4d865c4c12	nextflow run_nf.nf -resume
+2025-05-05 21:44:37	1m 8s	suspicious_curran	ERR	712959dd0bf4d569338ec0c43a3df589	f1933071-708b-42a1-bfd1-1f4d865c4c12	nextflow run_nf.nf -resume
+2025-05-05 21:46:09	45.5s	zen_rubens	ERR	23be192c7c94542c4ed154a337b52b83	f1933071-708b-42a1-bfd1-1f4d865c4c12	nextflow run_nf.nf -resume
+2025-05-05 22:45:42	5m 14s	dreamy_banach	ERR	12aa0b88d592fbf30be7444044fa22a8	f1933071-708b-42a1-bfd1-1f4d865c4c12	nextflow run_nf.nf -resume
+2025-05-05 22:51:43	2m 3s	chaotic_kare	ERR	28d9d51c88db47ea08ee96ff816f608c	f1933071-708b-42a1-bfd1-1f4d865c4c12	nextflow run_nf.nf -resume
+2025-05-05 22:54:01	1h 10m 16s	voluminous_shaw	ERR	85dcb59b8020c751f59d1b8941e211fe	f1933071-708b-42a1-bfd1-1f4d865c4c12	nextflow run_nf.nf -resume
+2025-05-06 00:05:19	5.7s	drunk_ampere	ERR	333ea6e80781034751d00b59d465be67	f1933071-708b-42a1-bfd1-1f4d865c4c12	nextflow run_nf.nf -resume
+2025-05-06 00:07:28	10m 47s	mighty_plateau	ERR	333ea6e80781034751d00b59d465be67	f1933071-708b-42a1-bfd1-1f4d865c4c12	nextflow run_nf.nf -resume
+2025-05-06 00:18:37	12m 30s	goofy_keller	ERR	ba2ee08914e2f2b49dcb04fb217c89fe	f1933071-708b-42a1-bfd1-1f4d865c4c12	nextflow run_nf.nf -resume
+2025-05-06 00:31:14	12h 5m 16s	ridiculous_ritchie	OK	67ccc64493604e34b0d1c4834a619854	f1933071-708b-42a1-bfd1-1f4d865c4c12	nextflow run_nf.nf -resume
