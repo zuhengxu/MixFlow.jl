@@ -15,13 +15,9 @@ function create_neural_spline_flow(name, nlayers)
     mask_idx1 = 1:2:hdims
     mask_idx2 = 2:2:hdims
 
-
     K = 10
     B = 30
-    Ls = [
-        NeuralSplineLayer(dims, hdims, K, B, mask_idx1) ∘ NeuralSplineLayer(dims, hdims, K, B, mask_idx2) for
-        _ in 1:nlayers
-    ]
+    Ls = [ NeuralSplineLayer(dims, hdims, K, B, mask_idx1) ∘ NeuralSplineLayer(dims, hdims, K, B, mask_idx2) for _ in 1:nlayers ]
 
     flow = create_flow(Ls, q0)
     return flow 
@@ -36,10 +32,7 @@ function create_real_nvp(name, nlayers)
     mask_idx1 = 1:2:hdims
     mask_idx2 = 2:2:hdims
 
-    Ls = [
-        AffineCoupling(dims, hdims, mask_idx1) ∘ AffineCoupling(dims, hdims, mask_idx2) for 
-        _ in 1:nlayers
-    ]
+    Ls = [ AffineCoupling(dims, hdims, mask_idx1) ∘ AffineCoupling(dims, hdims, mask_idx2) for _ in 1:nlayers ]
 
     flow = create_flow(Ls, q0)
     return flow 
@@ -121,10 +114,15 @@ function run_norm_flow(
 end
 
 
-# name = "Brownian"
 
-# df = run_norm_flow(
-#     1, name, "neural_spline_flow", 3, 1e-3; 
-#     batchsize=64, niters=1000, show_progress=true,
-#     nsample_eval=128,
-# )
+# # target_list = ["TReg", "SparseRegression", "Brownian", "Sonar", "LGCP"]
+
+
+# for name in target_list
+#     @info "Running $name"
+#     df = run_norm_flow(
+#         1, name, "neural_spline_flow", 3, 1e-4; 
+#         batchsize=64, niters=100, show_progress=true,
+#         nsample_eval=128,
+#     )
+# end

@@ -1,3 +1,8 @@
 2025-05-05 18:03:58	-	reverent_noether	-	60cc726e3989a2ebad91521b358f6706	0737bc26-93b3-4d38-8a94-01f0884f3f56	nextflow run run_nf.nf --dryRun
 2025-05-05 18:04:16	-	tiny_lichterman	-	c9273579b5d07215069eb1bd8f7463d3	9391e838-192f-4b66-9bcb-8b49e97e2eb5	nextflow run run_nf.nf --dryRun
 2025-05-05 18:04:24	8m 24s	happy_cajal	ERR	9671aff535b67b14bb35384a2431ee8a	f1933071-708b-42a1-bfd1-1f4d865c4c12	nextflow run run_nf.nf --dryRun
+2025-05-05 21:42:06	1m 7s	fabulous_marconi	ERR	4b5d5a4171ab59edbc7e8b99c98645f4	f1933071-708b-42a1-bfd1-1f4d865c4c12	nextflow run_nf.nf -resume
+2025-05-05 21:43:47	23.2s	serene_stonebraker	ERR	20994d4ec8ea51e6dc84958324c8d248	f1933071-708b-42a1-bfd1-1f4d865c4c12	nextflow run_nf.nf -resume
+2025-05-05 21:44:16	15.7s	desperate_lamport	ERR	682ab9640f695aa32d243db2ed8231f7	f1933071-708b-42a1-bfd1-1f4d865c4c12	nextflow run_nf.nf -resume
+2025-05-05 21:44:37	1m 8s	suspicious_curran	ERR	712959dd0bf4d569338ec0c43a3df589	f1933071-708b-42a1-bfd1-1f4d865c4c12	nextflow run_nf.nf -resume
+2025-05-05 21:46:09	45.5s	zen_rubens	ERR	23be192c7c94542c4ed154a337b52b83	f1933071-708b-42a1-bfd1-1f4d865c4c12	nextflow run_nf.nf -resume
