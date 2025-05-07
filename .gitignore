@@ -8,7 +8,7 @@ example/work/
 
 *.html
 
-**.nextflow
+**.nextflow**
 **/work
 **.nextflow.log**
 **summary.csv

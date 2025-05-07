@@ -94,11 +94,11 @@ end
 
 # T = 100
 # for i in 1:T
-#     ua, uv = _arnold_cat_map(ua, uv)
+#     ua, uv = MF._arnold_cat_map(ua, uv)
 # end
 
 # for i in 1:T
-#     ua, uv = _inv_arnold_cat_map(ua, uv)
+#     ua, uv = MF._inv_arnold_cat_map(ua, uv)
 # end
 # [ua, uv] .- [ua0, uv0]
 

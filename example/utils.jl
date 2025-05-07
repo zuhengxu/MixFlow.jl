@@ -28,8 +28,8 @@ function _find_dir(str::String)
 end
 
 
-function _read_csv_prefix(pfx::String)
-    pth = joinpath(@__DIR__, pfx, "output", "summary.csv")
+function _read_csv_prefix(pfx::String; append=("output", "summary.csv"))
+    pth = joinpath(pfx, append...)
     df = CSV.File(pth) |> DataFrame
     return df
 end

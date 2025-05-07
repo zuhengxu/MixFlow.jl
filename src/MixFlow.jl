@@ -96,10 +96,12 @@ include("kernel/rwmh.jl")
 include("kernel/mala.jl")
 include("kernel/hmc_uncorrect.jl")
 include("kernel/hmc.jl")
+include("kernel/hmc_multiple.jl")
 
 export RWMH1D
 export RWMH
 export uncorrectHMC, HMC, MALA
+export HMCmultiple
 
 function mcmc_sampler(
     prob::MixFlowProblem, K::MultivariateInvolutiveKernel, x0::AbstractVector{T}, nsteps::Int,
