@@ -13,3 +13,6 @@
 2025-05-06 00:07:28	10m 47s	mighty_plateau	ERR	333ea6e80781034751d00b59d465be67	f1933071-708b-42a1-bfd1-1f4d865c4c12	nextflow run_nf.nf -resume
 2025-05-06 00:18:37	12m 30s	goofy_keller	ERR	ba2ee08914e2f2b49dcb04fb217c89fe	f1933071-708b-42a1-bfd1-1f4d865c4c12	nextflow run_nf.nf -resume
 2025-05-06 00:31:14	12h 5m 16s	ridiculous_ritchie	OK	67ccc64493604e34b0d1c4834a619854	f1933071-708b-42a1-bfd1-1f4d865c4c12	nextflow run_nf.nf -resume
+2025-05-07 00:55:43	6.2s	extravagant_kimura	ERR	d7f1e919047258d96f9e4b2ff40795f5	f1933071-708b-42a1-bfd1-1f4d865c4c12	nextflow run_nf.nf -resume
+2025-05-07 00:55:58	3m 24s	chaotic_lavoisier	ERR	25ce32cf863bd51ea99c6e9a85730ba3	f1933071-708b-42a1-bfd1-1f4d865c4c12	nextflow run_nf.nf -resume
+2025-05-07 01:00:16	14m 40s	naughty_ekeblad	ERR	0fc35578a9d408d6a74aa7471c754504	f1933071-708b-42a1-bfd1-1f4d865c4c12	nextflow run_nf.nf -resume

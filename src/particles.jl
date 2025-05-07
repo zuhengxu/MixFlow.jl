@@ -1,6 +1,5 @@
 using Pigeons: header, render_report_cell, hr
 
-
 # code modified from https://github.com/alexandrebouchard/sais-gpu/blob/main/utils.jl
 
 """
@@ -89,7 +88,7 @@ all_reports() = [
         # header with    # lambda expression used to 
         # width of 9     # compute that report item
         "    T     "   => a -> a.flow.flow_length,
-        "n_ensumble"   => a -> hasfield(typeof(a.flow), :num_flows) ? a.flow.num_flows : 1,
+        "n_ensemble"   => a -> hasfield(typeof(a.flow), :num_flows) ? a.flow.num_flows : 1,
         "    N     "   => a -> n_particles(a.particles),
         # "  time(s) "   => a -> a.full_timing, 
         # "  allc(B) "   => a -> a.timing.bytes,
