@@ -12,7 +12,7 @@ using FillArrays
 
 
 using MixFlow 
-using Plots
+# using Plots
 
 # 1d targets
 Mixture1D() = MixtureModel(Normal, [(0.0, 0.8), (-3.0, 1.5), (3.0, 0.5)], [0.3, 0.5, 0.2])
@@ -59,6 +59,10 @@ function load_model(name::String)
         error("Model not defined")
     end
 end
+
+synthetic_list = Set(["Mixture1D", "Cauchy1D", "Banana", "Cross", "Funnel", "WarpedGaussian"])
+real_data_list = Set(["Brownian", "Sonar", "SparseRegression", "TReg", "LGCP"])
+
 
 # target, dims, ad = load_model("Sonar")
 # x = randn(dims)

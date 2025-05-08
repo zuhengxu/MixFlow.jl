@@ -3,7 +3,7 @@ include { instantiate; precompile; activate } from '../nf-nest/pkg.nf'
 include { combine_csvs; } from '../nf-nest/combine.nf'
 
 params.dryRun = false
-params.n_sample = params.dryRun ? 8 : 512
+params.n_sample = params.dryRun ? 8 : 256
 params.nrunThreads = 5
 
 def julia_env = file("${moduleDir}/../")
@@ -53,7 +53,7 @@ process run_simulation {
     flow_length = ${config.flow_length}
 
     # run simulation
-    df = run_tv(seed, name, flowtype, flow_length, kernel, step_size; nsample = ${params.n_sample})
+    df = run_tv_sweep(seed, name, flowtype, kernel, flow_length, step_size; nsample = ${params.n_sample})
     
     # store output
     mkdir("${filed(config)}")

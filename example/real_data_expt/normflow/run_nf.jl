@@ -126,3 +126,10 @@ end
 #         nsample_eval=128,
 #     )
 # end
+
+name = "LGCP"
+df = run_norm_flow(
+    1, name, "real_nvp", 5, 1e-4; 
+    batchsize=64, niters=100, show_progress=true,
+    nsample_eval=128,
+)

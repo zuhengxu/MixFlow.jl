@@ -16,3 +16,8 @@
 2025-05-07 00:55:43	6.2s	extravagant_kimura	ERR	d7f1e919047258d96f9e4b2ff40795f5	f1933071-708b-42a1-bfd1-1f4d865c4c12	nextflow run_nf.nf -resume
 2025-05-07 00:55:58	3m 24s	chaotic_lavoisier	ERR	25ce32cf863bd51ea99c6e9a85730ba3	f1933071-708b-42a1-bfd1-1f4d865c4c12	nextflow run_nf.nf -resume
 2025-05-07 01:00:16	14m 40s	naughty_ekeblad	ERR	0fc35578a9d408d6a74aa7471c754504	f1933071-708b-42a1-bfd1-1f4d865c4c12	nextflow run_nf.nf -resume
+2025-05-07 01:19:24	7m 2s	chaotic_northcutt	ERR	9292c8436b0d2e219a27137dc310856a	f1933071-708b-42a1-bfd1-1f4d865c4c12	nextflow run_nf.nf -resume
+2025-05-07 01:26:39	7m 47s	soggy_magritte	ERR	d436009b289adb38a2c6f376e0bad248	f1933071-708b-42a1-bfd1-1f4d865c4c12	nextflow run_nf.nf -resume
+2025-05-07 01:35:04	1h 3m 9s	maniac_hamilton	OK	2c2b62a78d8594b41d72410925ba81c7	f1933071-708b-42a1-bfd1-1f4d865c4c12	nextflow run_nf.nf -resume
+2025-05-07 10:25:40	5.9s	elegant_darwin	ERR	ed1553e9e35c267d82dd5df89e1dc349	f1933071-708b-42a1-bfd1-1f4d865c4c12	nextflow run_nf.nf -resume
+2025-05-07 10:25:55	4h 7m 32s	trusting_euclid	OK	20e6d79495c2439b047978c6ea54ffe0	f1933071-708b-42a1-bfd1-1f4d865c4c12	nextflow run_nf.nf -resume
