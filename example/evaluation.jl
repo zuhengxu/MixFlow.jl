@@ -65,12 +65,13 @@ end
 
 function flow_evaluation(
     seed, name::String, flowtype, kernel_type, T::Int, step_size; 
-    nsample = 1024, leapfrog_steps=50, nchains = 10,
+    nsample = 1024, leapfrog_steps=50, nchains = 10, 
 )
 
     Random.seed!(seed)
 
     prob, dims = load_prob_with_ref(name)
+
     flow, mixer, nchains = setup_flow(seed, flowtype, T, nchains, dims)
     kernel = setup_kernel(kernel_type, step_size, leapfrog_steps, dims)
     
@@ -83,6 +84,7 @@ function flow_evaluation(
     output = MF.mixflow(flow, prob, kernel, mixer, nsample)
 
     df = DataFrame(
+        cost = is_tracked(prob.target) ? compute_cost(prob.target) : NaN,
         nensembles = nchains, 
         logZ = output.logZ,
         elbo = output.elbo,
@@ -208,50 +210,92 @@ function stability_eval(
 end
 
 
-name = "Banana"
-prob, dims = load_prob_with_ref(name)
+function rejection_rate(prob, K, T)
+    dims = LogDensityProblems.dimension(prob)
+    mixer = RandomShift(dims, T)
+    err, rejsfwd, _ = check_error(prob, K, mixer, T)
+    rej_rate = length(rejsfwd) / T
+    return rej_rate, err
+end
 
-kernel = MF.RWMH
-ϵ = 0.25
-T = 1000
-K = kernel(ϵ, ones(dims))
 
-stability_eval(1, name, kernel(ϵ, ones(dims)); Ts = vcat([10, 20, 50], 100:100:1200))
+function bijection_search(
+    f, l, r;
+    target_rej_rate = 0.766,
+    max_iter = 20,
+    stop_criterion = (x) -> 0.73 < f(x) < 0.79
+)
+    for i in 1:max_iter
+        x = (l + r) / 2
+        if stop_criterion(x)
+            return x, i
+        end
 
-# look error and rejection rate
-mixer = RandomShift(dims, T)
-err, rejsfwd, rejsinv = check_error(prob, K, mixer, T)
-# plot(rejsfwd, label = "forward rejection")
-# plot!(rejsinv, label = "inverse rejection")
+        if f(x) < target_rej_rate
+            l = x
+        else
+            r = x
+        end
+    end
+
+    println("stop criterion not met")
+    return NaN, max_iter
+end
+
+function find_stepsize(
+    prob, kernel, T; 
+    l = 0.0001, r = 10.0, max_iter = 100, target_rej_rate = 0.75,
+    thresh = 0.05, T_check_stab = 5000
+)
+    stop_range_lower = target_rej_rate - thresh
+    stop_range_upper = target_rej_rate + thresh
+
+    # find the stepsize that gives the target rejection rate
+    # using binary search
+    dims = LogDensityProblems.dimension(prob)
+    f = ϵ -> rejection_rate(prob, kernel(ϵ, ones(dims)), T)[1]
+    stop_criterion = (x) -> stop_range_lower < f(x) < stop_range_upper
+
+    s, neval = bijection_search(
+        f, l, r;
+        target_rej_rate = target_rej_rate,
+        max_iter = max_iter,
+        stop_criterion = stop_criterion,
+    )
+    
+    println("done bijection search, stepsize: $s, neval: $neval")
+    
+    err = rejection_rate(prob, kernel(s, ones(dims)), T_check_stab)[2]
+    neval += 1
+    stable_cond = (err < 1e-3)
+    while !stable_cond
+        s /= 2
+        err = rejection_rate(prob, kernel(s, ones(dims)), T_check_stab)[2]
+        neval += 1
+        stable_cond = (err < 1e-3)
+    end
+    println("done stability check, stepsize: $s, neval: $neval")
+    return s, neval
+end
+
+
+# name = "Sonar"
+# prob, dims = load_prob_with_ref(name)
+# kernel = RWMH
+# T_check = 5000
+# ϵ, neval = find_stepsize(prob, kernel, 2000; target_rej_rate = 0.2, thresh = 0.02, T_check_stab = T_check)
+# K = kernel(ϵ, ones(dims))
+
+
+# rej_rate, err = rejection_rate(prob, K, T_check)
 
 # flowtype = MF.BackwardIRFMixFlow
-# flowtype = MF.IRFMixFlow
-# flowtype = MF.DeterministicMixFlow
-flowtype = MF.EnsembleIRFFlow
+# # flowtype = MF.IRFMixFlow
+# # flowtype = MF.DeterministicMixFlow
+# # flowtype = MF.EnsembleIRFFlow
 
-df = flow_evaluation(2, name, flowtype, kernel, T, ϵ; nsample = 256, nchains = 30)
-
-df = run_tv_sweep(2, name, flowtype, kernel, T, ϵ; nsample = 64, nchains = 30)
-
-
-
-
-
-# Es = [0.01, 0.03, 0.1, 1, 0.1, 0.03, 0.01]
-# kernel = HMCmultiple(Es, dims)
-
-# T = 100
-# flow = MF.BackwardIRFMixFlow(T)
-# mixer = RandomShift(dims, T)
-
-# flow = MF.DeterministicMixFlow(T)
-# mixer = ErgodicShift(dims, T)
+# df = flow_evaluation(1, name, flowtype, kernel, T_check, ϵ; nsample = 64, nchains = 30)
 
 # T = 3000
-# nchains = 200
-# mixer = EnsembleRandomShift(dims, T, nchains)
-# flow = EnsembleIRFFlow(T, nchains)
-
-# kernel = MF.RWMH(0.5, ones(dims))
-
+# df = run_tv_sweep(2, name, flowtype, kernel, T, ϵ; nsample = 64, nchains = 30)
 

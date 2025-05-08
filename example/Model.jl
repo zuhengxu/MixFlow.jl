@@ -76,3 +76,35 @@ LogDensityProblems.logdensity(dist::ContinuousDistribution, x) = logpdf(dist, x)
 MixFlow.iid_sample(dist::ContinuousDistribution, n::Int) = rand(dist, n)
 MixFlow.iid_sample(dist::ContinuousDistribution) = rand(dist)
 
+
+
+# tracking logdensity prob
+mutable struct TrackedLogDensityProblem{Prob}
+    n_density_evals  :: Int
+    n_gradient_evals :: Int
+    prob             :: Prob
+end
+
+function TrackedLogDensityProblem(prob)
+    TrackedLogDensityProblem{typeof(prob)}(0, 0, prob)
+end
+is_tracked(prob) = prob isa TrackedLogDensityProblem
+
+function LogDensityProblems.capabilities(::Type{TrackedLogDensityProblem{Prob}}) where {Prob}
+    return LogDensityProblems.capabilities(Prob)
+end
+
+LogDensityProblems.dimension(prob::TrackedLogDensityProblem) = LogDensityProblems.dimension(prob.prob)
+
+function LogDensityProblems.logdensity(prob::TrackedLogDensityProblem, x)
+    prob.n_density_evals += 1
+    return LogDensityProblems.logdensity(prob.prob, x)
+end
+
+function LogDensityProblems.logdensity_and_gradient(prob::TrackedLogDensityProblem, x)
+    prob.n_gradient_evals += 1
+    return LogDensityProblems.logdensity_and_gradient(prob.prob, x)
+end
+
+compute_cost(prob::TrackedLogDensityProblem) = prob.n_density_evals + prob.n_gradient_evals * LogDensityProblems.dimension(prob)
+

@@ -1,12 +1,12 @@
-include { crossProduct; filed; deliverables } from '../nf-nest/cross.nf'
-include { instantiate; precompile; activate } from '../nf-nest/pkg.nf'
-include { combine_csvs; } from '../nf-nest/combine.nf'
+include { crossProduct; filed; deliverables } from '../../nf-nest/cross.nf'
+include { instantiate; precompile; activate } from '../../nf-nest/pkg.nf'
+include { combine_csvs; } from '../../nf-nest/combine.nf'
 
 params.dryRun = false
 params.n_sample_eval = params.dryRun ? 8 : 1024
 params.nrunThreads = 2
 
-def julia_env = file("${moduleDir}/../")
+def julia_env = file("${moduleDir}/../../")
 def julia_script = file("${moduleDir}/normflow.jl")
 
 def variables = [
