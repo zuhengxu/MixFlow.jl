@@ -3,8 +3,8 @@ using DataFrames, CSV
 using Optimisers
 using Random
 
-include(joinpath(@__DIR__, "../../Model.jl"))
-include(joinpath(@__DIR__, "../../flowlayer.jl"))
+include(joinpath(@__DIR__, "../../julia_env/Model.jl"))
+include(joinpath(@__DIR__, "../../julia_env/flowlayer.jl"))
 
 function create_neural_spline_flow(name, nlayers)
     # reference
@@ -63,6 +63,7 @@ function run_norm_flow(
     # stop if nan or inf in training
     checkconv(iter, stat, re, θ, st) = _is_nan_or_inf(stat.loss) || (stat.gradient_norm < 1e-3)
 
+    time = @elapsed begin
     flow_trained, stats, _ = train_flow(
         NormalizingFlows.elbo,
         flow,
@@ -74,6 +75,7 @@ function run_norm_flow(
         show_progress=show_progress,
         hasconverged=checkconv,
     )
+    end
     @info "Training finished"
 
     # if early stop due to NaN or Inf, return NaN for all
@@ -106,11 +108,14 @@ function run_norm_flow(
         )
     end
     
-    return DataFrame(
+    df = DataFrame(
+        time = time,
         elbo=el,
         logZ=logz,
         ess=es,
     )
+
+    return df
 end
 
 
@@ -127,9 +132,9 @@ end
 #     )
 # end
 
-name = "LGCP"
-df = run_norm_flow(
-    1, name, "real_nvp", 5, 1e-4; 
-    batchsize=64, niters=100, show_progress=true,
-    nsample_eval=128,
-)
+# name = "LGCP"
+# df = run_norm_flow(
+#     1, name, "real_nvp", 5, 1e-4; 
+#     batchsize=64, niters=100, show_progress=true,
+#     nsample_eval=128,
+# )

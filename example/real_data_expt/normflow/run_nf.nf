@@ -11,13 +11,12 @@ def julia_script = file("${moduleDir}/run_nf.jl")
 
 def variables = [
     seed: 1..5,
-    target: ["LGCP"],
-    flowtype: ["real_nvp"],
-    // flowtype: ["real_nvp"],
-    nlayer: [3],
-    lr: ["1e-4"],
-    batchsize: [32],
-    niters: [1000, 10000],
+    target: ["Sonar", "Brownian", "TReg", "SparseRegression" ,"LGCP"],
+    flowtype: ["real_nvp", "neural_spline_flow"],
+    nlayer: [3, 5],
+    lr: ["1e-4", "1e-5"],
+    batchsize: [64],
+    niters: [50000],
 ]
 
 workflow {
@@ -59,7 +58,7 @@ process run_simulation {
         seed, name, flowtype, nlayer, lr; 
         batchsize=bs, niters=niters, show_progress=false,
         nsample_eval=${params.n_sample_eval},
-        save_jld = false
+        save_jld = true
     )
     
     # store output
