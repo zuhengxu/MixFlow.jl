@@ -57,7 +57,6 @@ tv_plot(combined_csvs_folder::String) = begin
     tv_plot(df)
 end
 
-# df = CSV.read("/home/zuheng/Research/MixFlow.jl/example/synthetic_tuning/deliverables/tv_mixflow.csv", DataFrame)
 
 function ensemble_flowlength_plot(
     df::DataFrame, metric::Symbol; 
@@ -163,3 +162,83 @@ end
 #     ylims=(0, 1),
 # )
 
+# plots comparing three flows
+function tv_plot_compare_flowtype(df::DataFrame)
+
+    targets = unique(df.target)
+    kernels = unique(df.kernel)
+    flowtypes = unique(df.flowtype)
+
+    for (t, k) in Iterators.product(targets, kernels)
+        println("target: $t, kernel: $k")
+        fig_name = "$(t)__$(_throw_dot(k))"
+        local selector = Dict(
+            :target => t,
+            :kernel => k,
+        )
+        try
+            local ds = _subset_expt(df, selector)
+            Tm = maximum(unique(ds.Ts))
+            local dsm = _subset_expt(ds, Dict(:Ts => Tm))
+            local dsg = groupby(dsm, [:step_size])
+            local dsc = combine(dsg, :tv => median)
+            # find the :step_size with the largest median tv
+            sort!(dsc, :tv_median)
+            # find the :step_size with the largest median tv
+            s = dsc[1, :step_size]
+
+            local dss = _subset_expt(ds, Dict(:step_size => s))
+
+            local fg = groupederrorline(
+                dss, :Ts, :tv, :seed, :flowtype;
+                mark_nan = true,
+                errorstyle = :ribbon,
+                legend = :best,
+                title = fig_name,
+                linestyle = :solid,
+                lw = 2,
+            )
+            
+            plot!(fg, ylims = (0, 1))    # TV is between 0 and 1
+            plot!(fg, ylabel = "Total Variation", xlabel = "flow length")
+            plot!(fg, dpi = 600, size = (500, 400), margin = 10Plots.mm)
+            savefig(fg, fig_name * ".png")
+        catch e
+            println("Error: $e")
+            continue
+        end
+    end
+end
+
+# df = CSV.read("/home/zuheng/Research/MixFlow.jl/example/synthetic_tuning/deliverables/tv_mixflow.csv", DataFrame)
+# df_rwmh = CSV.read("/home/zuheng/Research/MixFlow.jl/example/synthetic_tuning/deliverables/scriptName=tv.nf___dryRun=false___n_sample=64___nrunThreads=1/output/summary.csv", DataFrame)
+
+# # delect rows with flowtype == "rwmh"
+# df_no_rwmh = df[df.kernel .!= "MF.RWMH", :]
+# hcat(df_no_rwmh, df_rwmh)
+
+# names(df_no_rwmh)
+# names(df_rwmh)
+# ddf = vcat(df_no_rwmh, df_rwmh, cols=:union)
+# #turn missing values into 1
+
+
+# tv_plot_compare_flowtype(df)
+
+# ds = tv_plot_compare_flowtype(df)
+# dsg = groupby(ds, [:step_size])
+# dsc = combine(dsg, :tv => median)
+# # find the :step_size with the largest median tv
+# sort!(dsc, :tv_median)
+
+function best_step_size(df::DataFrame, t, k)
+    ds = _subset_expt(df, Dict(:target => t, :kernel => k))
+    Tm = maximum(unique(ds.Ts))
+    dsm = _subset_expt(ds, Dict(:Ts => Tm))
+    dsg = groupby(dsm, [:step_size])
+    dsc = combine(dsg, :tv => median)
+    # find the :step_size with the largest median tv
+    sort!(dsc, :tv_median)
+    s = dsc[1, :step_size]
+    return s, Tm
+end

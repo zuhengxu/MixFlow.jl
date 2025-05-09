@@ -74,7 +74,14 @@ process plot {
     ${activate(julia_env,params.nrunThreads)}
 
     include("$plot_script")
-    tv_plot("$combined_csvs_folder")
+
+    df = CSV.read("$combined_csvs_folder/summary.csv", DataFrame)
+
+    # tv plot for different stepsize
+    tv_plot(df)
+
+    # pick the best stepsize and compare flows
+    tv_plot_compare_flowtype(df)
     """
 }
 

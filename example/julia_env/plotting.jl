@@ -212,7 +212,7 @@ function groupederrorline(
 
     fg = StatsPlots.errorline(
         xs, y_mat,
-        label = gs',
+        label = reshape(gs, 1, length(gs)),
         xlabel = x_key,
         ylabel = y_key,
         legend = :best;
