@@ -222,6 +222,7 @@ end
 # ddf = vcat(df_no_rwmh, df_rwmh, cols=:union)
 # #turn missing values into 1
 
+# ds = _subset_expt(df, Dict(:kernel => "MF.MALA", :target => "Banana"))
 
 # tv_plot_compare_flowtype(df)
 

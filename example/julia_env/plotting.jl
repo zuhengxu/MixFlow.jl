@@ -135,7 +135,16 @@ function _process_for_grouped_errorline(
     g_vals = similar(gs)
     for (i, x) in enumerate(xs)
         for (j, g) in enumerate(gs)
-            y_mat[i, :, j] .= d_tmp[(x, g)][!, y_key]
+            # add catch block in case the rep key doesn;t have same length
+            try
+                y_mat[i, :, j] .= d_tmp[(x, g)][!, y_key]
+            catch e
+                y_mat[i, :, j] .= NaN
+                local v = d_tmp[(x, g)][!, y_key]
+                local n = length(v)
+                y_mat[i, 1:n, j] .= v
+            end
+
             if i == 1
                 g_vals[j] = g
             end
