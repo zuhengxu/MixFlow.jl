@@ -65,12 +65,16 @@ end
 
 function flow_evaluation(
     seed, name::String, flowtype, kernel_type, T::Int, step_size; 
-    nsample = 1024, leapfrog_steps=50, nchains = 10, 
+    nsample = 1024, leapfrog_steps=50, nchains = 10, track_cost = true
 )
 
     Random.seed!(seed)
 
     prob, dims = load_prob_with_ref(name)
+
+    if track_cost
+        prob = MixFlowProblem(prob.reference, TrackedLogDensityProblem(prob.target))
+    end
 
     flow, mixer, nchains = setup_flow(seed, flowtype, T, nchains, dims)
     kernel = setup_kernel(kernel_type, step_size, leapfrog_steps, dims)
@@ -91,7 +95,7 @@ function flow_evaluation(
         ess = output.ess/nsample,  # ess per sample
         nparticles = nsample,
     )
-    return df
+    return df, output
 end
 
 function load_prob_with_ref(name)
