@@ -107,7 +107,7 @@ end
 
 function load_synthetic_prob_with_reference(name)
     vi_res = JLD2.load(
-        joinpath(@__DIR__, "synthetic_expt/reference/result/$(name)_mfvi.jld2"),
+        joinpath(@__DIR__, "../synthetic_expt/reference/result/$(name)_mfvi.jld2"),
     )
     prob = vi_res["prob"]
     dims = LogDensityProblems.dimension(prob)
@@ -115,7 +115,7 @@ function load_synthetic_prob_with_reference(name)
 end
 
 function load_real_prob_with_reference(name)
-    ref = JLD2.load(joinpath(@__DIR__, "real_data_expt/reference/result/$(name)_mfvi.jld2"))
+    ref = JLD2.load(joinpath(@__DIR__, "../real_data_expt/reference/result/$(name)_mfvi.jld2"))
     prob = ref["prob"]
     dims = LogDensityProblems.dimension(prob)
     return prob, dims

@@ -11,10 +11,10 @@ using JLD2
 using MixFlow 
 const MF = MixFlow
 
-include(joinpath(@__DIR__, "../mfvi.jl"))
-include(joinpath(@__DIR__, "../Model.jl"))
-include(joinpath(@__DIR__, "../evaluation.jl"))
-include(joinpath(@__DIR__, "../plotting.jl"))
+include(joinpath(@__DIR__, "../julia_env/mfvi.jl"))
+include(joinpath(@__DIR__, "../julia_env/Model.jl"))
+include(joinpath(@__DIR__, "../julia_env/evaluation.jl"))
+include(joinpath(@__DIR__, "../julia_env/plotting.jl"))
 
 # tv_uhmc = run_tv_sweep(1, "Funnel", MF.DeterministicMixFlow, MF.uncorrectHMC, 10, 0.1; nsample = 4)
 # tv_hmc = run_tv_sweep(1, "Funnel", MF.DeterministicMixFlow, MF.HMC, 10, 0.1; nsample = 4)

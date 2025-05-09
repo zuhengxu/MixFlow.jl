@@ -4,9 +4,9 @@ include { combine_csvs; } from '../../nf-nest/combine.nf'
 
 params.dryRun = false
 params.n_sample_eval = params.dryRun ? 8 : 1024
-params.nrunThreads = 2
+params.nrunThreads = 1
 
-def julia_env = file("${moduleDir}/../../")
+def julia_env = file("${moduleDir}/../../julia_env")
 def julia_script = file("${moduleDir}/normflow.jl")
 
 def variables = [

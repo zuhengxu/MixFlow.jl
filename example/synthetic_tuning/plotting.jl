@@ -11,14 +11,17 @@ using JLD2
 using MixFlow 
 const MF = MixFlow
 
-include(joinpath(@__DIR__, "../mfvi.jl"))
-include(joinpath(@__DIR__, "../Model.jl"))
-include(joinpath(@__DIR__, "../plotting.jl"))
+include(joinpath(@__DIR__, "../julia_env/Model.jl"))
+include(joinpath(@__DIR__, "../julia_env/plotting.jl"))
 
 function tv_plot(
     combined_csvs_folder::String
 )
     df = CSV.read(joinpath(combined_csvs_folder, "summary.csv"), DataFrame) 
+
+    if !isdir("figure/")
+        mkpath("figure/")
+    end
 
     targets = unique(df.target)
     kernels = unique(df.kernel)
@@ -26,12 +29,13 @@ function tv_plot(
 
     for (t, k, f) in Iterators.product(targets, kernels, flowtypes)
         println("target: $t, kernel: $k, flowtype: $f")
-        fig_name = "$(t)__$(_throw_dot(f))__$(_throw_dot(k))"
+        fig_name = "figure/$(t)__$(_throw_dot(f))__$(_throw_dot(k))"
         local selector = Dict(
             :target => t,
             :kernel => k,
             :flowtype => f,
         )
+        try
         local ds = _subset_expt(df, selector)
 
         local fg = groupederrorline(
@@ -48,5 +52,9 @@ function tv_plot(
         plot!(fg, ylabel = "Total Variation", xlabel = "flow length")
         plot!(fg, dpi = 600, size = (500, 400), margin = 10Plots.mm)
         savefig(fg, fig_name * ".png")
+        catch e
+            println("Error: $e")
+            continue
+        end
     end
 end

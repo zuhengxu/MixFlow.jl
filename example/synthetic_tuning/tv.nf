@@ -6,16 +6,15 @@ params.dryRun = false
 params.n_sample = params.dryRun ? 8 : 64 
 params.nrunThreads = 1
 
-def julia_env = file("${moduleDir}/../")
+def julia_env = file("${moduleDir}/../julia_env")
 def julia_script = file(moduleDir/'metric_mixflow.jl')
 // def plot_script = file(moduleDir/'tuning.jl')
 
 def variables = [
     seed: 1..32,
     target: ["Banana", "Cross", "Funnel", "WarpedGaussian"], 
-    // target: ["Banana", "Cross", "Funnel"], 
     flowtype: ["MF.DeterministicMixFlow", "MF.BackwardIRFMixFlow", "MF.IRFMixFlow"],
-    kernel: ["MF.MALA"],
+    kernel: ["MF.RWMH"],
     step_size: [0.05, 0.2, 1.0],
     // flow_length: [3000],
     flow_length: [2000]
@@ -25,7 +24,7 @@ workflow {
     compiled_env = instantiate(julia_env) | precompile
     configs = crossProduct(variables, params.dryRun)
     combined = run_simulation(compiled_env, configs) | combine_csvs
-    // plot(compiled_env, plot_script, combined)
+    plot(compiled_env, plot_script, combined)
     final_deliverable(compiled_env, combined)
 }
 
