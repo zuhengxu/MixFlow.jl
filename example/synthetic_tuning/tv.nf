@@ -7,8 +7,8 @@ params.n_sample = params.dryRun ? 8 : 64
 params.nrunThreads = 1
 
 def julia_env = file("${moduleDir}/../julia_env")
-def julia_script = file(moduleDir/'metric_mixflow.jl')
-// def plot_script = file(moduleDir/'tuning.jl')
+def julia_script = file(moduleDir/'../julia_env/evaluation.jl')
+def plot_script = file(moduleDir/'plotting.jl')
 
 def variables = [
     seed: 1..32,
@@ -16,8 +16,7 @@ def variables = [
     flowtype: ["MF.DeterministicMixFlow", "MF.BackwardIRFMixFlow", "MF.IRFMixFlow"],
     kernel: ["MF.RWMH"],
     step_size: [0.05, 0.2, 1.0],
-    // flow_length: [3000],
-    flow_length: [2000]
+    flow_length: [4000],
 ]
 
 workflow {
@@ -54,7 +53,7 @@ process run_simulation {
     flow_length = ${config.flow_length}
 
     # run simulation
-    df = run_tv(seed, name, flowtype, flow_length, kernel, step_size; nsample = ${params.n_sample})
+    df = run_tv_sweep(seed, name, flowtype, kernel, flow_length, step_size; nsample = ${params.n_sample})
     
     # store output
     mkdir("${filed(config)}")
