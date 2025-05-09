@@ -3,14 +3,14 @@ include { instantiate; precompile; activate } from '../../nf-nest/pkg.nf'
 include { combine_csvs; } from '../../nf-nest/combine.nf'
 
 params.dryRun = false
-params.n_sample_eval = params.dryRun ? 8 : 1024
+params.n_sample_eval = params.dryRun ? 8 : 4096
 params.nrunThreads = 1
 
-def julia_env = file("${moduleDir}/../../")
-def julia_script = file("${moduleDir}/run_nf.jl")
+def julia_env = file("${moduleDir}/../../julia_env")
+def julia_script = file("${moduleDir}/run_ais.jl")
 
 def variables = [
-    seed: 1..5,
+    seed: 1..10,
     target: ["Sonar", "Brownian", "TReg", "SparseRegression" ,"LGCP"],
     flowtype: ["real_nvp", "neural_spline_flow"],
     nlayer: [3, 5],

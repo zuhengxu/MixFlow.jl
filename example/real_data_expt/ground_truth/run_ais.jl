@@ -36,11 +36,11 @@ function run_sais(
     if save_jld
         res_dir = joinpath(@__DIR__, "result/")
         if !isdir(res_dir)
-            mkdir(res_dir)
+            mkpath(res_dir)
         end
 
         JLD2.save(
-            joinpath(res_dir, "$(name)_sais.jld2"),
+            joinpath(res_dir, "$(name)_sais_$(seed).jld2"),
             "output", a_res,
             "prob", ais_prob,
         )
