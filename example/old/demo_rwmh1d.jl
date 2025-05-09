@@ -5,7 +5,7 @@ using JLD2
 using LogExpFunctions
 import PlotlyJS as pjs
 
-include("Model.jl")
+include("julia_env/Model.jl")
 
 # the involution map
 f(x, v) = (v, x)

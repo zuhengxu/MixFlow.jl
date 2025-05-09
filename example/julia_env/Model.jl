@@ -12,23 +12,25 @@ using FillArrays
 
 
 using MixFlow 
-# using Plots
+
+MixFlow.iid_sample(dist::ContinuousDistribution, n::Int) = rand(dist, n)
+MixFlow.iid_sample(dist::ContinuousDistribution) = rand(dist)
 
 # 1d targets
 Mixture1D() = MixtureModel(Normal, [(0.0, 0.8), (-3.0, 1.5), (3.0, 0.5)], [0.3, 0.5, 0.2])
 
 # Synthetic targets
-include("targets/banana.jl")
-include("targets/cross.jl")
-include("targets/neal_funnel.jl")
-include("targets/warped_gaussian.jl")
+include(joinpath(@__DIR__, "targets/banana.jl"))
+include(joinpath(@__DIR__, "targets/cross.jl"))
+include(joinpath(@__DIR__, "targets/neal_funnel.jl"))
+include(joinpath(@__DIR__, "targets/warped_gaussian.jl"))
 
-# real-data targets
-include("targets/brownian.jl")
-include("targets/sparse_reg.jl")
-include("targets/logreg_sonar.jl")
-include("targets/t_reg.jl")
-include("targets/lgcp.jl")
+# real targets
+include(joinpath(@__DIR__, "targets/brownian.jl"))
+include(joinpath(@__DIR__, "targets/sparse_reg.jl"))
+include(joinpath(@__DIR__, "targets/logreg_sonar.jl"))
+include(joinpath(@__DIR__, "targets/t_reg.jl"))
+include(joinpath(@__DIR__, "targets/lgcp.jl"))
 
 
 # wrapper function to load models
@@ -64,17 +66,8 @@ synthetic_list = Set(["Mixture1D", "Cauchy1D", "Banana", "Cross", "Funnel", "War
 real_data_list = Set(["Brownian", "Sonar", "SparseRegression", "TReg", "LGCP"])
 
 
-# target, dims, ad = load_model("Sonar")
-# x = randn(dims)
-# l, g = LogDensityProblems.logdensity_and_gradient(target, x)
-
-# LogDensityProblems.capabilities(::ContinuousDistribution) =  LogDensityProblems.LogDensityOrder{0}()
 LogDensityProblems.dimension(dist::ContinuousDistribution) = length(dist)
 LogDensityProblems.logdensity(dist::ContinuousDistribution, x) = logpdf(dist, x)
-
-
-MixFlow.iid_sample(dist::ContinuousDistribution, n::Int) = rand(dist, n)
-MixFlow.iid_sample(dist::ContinuousDistribution) = rand(dist)
 
 
 

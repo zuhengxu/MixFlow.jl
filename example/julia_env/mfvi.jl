@@ -4,8 +4,9 @@ using Bijectors
 using Functors
 using ADTypes
 using LogDensityProblems
-using Plots
+using LinearAlgebra
 using NormalizingFlows
+# using Plots
 
 # prevent destrcuture the param
 @leaf MvNormal
@@ -44,11 +45,11 @@ end
 # target = load_model("Banana")
 # flow, stats = mfvi(target; sample_per_iter = 10, max_iters = 10000)
 
-function visualize(p::Bijectors.MultivariateTransformed, samples=rand(p, 1000))
-    xrange = range(minimum(samples[1, :]) - 1, maximum(samples[1, :]) + 1; length=100)
-    yrange = range(minimum(samples[2, :]) - 1, maximum(samples[2, :]) + 1; length=100)
-    z = [exp(Distributions.logpdf(p, [x, y])) for x in xrange, y in yrange]
-    fig = contour(xrange, yrange, z'; levels=15, color=:viridis, label="PDF", linewidth=2)
-    scatter!(samples[1, :], samples[2, :]; label="Samples", alpha=0.3, legend=:bottomright)
-    return fig
-end
+# function visualize(p::Bijectors.MultivariateTransformed, samples=rand(p, 1000))
+#     xrange = range(minimum(samples[1, :]) - 1, maximum(samples[1, :]) + 1; length=100)
+#     yrange = range(minimum(samples[2, :]) - 1, maximum(samples[2, :]) + 1; length=100)
+#     z = [exp(Distributions.logpdf(p, [x, y])) for x in xrange, y in yrange]
+#     fig = contour(xrange, yrange, z'; levels=15, color=:viridis, label="PDF", linewidth=2)
+#     scatter!(samples[1, :], samples[2, :]; label="Samples", alpha=0.3, legend=:bottomright)
+#     return fig
+# end

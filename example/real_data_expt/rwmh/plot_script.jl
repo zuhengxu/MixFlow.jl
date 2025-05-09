@@ -127,7 +127,7 @@ make_box_plot(
     ylims = (1e-5, 2),
 )
 
-namea = "TReg"
+name = "TReg"
 best_lr = 0.001
 best_nlayer = 3
 
@@ -136,8 +136,8 @@ make_box_plot(
     df, df_sais, df_nf, name, :elbo;
     best_lr = best_lr,
     best_nlayer = best_nlayer,
-    ylims = (-135, -100),
     ylabel = "ELBO",
+    ylims = (-145.6, -145.3),
     size = (1000, 400),
 )
 
@@ -146,7 +146,7 @@ make_box_plot(
     best_lr = best_lr,
     best_nlayer = best_nlayer,
     ylabel = "log normalization constant",
-    ylims = (-140, -25),
+    ylims = (-145.6, -145.3),
     size = (1000, 400),
 )
 
@@ -154,10 +154,10 @@ make_box_plot(
     df, df_sais, df_nf, name, :ess;
     best_lr = best_lr,
     best_nlayer = best_nlayer,
-    yscale = :log10,
+    # yscale = :log10,
     ylabel = "Importance Sampling ESS (per particle)",
     size = (1000, 400),
-    ylims = (1e-5, 2),
+    ylims = (0.8, 1),
 )
 
 

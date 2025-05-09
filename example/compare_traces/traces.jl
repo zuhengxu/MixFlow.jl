@@ -13,10 +13,10 @@ using MixFlow: _rand_joint_reference, _log_density_ratio
 
 const MF = MixFlow
 
-include(joinpath(@__DIR__, "../mfvi.jl"))
-include(joinpath(@__DIR__, "../Model.jl"))
-include(joinpath(@__DIR__, "../utils.jl"))
-include(joinpath(@__DIR__, "../plotting.jl"))
+include(joinpath(@__DIR__, "../julia_env/mfvi.jl"))
+include(joinpath(@__DIR__, "../julia_env/Model.jl"))
+include(joinpath(@__DIR__, "../julia_env/utils.jl"))
+include(joinpath(@__DIR__, "../julia_env/plotting.jl"))
 
 # return Dict with named tuple each is a kernel
 function simulation_setting(name)
@@ -116,21 +116,3 @@ function run_traces(seed, name::String, kernel_type, trace_type)
 end
 
 # dts = run_traces(2, "Cross", MF.HMC, "inv_irf")
-
-# function chain_from_combine_csvs( 
-#     combined_csvs_folder::String,
-#     target,
-#     kernel_str, 
-#     trace_type, 
-# )
-#     df = CSV.read(joinpath(combined_csvs_folder, "summary.csv"), DataFrame)
-
-#     selector = Dict(
-#         :target => target, 
-#         :kernel => kernel_str,
-#         :trace_type => trace_type,
-#     )
-#     # groupby then iter over groupby and put in 3way array
-#     # ds = _subset_expt(df, selector)[!, [:iter, :d1, :d2, :dr, :seed]]
-# end
-#     

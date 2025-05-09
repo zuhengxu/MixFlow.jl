@@ -1448,7 +1448,7 @@ version = "2.0.0"
 
 [[deps.MixFlow]]
 deps = ["ADTypes", "AdvancedHMC", "AdvancedMH", "Distributions", "IrrationalConstants", "LinearAlgebra", "LogDensityProblems", "LogDensityProblemsAD", "LogExpFunctions", "PDMats", "Pigeons", "ProgressMeter", "Random", "SpecialFunctions", "Statistics", "StatsBase", "StatsFuns", "StructArrays"]
-path = ".."
+path = "../.."
 uuid = "ea471776-d4c6-43fb-ae26-e5140a895dea"
 version = "1.0.0-DEV"
 
