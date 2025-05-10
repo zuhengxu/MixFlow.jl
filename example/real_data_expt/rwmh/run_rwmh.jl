@@ -41,14 +41,14 @@ function run_simulation(
     # add cost tuning
     df[!, "cost_tuning"] .= cost_tuning
 
-    jld_pth = joinpath(@__DIR__, "results/")
+    jld_pth = joinpath(@__DIR__, "result/")
     if save_jld 
         if !isdir(jld_pth)
             mkpath(jld_pth)
         end
         JLD2.save(
             joinpath(jld_pth, "rwmh_$(name)_$seed.jld2"),
-            "output" => output,
+            "output", output,
         )
     end
     return df, output
