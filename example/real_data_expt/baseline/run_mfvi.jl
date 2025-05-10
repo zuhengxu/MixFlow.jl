@@ -27,7 +27,7 @@ function run_baseline(
     flow =
         Bijectors.transformed(q₀, Bijectors.Shift(zeros(dims)) ∘ Bijectors.Scale(ones(dims)))
     
-    cb(iter, opt_stats, re, θ) = (sample_per_iter = sample_per_iter, ad = ad)
+    cb(iter, opt_stats, re, θ) = (sample_per_iter = batchsize, ad = ad)
     checkconv(iter, stat, re, θ, st) = _is_nan_or_inf(stat.loss) || (stat.gradient_norm < 1e-3)
 
     time = @elapsed begin
