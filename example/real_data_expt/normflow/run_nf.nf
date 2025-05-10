@@ -7,15 +7,15 @@ params.n_sample_eval = params.dryRun ? 8 : 4096
 params.nrunThreads = 1
 
 def julia_env = file("${moduleDir}/../../julia_env")
-def julia_script = file("${moduleDir}/run_ais.jl")
+def julia_script = file("${moduleDir}/run_nf.jl")
 
 def variables = [
-    seed: 1..10,
-    target: ["Sonar", "Brownian", "TReg", "SparseRegression" ,"LGCP"],
+    seed: 1..5,
+    target: ["LGCP"],
     flowtype: ["real_nvp", "neural_spline_flow"],
     nlayer: [3, 5],
     lr: ["1e-4", "1e-5"],
-    batchsize: [64],
+    batchsize: [32],
     niters: [50000],
 ]
 
@@ -30,10 +30,10 @@ workflow {
 
 process run_simulation {
     debug false 
-    memory { 30.GB * Math.pow(2, task.attempt-1) }
-    time { 24.hour * Math.pow(2, task.attempt-1) } 
+    memory { 40.GB * Math.pow(2, task.attempt-1) }
+    time { 10.hour * Math.pow(2, task.attempt-1) } 
     cpus 1 
-    errorStrategy { task.attempt < 2 ? 'retry' : 'ignore' } 
+    errorStrategy { task.attempt < 3 ? 'retry' : 'ignore' } 
     input:
         path julia_env 
         val config 
@@ -54,13 +54,25 @@ process run_simulation {
     lr = ${config.lr}
 
     # run simulation
-    df = run_norm_flow(
-        seed, name, flowtype, nlayer, lr; 
-        batchsize=bs, niters=niters, show_progress=false,
-        nsample_eval=${params.n_sample_eval},
-        save_jld = true
-    )
-    
+	try
+        df = run_norm_flow(
+            seed, name, flowtype, nlayer, lr; 
+            batchsize=bs, niters=niters, show_progress=false,
+            nsample_eval=${params.n_sample_eval},
+            save_jld = true
+        )
+        
+    catch e
+
+        df = DataFrame(
+            time = NaN,
+            elbo=NaN,
+            logZ=NaN,
+            ess=NaN,
+        )
+
+    end
+
     # store output
     mkdir("${filed(config)}")
     CSV.write("${filed(config)}/summary.csv", df)

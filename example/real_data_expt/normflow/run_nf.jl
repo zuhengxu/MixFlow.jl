@@ -101,7 +101,7 @@ function run_norm_flow(
         end
 
         JLD2.save(
-            joinpath(res_dir, "$(name)_$(flowname)_$(lr)_$(seed).jld2"),
+            joinpath(res_dir, "$(name)_$(flowname)_$(nlayers)_$(lr)_$(seed).jld2"),
             "flow", flow_trained,
             "batchsize", batchsize,
             "seed", seed,

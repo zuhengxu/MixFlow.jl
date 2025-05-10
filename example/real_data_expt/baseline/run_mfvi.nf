@@ -4,34 +4,34 @@ include { combine_csvs; } from '../../nf-nest/combine.nf'
 
 params.dryRun = false
 params.n_sample_eval = params.dryRun ? 8 : 1024
+params.niters = params.dryRun ? 10 : 50000
 params.nrunThreads = 1
 
 def julia_env = file("${moduleDir}/../../julia_env")
-def julia_script = file("${moduleDir}/run_ais.jl")
+def julia_script = file("${moduleDir}/run_mfvi.jl")
 
 def variables = [
     target: ["Sonar", "Brownian", "TReg", "SparseRegression" ,"LGCP"],
     lr: ["1e-3"],
     batchsize: [64],
-    niters: [50000],
-    seed: 1..10,
+    seed: 1..5,
 ]
 
 workflow {
     compiled_env = instantiate(julia_env) | precompile
     configs = crossProduct(variables, params.dryRun)
-    combined = run_simulation(compiled_env, configs) | combine_csvs
+    combined = run_baseline(compiled_env, configs) | combine_csvs
     // plot(compiled_env, plot_script, combined)
    final_deliverable(compiled_env, combined)
 }
 
 
-process run_simulation {
+process run_baseline {
     debug false 
-    memory { 30.GB * Math.pow(2, task.attempt-1) }
-    time { 24.hour * Math.pow(2, task.attempt-1) } 
+    memory { 5.GB * Math.pow(2, task.attempt-1) }
+    time { 3.hour * Math.pow(2, task.attempt-1) } 
     cpus 1 
-    errorStrategy { task.attempt < 2 ? 'retry' : 'ignore' } 
+//    errorStrategy { task.attempt < 2 ? 'retry' : 'ignore' } 
     input:
         path julia_env 
         val config 
@@ -45,26 +45,17 @@ process run_simulation {
     # get configurations
     seed = ${config.seed}
     name = "${config.target}"
-    niters = ${config.niters}
     bs = ${config.batchsize} 
     lr = ${config.lr}
+    niters = ${params.niters}
 
     # run simulation
-    try
-        df = run_baseline(
-            seed, name, lr; 
-            batchsize=bs, niters=niters, show_progress=false,
-            nsample_eval=${params.n_sample_eval},
-            save_jld = true
-        )
-    catch e
-        df = DataFrame(
-            time = NaN,
-            elbo = NaN,
-            logZ = NaN,
-            ess = NaN,
-        )
-    end
+    df = run_baseline(
+        seed, name, lr; 
+        batchsize=bs, niters=niters, show_progress=false,
+        nsample_eval=${params.n_sample_eval},
+        save_jld = true
+    )
 
     
     # store output

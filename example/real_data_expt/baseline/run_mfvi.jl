@@ -7,7 +7,7 @@ using MixFlow
 const MF = MixFlow
 
 
-include(joinpath(@__DIR__, "../../Model.jl"))
+include(joinpath(@__DIR__, "../../julia_env/Model.jl"))
 include(joinpath(@__DIR__, "../../julia_env/flowlayer.jl"))
 
 function run_baseline(
@@ -21,12 +21,11 @@ function run_baseline(
     target, dims, ad = load_model(name)
 
     @info "learning mfvi for $(name), dims = $(dims)"
-    dim = LogDensityProblems.dimension(target)
     logp = Base.Fix1(LogDensityProblems.logdensity, target)
 
-    q₀ = MvNormal(zeros(dim), I)
+    q₀ = MvNormal(zeros(dims), I)
     flow =
-        Bijectors.transformed(q₀, Bijectors.Shift(zeros(dim)) ∘ Bijectors.Scale(ones(dim)))
+        Bijectors.transformed(q₀, Bijectors.Shift(zeros(dims)) ∘ Bijectors.Scale(ones(dims)))
     
     cb(iter, opt_stats, re, θ) = (sample_per_iter = sample_per_iter, ad = ad)
     checkconv(iter, stat, re, θ, st) = _is_nan_or_inf(stat.loss) || (stat.gradient_norm < 1e-3)
