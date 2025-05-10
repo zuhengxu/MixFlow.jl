@@ -6,14 +6,14 @@ params.dryRun = false
 params.n_sample = params.dryRun ? 8 : 64 
 params.nrunThreads = 1
 
-def julia_env = file("${moduleDir}/../../")
+def julia_env = file("${moduleDir}/../../julia_env")
 def julia_script = file(moduleDir/'run_rwmh.jl')
 // def plot_script = file(moduleDir/'tuning.jl')
 
 def variables = [
     seed: 1..32,
-    target: ["TReg", "Brownian", "Sonar", "SparseRegression"], 
-    flowtype: ["BackwardIRFMixFlow", "DeterministicMixFlow", "EnsembleIRFFlow"],
+    target: ["TReg", "Brownian", "Sonar", "SparseRegression", "LGCP"], 
+    flowtype: ["BackwardIRFMixFlow", "DeterministicMixFlow", "EnsembleIRFFlow", "IRFMixFlow"],
     kernel: ["MF.RWMH"],
     nchains: [30],
     flow_length: [5000],
@@ -53,8 +53,8 @@ process run_simulation {
     nchains = ${config.nchains}
 
     # run simulation
-    df = run_simulation(seed, name, flowtype, kernel, T, nchains; nsample = ${params.n_sample})
-    
+    df, output = run_simulation(seed, name, flowtype, kernel, T, nchains; nsample = ${params.n_sample})
+
     # store output
     mkdir("${filed(config)}")
     CSV.write("${filed(config)}/summary.csv", df)

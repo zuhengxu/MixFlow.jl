@@ -11,12 +11,13 @@ using JLD2
 using MixFlow 
 const MF = MixFlow
 
-include(joinpath(@__DIR__, "../../evaluation.jl"))
+include(joinpath(@__DIR__, "../../julia_env/evaluation.jl"))
 
 
 function run_simulation(
     seed, name, flowtype, kernel, T, nchains; 
     nsample = 128, target_rej_rate = 0.2, track_cost = true, T_tune = T, 
+    save_jld = false
 )
     Random.seed!(seed)
     prob, dims = load_prob_with_ref(name)
@@ -35,11 +36,22 @@ function run_simulation(
 
     # rej_rate, err = rejection_rate(prob, K, T_check)
 
-    df = flow_evaluation(seed, name, flowtype, kernel, T, ϵ; nsample = nsample, nchains = nchains)
+    df, output = flow_evaluation(seed, name, flowtype, kernel, T, ϵ; nsample = nsample, nchains = nchains, track_cost = track_cost)
     
     # add cost tuning
     df[!, "cost_tuning"] .= cost_tuning
-    return df
+
+    jld_pth = joinpath(@__DIR__, "results/")
+    if save_jld 
+        if !isdir(jld_pth)
+            mkpath(jld_pth)
+        end
+        JLD2.save(
+            joinpath(jld_pth, "rwmh_$(name)_$seed.jld2"),
+            "output" => output,
+        )
+    end
+    return df, output
 end
 
 
@@ -60,6 +72,6 @@ end
 
 # df = flow_evaluation(1, name, flowtype, kernel, T_check, ϵ; nsample = 1024, nchains = 30)
 
-# df = run_simulation(
-#     1, "SparseRegression", MF.BackwardIRFMixFlow, RWMH, 5000, 30; nsample = 128
+# df, output = run_simulation(
+#     1, "Banana", MF.EnsembleIRFFlow, RWMH, 5000, 30; target_rej_rate = 0.766, nsample = 128
 # )
