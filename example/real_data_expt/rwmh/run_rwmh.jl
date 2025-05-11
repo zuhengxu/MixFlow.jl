@@ -47,7 +47,7 @@ function run_simulation(
             mkpath(jld_pth)
         end
         JLD2.save(
-            joinpath(jld_pth, "rwmh_$(name)_$seed.jld2"),
+            joinpath(jld_pth, "rwmh_$(name)_$(flowtype)_$seed.jld2"),
             "output", output,
         )
     end
