@@ -11,7 +11,7 @@ function create_neural_spline_flow(name, nlayers)
     q0 = JLD2.load(joinpath(@__DIR__, "../reference/result/$(name)_mfvi.jld2"))["reference"]
 
     dims = length(q0)
-    hdims = min(dims, 100)
+    hdims = min(dims, 64)
     mask_idx1 = 1:2:dims
     mask_idx2 = 2:2:dims
 
@@ -28,7 +28,7 @@ function create_real_nvp(name, nlayers)
     q0 = JLD2.load(joinpath(@__DIR__, "../reference/result/$(name)_mfvi.jld2"))["reference"]
 
     dims = length(q0)
-    hdims = min(dims, 100)
+    hdims = min(dims, 64)
     mask_idx1 = 1:2:dims
     mask_idx2 = 2:2:dims
 
@@ -45,7 +45,11 @@ function run_norm_flow(
     nsample_eval::Int=128, save_jld::Bool=true,
 )
     Random.seed!(seed)
-    target, _, ad = load_model(name)
+    target, _, _ = load_model(name)
+
+    # mooncake is much faster for large nn
+    ad = AutoMooncake(; config = Mooncake.Config())
+
     logp = Base.Fix1(LogDensityProblems.logdensity, target)
 
     # create flow
@@ -63,18 +67,18 @@ function run_norm_flow(
     # stop if nan or inf in training
     checkconv(iter, stat, re, θ, st) = _is_nan_or_inf(stat.loss) || (stat.gradient_norm < 1e-3)
 
-    time = @elapsed begin
-    flow_trained, stats, _ = train_flow(
-        NormalizingFlows.elbo,
-        flow,
-        logp,
-        batchsize;
-        max_iters=niters,
-        optimiser=Optimisers.Adam(lr),
-        ADbackend=ad,
-        show_progress=show_progress,
-        hasconverged=checkconv,
-    )
+    time_train = @elapsed begin
+        flow_trained, stats, _ = train_flow(
+            NormalizingFlows.elbo,
+            flow,
+            logp,
+            batchsize;
+            max_iters=niters,
+            optimiser=Optimisers.Adam(lr),
+            ADbackend=ad,
+            show_progress=show_progress,
+            hasconverged=checkconv,
+        )
     end
     @info "Training finished"
 
@@ -82,6 +86,7 @@ function run_norm_flow(
     if _is_nan_or_inf(stats[end].loss)
         println("Training failed: loss is NaN or Inf")
         return DataFrame(
+            time = NaN,
             elbo = NaN,
             logZ = NaN,
             ess = NaN,
@@ -109,7 +114,7 @@ function run_norm_flow(
     end
     
     df = DataFrame(
-        time = time,
+        time = time_train,
         elbo=el,
         logZ=logz,
         ess=es,
@@ -120,14 +125,13 @@ end
 
 
 
-# # target_list = ["TReg", "SparseRegression", "Brownian", "Sonar", "LGCP"]
-
+# target_list = ["TReg", "SparseRegression", "Brownian", "Sonar"]
 
 # for name in target_list
 #     @info "Running $name"
 #     df = run_norm_flow(
-#         1, name, "neural_spline_flow", 3, 1e-4; 
-#         batchsize=64, niters=100, show_progress=true,
+#         1, name, "neural_spline_flow", 3, 1e-3; 
+#         batchsize=32, niters=10, show_progress=true,
 #         nsample_eval=128,
 #     )
 # end
@@ -135,6 +139,6 @@ end
 # name = "LGCP"
 # df = run_norm_flow(
 #     1, name, "real_nvp", 5, 1e-4; 
-#     batchsize=64, niters=100, show_progress=true,
+#     batchsize=32, niters=100, show_progress=true,
 #     nsample_eval=128,
 # )
