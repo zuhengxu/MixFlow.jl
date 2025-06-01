@@ -6,7 +6,8 @@ end
 function LogDensityProblems.capabilities(::Type{<:BrownianMotion})
     return LogDensityProblems.LogDensityOrder{2}()
 end
-function LogDensityProblems.logdensity(prob::BrownianMotion, θ)
+
+function LogDensityProblems.logdensity(prob::BrownianMotion, θ::AbstractVector)
     (; y, obs_idx) = prob
     x     = @view(θ[1:30])
     α_inn = StatsFuns.softplus(θ[31])

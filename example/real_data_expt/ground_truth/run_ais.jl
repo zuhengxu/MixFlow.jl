@@ -62,8 +62,6 @@ function run_sais(
     return df
 end
 
-
-
 # nptls = 2^11
 # nrounds = 5
 

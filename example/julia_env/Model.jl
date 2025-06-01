@@ -69,8 +69,6 @@ real_data_list = Set(["Brownian", "Sonar", "SparseRegression", "TReg", "LGCP"])
 LogDensityProblems.dimension(dist::ContinuousDistribution) = length(dist)
 LogDensityProblems.logdensity(dist::ContinuousDistribution, x) = logpdf(dist, x)
 
-
-
 # tracking logdensity prob
 mutable struct TrackedLogDensityProblem{Prob}
     n_density_evals  :: Int

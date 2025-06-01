@@ -5,7 +5,7 @@ struct LogisticRegression{XT, YT}
     y::YT
 end
 
-function LogDensityProblems.logdensity(prob::LogisticRegression, θ)
+function LogDensityProblems.logdensity(prob::LogisticRegression, θ::AbstractVector)
     (; X, y) = prob
 
     ℓp_θ   = mapreduce(normlogpdf, +, θ)

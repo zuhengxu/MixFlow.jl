@@ -43,7 +43,7 @@ function mfvi(
 end
 
 # target = load_model("Banana")
-# flow, stats = mfvi(target; sample_per_iter = 10, max_iters = 10000)
+# flow, stats = mfvi(target; sample_per_iter = 10, max_iters = 1000)
 
 # function visualize(p::Bijectors.MultivariateTransformed, samples=rand(p, 1000))
 #     xrange = range(minimum(samples[1, :]) - 1, maximum(samples[1, :]) + 1; length=100)

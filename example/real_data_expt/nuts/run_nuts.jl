@@ -118,17 +118,17 @@ end
 
 # df_rwmh_is(seed, name, flowtype)
 
-name = "LGCP"
-nsample = 5000
+# name = "LGCP"
+# nsample = 5000
 
-for seed in 1:10
-    df = df_nuts(seed, name; n_samples=5000)
-    CSV.write(
-        joinpath(@__DIR__, "results/nuts_$(name)_$(seed).csv"),
-        df,
-        writeheader=true,
-        append=false,
-    )
-end
+# for seed in 1:10
+#     df = df_nuts(seed, name; n_samples=5000)
+#     CSV.write(
+#         joinpath(@__DIR__, "results/nuts_$(name)_$(seed).csv"),
+#         df,
+#         writeheader=true,
+#         append=false,
+#     )
+# end
 
 

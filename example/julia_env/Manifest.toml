@@ -1559,9 +1559,17 @@ version = "1.2.0"
 
 [[deps.NormalizingFlows]]
 deps = ["ADTypes", "Bijectors", "DifferentiationInterface", "Distributions", "DocStringExtensions", "LinearAlgebra", "Optimisers", "ProgressMeter", "Random", "StatsBase"]
-git-tree-sha1 = "17d89739ee13b1e62381d7ad5c6094d94cadf1bd"
+git-tree-sha1 = "fd54eff641bb9c5fbd0cd1991bae15f1a64ef0bf"
+repo-rev = "main"
+repo-url = "https://github.com/TuringLang/NormalizingFlows.jl.git"
 uuid = "50e4474d-9f12-44b7-af7a-91ab30ff6256"
-version = "0.2.0"
+version = "0.2.1"
+
+    [deps.NormalizingFlows.extensions]
+    NormalizingFlowsCUDAExt = "CUDA"
+
+    [deps.NormalizingFlows.weakdeps]
+    CUDA = "052768ef-5323-5732-b1bb-66c8b64840ba"
 
 [[deps.Observables]]
 git-tree-sha1 = "7438a59546cf62428fc9d1bc94729146d37a7225"

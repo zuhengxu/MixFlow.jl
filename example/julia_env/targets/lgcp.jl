@@ -12,7 +12,7 @@ struct LogGaussianCoxProcess{
     logjac      :: LogJac
 end
 
-function LogDensityProblems.logdensity(prob::LogGaussianCoxProcess, f_white)
+function LogDensityProblems.logdensity(prob::LogGaussianCoxProcess, f_white::AbstractVector)
     (; area, counts, gp_mean, gp_cov_chol, logjac) = prob
     f    = gp_cov_chol * f_white + gp_mean
     ℓp_f = logpdf(MvNormal(Zeros(length(f)), I), f_white)

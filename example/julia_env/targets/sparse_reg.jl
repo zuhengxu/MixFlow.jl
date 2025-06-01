@@ -32,7 +32,7 @@ end
 
 LogDensityProblems.dimension(prob::SparseRegression) = prob.d
 
-function LogDensityProblems.logdensity(prob::SparseRegression, z)
+function LogDensityProblems.logdensity(prob::SparseRegression, z::AbstractVector)
     (; fs, rs, N, d) = prob
 
     # s := logσ²

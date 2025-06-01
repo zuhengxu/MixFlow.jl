@@ -37,7 +37,7 @@ end
 #######################
 # models ( t₅(Xβ, 1)-distirbution lin reg with heavy tailed prior, β ∼ Cauchy(0, 1))
 #######################
-function LogDensityProblems.logdensity(prob::StudentTRegression, β)
+function LogDensityProblems.logdensity(prob::StudentTRegression, β::AbstractVector)
     (; X, Y, N, d) = prob
     
     ℓp_β = -d*log(π) - sum(log1p, β.^2.0)

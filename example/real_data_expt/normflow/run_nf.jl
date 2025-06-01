@@ -125,7 +125,7 @@ end
 
 
 
-# target_list = ["TReg", "SparseRegression", "Brownian", "Sonar"]
+# target_list = ["TReg", "SparseRegression", "Brownian"]
 
 # for name in target_list
 #     @info "Running $name"
