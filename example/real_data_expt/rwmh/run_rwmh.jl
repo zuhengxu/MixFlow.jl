@@ -53,25 +53,3 @@ function run_simulation(
     end
     return df, output
 end
-
-
-# name = "TReg"
-# prob, dims = load_prob_with_ref(name)
-# kernel = RWMH
-# T_check = 5000
-# ϵ, neval = find_stepsize(prob, kernel, T_check; target_rej_rate = 0.2, thresh = 0.02, T_check_stab = T_check)
-# K = kernel(ϵ, ones(dims))
-
-
-# rej_rate, err = rejection_rate(prob, K, T_check)
-
-# flowtype = MF.BackwardIRFMixFlow
-# # flowtype = MF.IRFMixFlow
-# # flowtype = MF.DeterministicMixFlow
-# # flowtype = MF.EnsembleIRFFlow
-
-# df = flow_evaluation(1, name, flowtype, kernel, T_check, ϵ; nsample = 1024, nchains = 30)
-
-# df, output = run_simulation(
-#     1, "Banana", MF.EnsembleIRFFlow, RWMH, 5000, 30; target_rej_rate = 0.766, nsample = 128
-# )
