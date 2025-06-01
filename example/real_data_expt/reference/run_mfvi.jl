@@ -7,8 +7,8 @@ using MixFlow
 const MF = MixFlow
 
 
-include(joinpath(@__DIR__, "../../mfvi.jl"))
-include(joinpath(@__DIR__, "../../Model.jl"))
+include(joinpath(@__DIR__, "../../julia_env/mfvi.jl"))
+include(joinpath(@__DIR__, "../../julia_env/Model.jl"))
 
 
 function get_vi_reference(
@@ -36,13 +36,3 @@ function get_vi_reference(
     )
     return reference
 end
-
-
-for name in ["TReg", "SparseRegression", "Brownian", "Sonar", "LGCP"]
-    get_vi_reference(1, name; batchsize = 10, niters = 100_000)
-end
-
-# res = JLD2.load(joinpath(@__DIR__, "result/Brownian_mfvi.jld2"))
-# pr = res["prob"]
-
-

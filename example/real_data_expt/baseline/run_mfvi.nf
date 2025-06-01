@@ -11,9 +11,9 @@ def julia_env = file("${moduleDir}/../../julia_env")
 def julia_script = file("${moduleDir}/run_mfvi.jl")
 
 def variables = [
-    target: ["Sonar", "Brownian", "TReg", "SparseRegression" ,"LGCP"],
+    target: ["TReg", "Sonar", "Brownian", "SparseRegression"],
     lr: ["1e-3"],
-    batchsize: [64],
+    batchsize: [32],
     seed: 1..5,
 ]
 
@@ -29,7 +29,7 @@ workflow {
 process run_baseline {
     debug false 
     memory { 5.GB * Math.pow(2, task.attempt-1) }
-    time { 3.hour * Math.pow(2, task.attempt-1) } 
+    time { 24.hour * Math.pow(2, task.attempt-1) } 
     cpus 1 
 //    errorStrategy { task.attempt < 2 ? 'retry' : 'ignore' } 
     input:

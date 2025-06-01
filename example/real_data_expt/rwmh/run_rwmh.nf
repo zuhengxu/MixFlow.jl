@@ -4,19 +4,19 @@ include { combine_csvs; } from '../../nf-nest/combine.nf'
 
 params.dryRun = false
 params.n_sample = params.dryRun ? 8 : 64 
-params.nrunThreads = 4
+params.nrunThreads = 1
 
 def julia_env = file("${moduleDir}/../../julia_env")
 def julia_script = file(moduleDir/'run_rwmh.jl')
 // def plot_script = file(moduleDir/'tuning.jl')
 
 def variables = [
-    seed: 1..32,
-    target: ["Sonar", "Brownian", "TReg", "SparseRegression"],
-    flowtype: ["IRFMixFlow"],
+    target: ["LGCP"],
+    flowtype: ["BackwardIRFMixFlow", "DeterministicMixFlow"],
     kernel: ["MF.RWMH"],
     nchains: [30],
-    flow_length: [3000],
+    flow_length: [5000],
+    seed: 1..16,
 ]
 
 workflow {
@@ -30,9 +30,9 @@ workflow {
 
 process run_simulation {
     debug false 
-    memory { 10.GB * Math.pow(2, task.attempt-1) }
-    time { 2.hour * Math.pow(2, task.attempt-1) } 
-    cpus 4 
+    memory { 5.GB * Math.pow(2, task.attempt-1) }
+    time { 24.hour * Math.pow(2, task.attempt-1) } 
+    cpus 1 
     errorStrategy { task.attempt < 3 ? 'retry' : 'ignore' } 
     input:
         path julia_env 
@@ -40,7 +40,7 @@ process run_simulation {
     output:
         path "${filed(config)}"
     """
-    ${activate(julia_env,10)}
+    ${activate(julia_env,params.nrunThreads)}
 
     include("$julia_script")
 
@@ -53,7 +53,7 @@ process run_simulation {
     nchains = ${config.nchains}
 
     # run simulation
-    df, _ = run_simulation(seed, name, flowtype, kernel, T, nchains; nsample = ${params.n_sample})
+    df, _ = run_simulation(seed, name, flowtype, kernel, T, nchains; nsample = ${params.n_sample}, save_jld = true)
 
     # store output
     mkdir("${filed(config)}")

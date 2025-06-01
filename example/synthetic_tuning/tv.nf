@@ -13,7 +13,7 @@ def plot_script = file(moduleDir/'plotting.jl')
 def variables = [
     seed: 1..32,
     target: ["Banana", "Cross", "Funnel", "WarpedGaussian"], 
-    flowtype: ["MF.DeterministicMixFlow", "MF.BackwardIRFMixFlow", "MF.IRFMixFlow"],
+    flowtype: ["MF.IRFMixFlow"],
     kernel: ["MF.RWMH"],
     step_size: [0.05, 0.2, 1.0],
     flow_length: [4000],

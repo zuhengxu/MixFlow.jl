@@ -90,9 +90,10 @@ function ensemble_flowlength_plot(
                 legend = :best,
                 legendtitle = "step size",
                 title = "$(t)__$(_throw_dot(k))__nchain=$(nc_mx)",
+                lw = 2,
             )
             plot!(fg; kwargs...)
-            plot!(fg, dpi = 600, size = (500, 400), margin = 10Plots.mm)
+            plot!(fg, dpi = 600, size = (500, 400))
             savefig(fg, joinpath(fig_dir, "$(t)__$(_throw_dot(k))__nchain=$(nc_mx).png"))
         catch e
             println("Error: $e")
@@ -136,10 +137,11 @@ function ensemble_nchains_plot(
                 legend = :best,
                 legendtitle = "step size",
                 title = "$(t)__$(_throw_dot(k))__T=$(fl_mx)",
+                lw = 2,
             )
             plot!(fg; kwargs...)
-            plot!(fg, dpi = 600, size = (500, 400), margin = 10Plots.mm)
-            savefig(fg, joinpath(fig_dir, "$(t)__$(_throw_dot(k))__nchain=$(n).png"))
+            plot!(fg, dpi = 600, size = (500, 400))
+            savefig(fg, joinpath(fig_dir, "$(t)__$(_throw_dot(k))__length=$(fl_mx).png"))
         catch e
             println("Error: $e")
             continue
@@ -153,6 +155,7 @@ end
 #     create_fig_dir=true, fig_dir="figure/flowlength/", 
 #     ylabel="Total Variation", xlabel="flow length",
 #     ylims=(0, 1),
+#     margin = 5Plots.mm
 # )
 
 # ensemble_nchains_plot(
@@ -160,6 +163,7 @@ end
 #     create_fig_dir=true, fig_dir="figure/nchains/", 
 #     ylabel="Total Variation", xlabel="Number of Ensembles",
 #     ylims=(0, 1),
+#     margin = 5Plots.mm
 # )
 
 # plots comparing three flows
@@ -209,28 +213,6 @@ function tv_plot_compare_flowtype(df::DataFrame)
         end
     end
 end
-
-# df = CSV.read("/home/zuheng/Research/MixFlow.jl/example/synthetic_tuning/deliverables/tv_mixflow.csv", DataFrame)
-# df_rwmh = CSV.read("/home/zuheng/Research/MixFlow.jl/example/synthetic_tuning/deliverables/scriptName=tv.nf___dryRun=false___n_sample=64___nrunThreads=1/output/summary.csv", DataFrame)
-
-# # delect rows with flowtype == "rwmh"
-# df_no_rwmh = df[df.kernel .!= "MF.RWMH", :]
-# hcat(df_no_rwmh, df_rwmh)
-
-# names(df_no_rwmh)
-# names(df_rwmh)
-# ddf = vcat(df_no_rwmh, df_rwmh, cols=:union)
-# #turn missing values into 1
-
-# ds = _subset_expt(df, Dict(:kernel => "MF.MALA", :target => "Banana"))
-
-# tv_plot_compare_flowtype(df)
-
-# ds = tv_plot_compare_flowtype(df)
-# dsg = groupby(ds, [:step_size])
-# dsc = combine(dsg, :tv => median)
-# # find the :step_size with the largest median tv
-# sort!(dsc, :tv_median)
 
 function best_step_size(df::DataFrame, t, k)
     ds = _subset_expt(df, Dict(:target => t, :kernel => k))

@@ -3,20 +3,20 @@ include { instantiate; precompile; activate } from '../../nf-nest/pkg.nf'
 include { combine_csvs; } from '../../nf-nest/combine.nf'
 
 params.dryRun = false
-params.n_sample_eval = params.dryRun ? 8 : 4096
+params.n_sample_eval = params.dryRun ? 8 : 1024
 params.nrunThreads = 1
 
 def julia_env = file("${moduleDir}/../../julia_env")
 def julia_script = file("${moduleDir}/run_nf.jl")
 
 def variables = [
-    seed: 1..5,
-    target: ["LGCP"],
+    target: ["SparseRegression", "TReg", "Sonar", "Brownian", "LGCP"],
     flowtype: ["real_nvp", "neural_spline_flow"],
     nlayer: [3, 5],
-    lr: ["1e-4", "1e-5"],
+    lr: ["1e-3", "1e-4"],
     batchsize: [32],
     niters: [50000],
+    seed: 1..5,
 ]
 
 workflow {
@@ -30,8 +30,8 @@ workflow {
 
 process run_simulation {
     debug false 
-    memory { 40.GB * Math.pow(2, task.attempt-1) }
-    time { 10.hour * Math.pow(2, task.attempt-1) } 
+    memory { 4.GB * Math.pow(2, task.attempt-1) }
+    time { 24.hour * Math.pow(2, task.attempt-1) } 
     cpus 1 
     errorStrategy { task.attempt < 3 ? 'retry' : 'ignore' } 
     input:
@@ -54,17 +54,17 @@ process run_simulation {
     lr = ${config.lr}
 
     # run simulation
-	try
-        df = run_norm_flow(
+    df = try 
+        run_norm_flow(
             seed, name, flowtype, nlayer, lr; 
             batchsize=bs, niters=niters, show_progress=false,
             nsample_eval=${params.n_sample_eval},
             save_jld = true
         )
         
-    catch e
+    catch 
 
-        df = DataFrame(
+        DataFrame(
             time = NaN,
             elbo=NaN,
             logZ=NaN,

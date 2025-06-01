@@ -6,7 +6,7 @@ nsample = 64
 nchains = 30
 
 for name in ["LGCP"]
-    for flowtype in [MF.BackwardIRFMixFlow, MF.DeterministicMixFlow, MF.EnsembleIRFFlow]
+    for flowtype in [MF.DeterministicMixFlow]
         for kernel in [RWMH]
             for T in [5000]
                 for seed in 1:nrep

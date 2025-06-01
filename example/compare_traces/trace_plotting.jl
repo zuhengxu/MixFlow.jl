@@ -14,8 +14,8 @@ using MixFlow: _rand_joint_reference, _log_density_ratio
 
 const MF = MixFlow
 
-include(joinpath(@__DIR__, "../utils.jl"))
-include(joinpath(@__DIR__, "../plotting.jl"))
+include(joinpath(@__DIR__, "../julia_env/utils.jl"))
+include(joinpath(@__DIR__, "../julia_env/plotting.jl"))
 
 function chain_from_combine_csvs( 
     combined_csvs_folder::String,
@@ -220,28 +220,3 @@ function trace_meanplot(
         savefig(fg, fg_name * ".png")
     end 
 end
-
-# trace_meanplot(
-#     ".",
-#     "Cross", 
-#     "MF.RWMH";
-#     dpi = 1000,
-#     margin = 5Plots.mm,
-#     xguidefontsize = 18,
-#     yguidefontsize = 18,
-# ) 
-
-
-
-# chn, _ = chain_from_combine_csvs(
-#     ".",
-#     "Cross",
-#     "MF.RWMH",
-#     "fwd_homo"; 
-#     compute_ess = false,
-# )
-# fg = plot(chn)
-# savefig(fg, "../traceplot/Cross_homo_trace.png")
-
-# fg1 = meanplot(chn)
-# plot!(fg1, dpi = 1000, margin = 5Plots.mm, xguidefontsize = 18, yguidefontsize = 18, plot_title = "Banana MALA bwd_inv_IRF", legend = false)

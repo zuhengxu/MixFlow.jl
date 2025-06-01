@@ -6,16 +6,17 @@ params.dryRun = false
 params.n_sample = params.dryRun ? 8 : 64 
 params.nrunThreads = 1
 
-def julia_env = file("${moduleDir}/../")
-def julia_script = file(moduleDir/'metric_mixflow.jl')
+def julia_env = file("${moduleDir}/../julia_env")
+def julia_script = file(moduleDir/'../julia_env/evaluation.jl')
 
 def variables = [
+    flowtype: ["MF.IRFMixFlow"],
+    target: ["Banana", "Cross", "Funnel", "WarpedGaussian"], 
+    kernel: ["MF.RWMH"],
+    step_size: [1.0],
+    flow_length: [3000],
+    nchains: [30],
     seed: 1..32,
-    kernel: ["MF.HMC"],
-    step_size: [0.1],
-    flow_length: [150],
-    target: ["Cross"], 
-    flowtype: ["MF.DeterministicMixFlow", "MF.BackwardIRFMixFlow", "MF.IRFMixFlow"],
 ]
 
 workflow {
@@ -50,9 +51,14 @@ process run_simulation {
     kernel = ${config.kernel}
     step_size = ${config.step_size}
     flow_length = ${config.flow_length}
+    nchains = ${config.nchains}
 
     # run simulation
-    df = run_elbo(seed, name, flowtype, flow_length, kernel, step_size; nsample = ${params.n_sample})
+    df, _ = flow_evaluation(
+        seed, name, flowtype, kernel, flow_length, step_size; 
+        nsample = ${params.n_sample}, nchains = nchains, 
+        track_cost=false,
+    )
     
     # store output
     mkdir("${filed(config)}")

@@ -81,3 +81,30 @@ function _load_lgcp()
     # target_ad = ADgradient(ad, target; x = randn(dims))
     return target, dims, ad 
 end
+
+
+# using BenchmarkTools
+
+# Bl = []
+# BBg = []
+# Bg = []
+# Ds = []
+# for name in ["TReg", "Brownian", "SparseRegression", "LGCP"]
+#     @info "Loading $name"
+#     prob, dims, ad = load_model(name)
+#     @info "Loaded $name with dimension $dims"
+
+#     # ad = AutoMooncake(; config = Mooncake.Config())
+#     prob_ad = ADgradient(ad, prob; x = randn(dims))
+
+#     bl = @belapsed LogDensityProblems.logdensity(prob, randn(dims))
+#     bg = @belapsed LogDensityProblems.logdensity_and_gradient(prob_ad, randn(dims))
+
+#     push!(Ds, dims)
+#     push!(Bl, bl)
+#     push!(Bg, bg)
+#     push!(BBg, bl*dims)
+# end
+
+# using Plots
+# plot(Ds, Bg./Bl, label="Gradient_time/LogDensity_time", title="Gradient/LogDensity vs Dimension", xlabel="Dimension", ylabel="Ratio")
