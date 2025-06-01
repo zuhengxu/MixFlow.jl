@@ -18,8 +18,7 @@ workflow {
     compiled_env = instantiate(julia_env) | precompile
     configs = crossProduct(variables, params.dryRun)
     combined = run_nuts(compiled_env, configs) | combine_csvs
-    // plot(compiled_env, plot_script, combined)
-   final_deliverable(compiled_env, combined)
+    final_deliverable(compiled_env, combined)
 }
 
 
@@ -44,12 +43,16 @@ process run_nuts {
     name = "${config.target}"
     flowtype = ${config.flowtype}
 
-    # run simulation
+    # processing rwmh importance sampling 
     df = df_rwmh_is(seed, name, flowtype)
+
+    # run NUTS simulation
+    df_n = df_nuts(seed, name)
 
     # store output
     mkdir("${filed(config)}")
-    CSV.write("${filed(config)}/summary.csv", df)
+    CSV.write("${filed(config)}/rwmh_is.csv", df)
+    CSV.write("${filed(config)}/nuts.csv", df_n)
     """
 }
 
