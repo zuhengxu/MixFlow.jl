@@ -4,6 +4,8 @@ include(joinpath(@__DIR__, "../../julia_env/", "plotting.jl"))
 
 
 df_rwmh = CSV.read("deliverables/rwmh_res/output/summary.csv", DataFrame)
+# rename DeterministicMixFlow to HomogeneousMixFlow
+df_rwmh.method .= replace(df_rwmh.method, "DeterministicMixFlow" => "HomogeneousMixFlow")
 df_nut = CSV.read("deliverables/nuts.csv", DataFrame)
 
 # for  t in real_data_list
@@ -28,7 +30,7 @@ for t in real_data_list
             label=""
         )
         plot!(fg, legend=:best)
-        plot!(fg, dpi=600, size=(600, 400), margin=5Plots.mm)
+        plot!(fg, dpi=200, size=(600, 400), margin=5Plots.mm)
         savefig(fg, "figure/$(t)_mean_error.png")
 
         fg = @df ds_combine boxplot(
@@ -44,7 +46,7 @@ for t in real_data_list
             label=""
         )
         plot!(fg, legend=:best)
-        plot!(fg, dpi=600, size=(600, 400), margin=5Plots.mm)
+        plot!(fg, dpi=200, size=(600, 400), margin=5Plots.mm)
         savefig(fg, "figure/$(t)_std_error.png")
     catch e
         println("Error in $t: ", e)

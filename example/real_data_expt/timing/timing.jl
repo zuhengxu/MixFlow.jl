@@ -52,11 +52,11 @@ function normflow_timing(
     time = @elapsed begin
         run_norm_flow(
             seed, name, flowtype, nlayers, 1e-5; 
-            batchsize=32, niters=100, show_progress=true,
+            batchsize=32, niters=1000, show_progress=true,
             nsample_eval=1024, save_jld=false,
         )
     end
-    return 500*time
+    return 50*time
 end
 
 function nuts_timing(
@@ -145,7 +145,7 @@ end
 
 # all irfflow timing
 for name in ["TReg", "Brownian", "SparseRegression", "LGCP"]
-    for flowtype in [BackwardIRFMixFlow, DeterministicMixFlow, EnsembleIRFFlow, IRFMixFlow]
+    for flowtype in [BackwardIRFMixFlow, DeterministicMixFlow, EnsembleIRFFlow]
         for seed in 1:10
             @info "Running IRFFlow timing for $(name) with flow type $(flowtype)"
             file_name = joinpath(res_dir, "$(name)_$(flowtype)_$(seed).csv")

@@ -10,7 +10,7 @@ def julia_env = file("${moduleDir}/../../julia_env")
 def julia_script = file(moduleDir/'run_rwmh.jl')
 
 def variables = [
-    target: ["SparseRegression", "TReg", "Sonar", "Brownian", "LGCP"],
+    target: ["SparseRegression", "TReg", "Brownian", "LGCP"],
     flowtype: ["BackwardIRFMixFlow", "DeterministicMixFlow", "EnsembleIRFFlow", "IRFMixFlow"],
     kernel: ["MF.RWMH"],
     nchains: [30],
