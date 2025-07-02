@@ -48,7 +48,7 @@ Zygote.@adjoint function LogDensityProblems.logdensity(prob::LogisticRegression,
       lr_logpdf_pullback(x̄) = (nothing, _mygrad(prob, θ) * x̄)
     return LogDensityProblems.logdensity(prob, θ), lr_logpdf_pullback
 end
-Zygote.refresh()
+# Zygote.refresh()
 
 function LogDensityProblems.capabilities(::Type{<:LogisticRegression})
     return LogDensityProblems.LogDensityOrder{1}()

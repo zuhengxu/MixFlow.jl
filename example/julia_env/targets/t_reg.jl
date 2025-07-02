@@ -72,7 +72,7 @@ Zygote.@adjoint function LogDensityProblems.logdensity(prob::StudentTRegression,
     return ℓ, lr_logpdf_pullback
 end
 
-Zygote.refresh()
+# Zygote.refresh()
 
 function LogDensityProblems.capabilities(::Type{<:StudentTRegression})
     return LogDensityProblems.LogDensityOrder{1}()

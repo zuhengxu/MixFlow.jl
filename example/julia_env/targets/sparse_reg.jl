@@ -94,7 +94,7 @@ Zygote.@adjoint function LogDensityProblems.logdensity(prob::SparseRegression, z
     lr_logpdf_pullback(x̄) = (nothing, ∇ℓ * x̄)
     return ℓ, lr_logpdf_pullback
 end
-Zygote.refresh()
+# Zygote.refresh()
 
 
 function _load_sparse_reg()

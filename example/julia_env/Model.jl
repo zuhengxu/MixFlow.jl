@@ -25,6 +25,8 @@ include(joinpath(@__DIR__, "targets/cross.jl"))
 include(joinpath(@__DIR__, "targets/neal_funnel.jl"))
 include(joinpath(@__DIR__, "targets/warped_gaussian.jl"))
 
+include(joinpath(@__DIR__, "targets/mvskewnormal.jl"))
+
 # real targets
 include(joinpath(@__DIR__, "targets/brownian.jl"))
 include(joinpath(@__DIR__, "targets/sparse_reg.jl"))
@@ -47,6 +49,8 @@ function load_model(name::String)
         return Funnel(2)
     elseif name == "WarpedGaussian"
         return WarpedGauss()
+    elseif name == "MvSkewNormal"
+        return _load_skewnormal()
     elseif name == "Brownian"
         return _load_brownian()
     elseif name == "Sonar"
@@ -97,5 +101,6 @@ function LogDensityProblems.logdensity_and_gradient(prob::TrackedLogDensityProbl
     return LogDensityProblems.logdensity_and_gradient(prob.prob, x)
 end
 
-compute_cost(prob::TrackedLogDensityProblem) = prob.n_density_evals + prob.n_gradient_evals * LogDensityProblems.dimension(prob)
+compute_cost(prob::TrackedLogDensityProblem) =
+    prob.n_density_evals + prob.n_gradient_evals * logdensityproblems.dimension(prob)
 
